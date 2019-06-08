@@ -12,11 +12,11 @@ import Vapor
 // Node is a single worker machine to which Speedster connects via SSH
 public struct Node: Model {
     
-    public enum Auth: Int, Codable {
-        case none = 0
-        case me = 1
-        case password = 2
-        case privateKey = 3
+    public enum Auth: String, Codable {
+        case none = "na"
+        case me = "me"
+        case password = "ps"
+        case privateKey = "pk"
     }
     
     public static let shared = Node()
@@ -25,33 +25,46 @@ public struct Node: Model {
     public let id = Field<Speedster.DbIdType?>("id")
     
     /// Node name
-    public var name = Field<String>("name")
+    public let name = Field<String>("name")
     
     /// Host (no protocol, ex. example.com)
-    public var host = Field<String>("host")
+    public let host = Field<String>("host")
     
     /// Port to connect to
-    public var port = Field<Int?>("port")
+    public let port = Field<Int?>("port")
     
     /// Port to connect to
-    public var user = Field<String?>("user")
+    public let user = Field<String?>("user")
     
     /// Login password (if auth is 2) or an optional passphrase (if auth is 3)
-    public var password = Field<String?>("password")
+    public let password = Field<String?>("password")
     
     /// Public key certificate
-    public var publicKey = Field<String?>("public_key")
-    
-    /// Certificate passphrase
-    public var passphrase = Field<String?>("passphrase")
+    public let publicKey = Field<String?>("public_key")
     
     /// Authentication
-    public var auth = Field<Auth>("auth", dataType: .int8)
+    public let auth = Field<Auth>("auth", dataType: .string)
     
     /// Max node runners
-    public var maxRunners = Field<Int8>("max_runners")
+    public let executors = Field<Int>("executors")
     
     /// Node used count
-    public var running = Field<Int8>("running")
+    public let running = Field<Int?>("running")
 
+}
+
+
+extension Node {
+    
+    static func masterNode() -> Row<Node> {
+        let node = Node.row()
+        node.name = "Me"
+        node.host = "localhost"
+        node.port = 0
+        node.auth = .none
+        node.executors = 2
+        node.running = 0
+        return node
+    }
+    
 }

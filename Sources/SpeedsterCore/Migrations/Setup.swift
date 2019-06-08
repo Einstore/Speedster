@@ -12,10 +12,7 @@ import Fluent
 struct Setup: Migration {
     
     func prepare(on database: Database) -> EventLoopFuture<Void> {
-        let node = Node.row()
-        node.name = "Me"
-        node.host = "localhost"
-        node.port = 0
+        let node = Node.masterNode()
         return node.save(on: database)
     }
     

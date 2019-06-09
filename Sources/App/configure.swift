@@ -1,6 +1,6 @@
 import Fluent
 import Vapor
-import SpeedsterCore
+import SpeedsterDB
 
 
 /// Called before your application initializes.
@@ -31,8 +31,7 @@ public func configure(_ s: inout Services) throws {
     
     s.register(Migrations.self) { c in
         var migrations = Migrations()
-        migrations.add(Todo.autoMigration(), to: dbId)
-        try Speedster.configure(migrations: &migrations, dbIdentifier: dbId)
+        try SpeedsterDb.configure(migrations: &migrations, dbIdentifier: dbId)
         return migrations
     }
     

@@ -25,9 +25,12 @@ class RemoteExecutor: Executor {
     var ssh: SSH?
     var sshError: Swift.Error?
     
-    required init(_ node: Node, on eventLoop: EventLoop) {
+    let output: ExecutorOutput
+    
+    required init(_ node: Node, on eventLoop: EventLoop, output: @escaping ExecutorOutput) {
         self.eventLoop = eventLoop
         self.node = node
+        self.output = output
         
         do {
             ssh = try SSH(host: node.host, port: Int32(node.port))
@@ -47,7 +50,7 @@ class RemoteExecutor: Executor {
         }
     }
     
-    func run(_ phase: Job.Phase) throws -> String {
+    func run(_ phase: Job.Phase) throws {
         if let err = sshError {
             throw err
         }
@@ -69,7 +72,7 @@ class RemoteExecutor: Executor {
             })
             value.append("\(res == 0 ? "Success" : "Failure")\n")
             value.append("-------------------------\n")
-            return value
+//            return value
         } catch {
             value.append("Failure\n")
             value.append(error.localizedDescription)
@@ -78,8 +81,8 @@ class RemoteExecutor: Executor {
         }
     }
     
-    func close() {
-        
+    func close() throws {
+        try ssh?.execute("exit")
     }
     
 }

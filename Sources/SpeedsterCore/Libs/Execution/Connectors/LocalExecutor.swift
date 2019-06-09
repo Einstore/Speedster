@@ -19,40 +19,42 @@ class LocalExecutor: Executor {
     
     let eventLoop: EventLoop
     
-    required init(_ node: Node, on eventLoop: EventLoop) {
+    let output: ExecutorOutput
+    
+    required init(_ node: Node, on eventLoop: EventLoop, output: @escaping ExecutorOutput) {
         self.eventLoop = eventLoop
         self.node = node
+        self.output = output
     }
     
-    func run(_ phase: Job.Phase) throws -> String {
+    func run(_ phase: Job.Phase) throws {
         try FileManager.default.createDirectory(atPath: node.dir, withIntermediateDirectories: true, attributes: nil)
         
-        var value = ""
         if !phase.name.isEmpty {
-            value.append("\(phase.name)\n")
+            output("\(phase.name)\n")
         }
         if !phase.description.isEmpty {
-            value.append("\(phase.description)\n")
+            output("\(phase.description)\n")
         }
-        value.append("$ \(phase.command)\n")
+        output("$ \(phase.command)\n")
         
-        let output = SwiftShell.run(bash: phase.command)
+        let context = CustomContext(main)
+        let res = context.run(bash: phase.command)
         
-        value.append(output.stdout)
-        value.append("\n")
+        output(res.stdout)
+        output("\n")
         
-        if output.succeeded {
-            value.append("-------------------------\n")
-            return value
+        if res.succeeded {
+            output("-------------------------\n")
         } else {
-            value.append(output.stderror)
-            value.append("\n")
-            value.append("-------------------------\n")
-            throw Error.fail(output.stderror)
+            output(res.stderror)
+            output("\n")
+            output("-------------------------\n")
+            throw Error.fail(res.stderror)
         }
     }
     
-    func close() {
+    func close() throws {
         
     }
     

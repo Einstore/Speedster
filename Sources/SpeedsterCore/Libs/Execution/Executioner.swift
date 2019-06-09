@@ -26,25 +26,26 @@ class Executioner {
         self.job = job
         
         if node.host == "localhost" {
-            executor = LocalExecutor(node, on: eventLoop)
+            executor = LocalExecutor(node, on: eventLoop) { out in
+                
+            }
         } else {
-            executor = RemoteExecutor(node, on: eventLoop)
+            executor = RemoteExecutor(node, on: eventLoop) { out in
+                
+            }
         }
     }
     
     /// Execute job
     func run() throws -> String {
         for phase in job.preBuild {
-            let s = try executor.run(phase)
-            output.append(s)
+            try executor.run(phase)
         }
         for phase in job.build {
-            let s = try executor.run(phase)
-            output.append(s)
+            try executor.run(phase)
         }
         for phase in job.postBuild {
-            let s = try executor.run(phase)
-            output.append(s)
+            try executor.run(phase)
         }
         return output
     }

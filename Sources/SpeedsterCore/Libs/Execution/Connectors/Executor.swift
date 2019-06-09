@@ -8,10 +8,15 @@
 import Foundation
 
 
+public typealias ExecutorOutput = ((String) -> ())
+
+
 protocol Executor {
     
-    init(_ node: Node, on eventLoop: EventLoop)
-    func run(_ phase: Job.Phase) throws -> String
-    func close()
+    var output: ExecutorOutput { get }
+    
+    init(_ node: Node, on eventLoop: EventLoop, output: @escaping ExecutorOutput)
+    func run(_ phase: Job.Phase) throws
+    func close() throws
     
 }

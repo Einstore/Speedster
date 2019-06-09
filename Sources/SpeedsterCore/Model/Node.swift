@@ -2,15 +2,13 @@
 //  Node.swift
 //  
 //
-//  Created by Ondrej Rafaj on 07/06/2019.
+//  Created by Ondrej Rafaj on 09/06/2019.
 //
 
-import Fluent
-import Vapor
+import Foundation
 
 
-// Node is a single worker machine to which Speedster connects via SSH
-public struct Node: Model {
+public struct Node: Codable {
     
     public enum Auth: String, Codable {
         case none = "na"
@@ -19,52 +17,40 @@ public struct Node: Model {
         case privateKey = "pk"
     }
     
-    public static let shared = Node()
-    public static let entity = "nodes"
-    
-    public let id = Field<Speedster.DbIdType?>("id")
-    
     /// Node name
-    public let name = Field<String>("name")
+    public let name: String
     
     /// Host (no protocol, ex. example.com)
-    public let host = Field<String>("host")
+    public let host: String
     
     /// Port to connect to
-    public let port = Field<Int?>("port")
+    public let port: Int
     
     /// Port to connect to
-    public let user = Field<String?>("user")
+    public let user: String?
     
     /// Login password (if auth is 2) or an optional passphrase (if auth is 3)
-    public let password = Field<String?>("password")
+    public let password: String?
     
     /// Public key certificate
-    public let publicKey = Field<String?>("public_key")
+    public let publicKey: String?
     
     /// Authentication
-    public let auth = Field<Auth>("auth", dataType: .string)
+    public let auth: Auth
     
-    /// Max node runners
-    public let executors = Field<Int>("executors")
+    /// Host (no protocol, ex. example.com)
+    public let dir: String
     
-    /// Node used count
-    public let running = Field<Int?>("running")
-
-}
-
-
-extension Node {
-    
-    static func masterNode() -> Row<Node> {
-        let node = Node.row()
-        node.name = "Me"
-        node.host = "localhost"
-        node.port = 0
-        node.auth = .none
-        node.executors = 2
-        node.running = 0
-        return node
+    /// Initializer
+    public init(name: String, host: String, port: Int, user: String?, password: String?, publicKey: String?, auth: Auth, dir: String = "~/Speedster") {
+        self.name = name
+        self.host = host
+        self.port = port
+        self.user = user
+        self.password = password
+        self.publicKey = publicKey
+        self.auth = auth
+        self.dir = dir
     }
     
 }

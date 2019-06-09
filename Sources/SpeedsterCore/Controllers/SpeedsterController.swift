@@ -7,24 +7,107 @@
 
 import Foundation
 import Vapor
-import Fluent
 
 
 final class SpeedsterController: Controller {
     
-    let db: Database
-    
-    init(_ db: Database) {
-        self.db = db
-    }
-    
     func routes(_ r: Routes, _ c: Container) throws {
-        r.get("demo") { req -> EventLoopFuture<Row<Node>> in
-            let node = Node.row()
-            node.name = "Me"
-            node.host = "localhost"
-            node.port = 0
-            return node.save(on: self.db).map({ node })
+        r.get("local") { req -> String in
+            let e = Executioner(
+                job: Job(
+                    name: "Test job",
+                    timeout: 10,
+                    timeoutOnInactivity: 5,
+                    preBuild: [
+                        Job.Phase(
+                            name: "a) Phase 1",
+                            command: "pwd",
+                            description: "Phase 1 description"
+                        )
+                    ],
+                    build: [
+                        Job.Phase(
+                            name: "b) Phase 1",
+                            command: "pwd",
+                            description: "Phase 1 description"
+                        ),
+                        Job.Phase(
+                            name: "b) Phase 2",
+                            command: "ls -a",
+                            description: "Phase 2 description"
+                        )
+                    ],
+                    postBuild: [
+                        Job.Phase(
+                            name: "c) Phase 1",
+                            command: "pwd",
+                            description: "Phase 1 description"
+                        )
+                    ]
+                ),
+                node: Node(
+                    name: "Localhost",
+                    host: "localhost",
+                    port: 0,
+                    user: nil,
+                    password: nil,
+                    publicKey: nil,
+                    auth: .none
+                ),
+                on: req.eventLoop
+            )
+            return try e.run()
+        }
+        
+        r.get("remote") { req -> String in
+            let e = Executioner(
+                job: Job(
+                    name: "Remote test job",
+                    timeout: 10,
+                    timeoutOnInactivity: 5,
+                    preBuild: [
+                        Job.Phase(
+                            name: "a) Phase 1",
+                            command: "pwd",
+                            description: "Phase 1 description"
+                        )
+                    ],
+                    build: [
+                        Job.Phase(
+                            name: "b) Phase 1",
+                            command: "pwd",
+                            description: "Phase 1 description"
+                        ),
+                        Job.Phase(
+                            name: "b) Phase 2",
+                            command: """
+                                pwd
+                                ls ~/ -a
+                                pwd
+                                """,
+                            description: "Phase 2 description"
+                        )
+                    ],
+                    postBuild: [
+                        Job.Phase(
+                            name: "c) Phase 1",
+                            command: "pwd",
+                            description: "Phase 1 description"
+                        )
+                    ]
+                ),
+                node: Node(
+                    name: "Ubuntu Test",
+                    host: "157.230.106.39",
+                    port: 22,
+                    user: "root",
+                    password: "exploited",
+                    publicKey: nil,
+                    auth: .password
+                ),
+                on: req.eventLoop
+            )
+            return try e.run()
         }
     }
     

@@ -1,27 +1,69 @@
 //
-//  Job.swift
+//  File.swift
 //  
 //
-//  Created by Ondrej Rafaj on 07/06/2019.
+//  Created by Ondrej Rafaj on 09/06/2019.
 //
 
-import Fluent
-import Vapor
+import Foundation
 
 
-/// Executable job, has phases and runs
-public struct Job: Model {
+public struct Job: Codable {
     
-    public static let shared = Job()
-    public static let entity = "jobs"
+    public struct Phase: Codable {
+        
+        /// Name of the job
+        public let name: String
+        
+        /// Command to be executed
+        public let command: String
+        
+        /// Phase description, informative only
+        public let description: String
+        
+        /// Initializer
+        public init(name: String, command: String, description: String) {
+            self.name = name
+            self.command = command
+            self.description = description
+        }
+
+    }
     
-    public let id = Field<Speedster.DbIdType?>("id")
-    public let name = Field<String>("name")
+    public let name: String
     
     /// Timeout for the whole job (seconds, default 3600)
-    public let timeout = Field<Int>("timeout")
+    public let timeout: Int
     
     /// Job will timeout after an interval if no update is received (seconds, default 1800)
-    public let timeoutOnInactivity = Field<Int>("timeout_inactivity")
-
+    public let timeoutOnInactivity: Int
+    
+    /// Pre-build phases
+    public let preBuild: [Phase]
+    
+    /// Build phases
+    public let build: [Phase]
+    
+    /// Post-build phases
+    public let postBuild: [Phase]
+    
+    enum CodingKeys: String, CodingKey {
+        case name
+        case timeout
+        case timeoutOnInactivity = "timeout_inactivity"
+        case preBuild = "pre_build"
+        case build
+        case postBuild = "post_build"
+    }
+    
+    /// Initializers
+    public init(name: String, timeout: Int, timeoutOnInactivity: Int, preBuild: [Phase], build: [Phase], postBuild: [Phase]) {
+        self.name = name
+        self.timeout = timeout
+        self.timeoutOnInactivity = timeoutOnInactivity
+        self.preBuild = preBuild
+        self.build = build
+        self.postBuild = postBuild
+    }
+    
 }

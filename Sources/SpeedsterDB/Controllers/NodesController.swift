@@ -10,7 +10,7 @@ import Vapor
 import Fluent
 
 
-final class NodesController: Controller {
+final class NodesController: DbController {
     
     let db: Database
     
@@ -29,12 +29,12 @@ final class NodesController: Controller {
             return node.save(on: self.db).map { node }
         }
         
-        r.put("nodes", UUID.parameter?) { req -> EventLoopFuture<Row<Node>> in
-            req.parameters.get("node")
-            let node = try req.content.decode(Row<Node>.self)
-            node.running = 0
-            return node.save(on: self.db).map { node }
-        }
+//        r.put("nodes", UUID.parameter?) { req -> EventLoopFuture<Row<Node>> in
+//            req.parameters.get("node")
+//            let node = try req.content.decode(Row<Node>.self)
+//            node.running = 0
+//            return node.save(on: self.db).map { node }
+//        }
     }
     
 }

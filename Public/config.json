@@ -1,0 +1,11 @@
+{
+    "name": "Test job",
+    "timeout": 3600
+    "timeout_inactivity": 1800,
+    "phases":
+    [
+    {
+    "": ""
+    }
+    ]
+}

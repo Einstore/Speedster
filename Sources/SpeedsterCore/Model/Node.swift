@@ -33,7 +33,10 @@ public struct Node: Model {
     /// Port to connect to
     public let port = Field<Int?>("port")
     
-    /// Port to connect to
+    /// Labels to identify node type
+    public let labels = Field<String?>("labels")
+    
+    /// User auth
     public let user = Field<String?>("user")
     
     /// Login password (if auth is 2) or an optional passphrase (if auth is 3)
@@ -60,6 +63,7 @@ extension Node {
         let node = Node.row()
         node.name = "Me"
         node.host = "localhost"
+        node.labels = "master"
         node.port = 0
         node.auth = .none
         node.executors = 2

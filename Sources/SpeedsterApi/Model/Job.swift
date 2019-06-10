@@ -18,6 +18,7 @@ public struct Job: Model {
     public let id = Field<Speedster.DbIdType?>("id")
     public let name = Field<String>("name")
     
+    /// Full URL of a Github repo (ex.1 https://github.com/Einstore/Speedster)
     public let githubRepo = Field<String>("github")
     
     /// Timeout for the whole job (seconds, default 3600)

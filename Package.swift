@@ -8,7 +8,8 @@ let package = Package(
     ],
     products: [
         .library(name: "SpeedsterCore", targets: ["SpeedsterCore"]),
-        .library(name: "SpeedsterApi", targets: ["SpeedsterApi"])
+        .library(name: "SpeedsterApi", targets: ["SpeedsterApi"]),
+        .library(name: "GithubAPI", targets: ["GithubAPI"])
     ],
     dependencies: [
         .package(url: "https://github.com/vapor/vapor.git", from: "4.0.0-alpha"),
@@ -43,6 +44,13 @@ let package = Package(
                 "FluentPostgresDriver",
                 "FluentSQLiteDriver",
                 "SpeedsterCore",
+                "Vapor",
+                "GithubAPI"
+            ]
+        ),
+        .target(
+            name: "GithubAPI",
+            dependencies: [
                 "Vapor"
             ]
         ),
@@ -50,7 +58,7 @@ let package = Package(
             name: "Run",
             dependencies: ["App"]
         ),
-        .testTarget(
+          .testTarget(
             name: "AppTests",
             dependencies: ["App"]
         )

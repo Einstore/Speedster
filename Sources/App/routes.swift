@@ -1,6 +1,5 @@
 import Fluent
 import Vapor
-import SpeedsterCore
 import SpeedsterApi
 
 /// Register your application's routes here.

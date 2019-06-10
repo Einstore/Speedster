@@ -8,46 +8,55 @@
 import Vapor
 
 
-class Executioner {
-    
-    private(set) var output = ""
+public class Executioner {
     
     /// Connector
-    let executor: Executor
+    private(set) var executor: Executor
     
     /// Job to be executed
     let job: Job
     
     let eventLoop: EventLoop
     
+    var output: ((String) -> ())
+    
     /// Initializer
-    init(job: Job, node: Node, on eventLoop: EventLoop) {
+    public init(job: Job, node: Node, on eventLoop: EventLoop, output: @escaping ((String) -> ())) {
         self.eventLoop = eventLoop
         self.job = job
+        self.output = output
         
         if node.host == "localhost" {
-            executor = LocalExecutor(node, on: eventLoop) { out in
-                
-            }
+            executor = LocalExecutor(node, on: eventLoop)
         } else {
-            executor = RemoteExecutor(node, on: eventLoop) { out in
-                
-            }
+            executor = RemoteExecutor(node, on: eventLoop)
+        }
+        
+        executor.output = { out in
+            let out = "[\(node.host)] \(out)"
+            print(out)
+            self.output(out)
         }
     }
     
     /// Execute job
-    func run() throws -> String {
-        for phase in job.preBuild {
-            try executor.run(phase)
+    public func run(finished: @escaping (() -> ()), failed: @escaping ((Error) -> ())) {
+        DispatchQueue.global(qos: .background).async {
+            do {
+                for phase in self.job.preBuild {
+                    try self.executor.run(phase)
+                }
+                for phase in self.job.build {
+                    try self.executor.run(phase)
+                }
+                for phase in self.job.postBuild {
+                    try self.executor.run(phase)
+                }
+                finished()
+            } catch {
+                failed(error)
+            }
         }
-        for phase in job.build {
-            try executor.run(phase)
-        }
-        for phase in job.postBuild {
-            try executor.run(phase)
-        }
-        return output
     }
     
 }

@@ -21,7 +21,13 @@ final class SpeedsterController: Controller {
                     preBuild: [
                         Job.Phase(
                             name: "a) Phase 1",
-                            command: "pwd",
+                            command: """
+for ((i=1;i<=100;i++));
+do
+    echo $i
+    echo "\n"
+done
+""",
                             description: "Phase 1 description"
                         )
                     ],
@@ -55,11 +61,14 @@ final class SpeedsterController: Controller {
                     auth: .none
                 ),
                 on: req.eventLoop
-            )
-            return try e.run()
+            ) { out in
+                
+            }
+            
+            return ":)"
         }
         
-        r.get("remote") { req -> String in
+        r.webSocket("remote") { (req, webSocket) in
             let e = Executioner(
                 job: Job(
                     name: "Remote test job",
@@ -68,7 +77,15 @@ final class SpeedsterController: Controller {
                     preBuild: [
                         Job.Phase(
                             name: "a) Phase 1",
-                            command: "pwd",
+                            command: """
+apt-get update
+for ((i=1;i<=10;i++));
+do
+    echo $i
+    echo "\n"
+    sleep 1
+done
+""",
                             description: "Phase 1 description"
                         )
                     ],
@@ -106,8 +123,28 @@ final class SpeedsterController: Controller {
                     auth: .password
                 ),
                 on: req.eventLoop
-            )
-            return try e.run()
+            ) { out in
+                webSocket.send("\(out)\n")
+            }
+            
+            webSocket.onError { (webSocket, error) in
+                webSocket.send("Error: \(error.localizedDescription)\n")
+                close()
+            }
+            
+            func close() {
+                do {
+                    try webSocket.close().wait()
+                } catch {
+                    webSocket.send("Error: Unable to close socket - \(error.localizedDescription)\n")
+                }
+            }
+            e.run(finished: {
+                close()
+            }) { error in
+                webSocket.send("Error: \(error.localizedDescription)\n")
+                close()
+            }
         }
     }
     

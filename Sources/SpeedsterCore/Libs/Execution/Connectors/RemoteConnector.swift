@@ -25,12 +25,11 @@ class RemoteExecutor: Executor {
     var ssh: SSH?
     var sshError: Swift.Error?
     
-    let output: ExecutorOutput
+    var output: ExecutorOutput?
     
-    required init(_ node: Node, on eventLoop: EventLoop, output: @escaping ExecutorOutput) {
+    required init(_ node: Node, on eventLoop: EventLoop) {
         self.eventLoop = eventLoop
         self.node = node
-        self.output = output
         
         do {
             ssh = try SSH(host: node.host, port: Int32(node.port))
@@ -54,29 +53,27 @@ class RemoteExecutor: Executor {
         if let err = sshError {
             throw err
         }
-        var value = ""
+        
         if !phase.name.isEmpty {
-            value.append("\(phase.name)\n")
+            output?("\(phase.name)")
         }
         if !phase.description.isEmpty {
-            value.append("\(phase.description)\n")
+            output?("\(phase.description)")
         }
-        value.append("$ \(phase.command)\n")
+        output?("$ \(phase.command)")
         
         do {
             let res = try ssh?.execute("cd \(node.dir) && \(phase.command)", output: { string in
                 if !string.isEmpty {
-                    value.append(string)
-                    value.append("\n")
+                    output?(string)
                 }
             })
-            value.append("\(res == 0 ? "Success" : "Failure")\n")
-            value.append("-------------------------\n")
-//            return value
+            output?("\(res == 0 ? "Success" : "Failure")")
+            output?("-------------------------")
         } catch {
-            value.append("Failure\n")
-            value.append(error.localizedDescription)
-            value.append("-------------------------\n")
+            output?("Failure\n")
+            output?(error.localizedDescription)
+            output?("-------------------------")
             throw Error.fail(error.localizedDescription)
         }
     }

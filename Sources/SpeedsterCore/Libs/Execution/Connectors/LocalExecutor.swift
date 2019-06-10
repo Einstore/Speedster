@@ -19,37 +19,34 @@ class LocalExecutor: Executor {
     
     let eventLoop: EventLoop
     
-    let output: ExecutorOutput
+    var output: ExecutorOutput?
     
-    required init(_ node: Node, on eventLoop: EventLoop, output: @escaping ExecutorOutput) {
+    required init(_ node: Node, on eventLoop: EventLoop) {
         self.eventLoop = eventLoop
         self.node = node
-        self.output = output
     }
     
     func run(_ phase: Job.Phase) throws {
         try FileManager.default.createDirectory(atPath: node.dir, withIntermediateDirectories: true, attributes: nil)
         
         if !phase.name.isEmpty {
-            output("\(phase.name)\n")
+            output?("\(phase.name)")
         }
         if !phase.description.isEmpty {
-            output("\(phase.description)\n")
+            output?("\(phase.description)")
         }
-        output("$ \(phase.command)\n")
+        output?("$ \(phase.command)")
         
         let context = CustomContext(main)
         let res = context.run(bash: phase.command)
         
-        output(res.stdout)
-        output("\n")
+        output?(res.stdout)
         
         if res.succeeded {
-            output("-------------------------\n")
+            output?("-------------------------")
         } else {
-            output(res.stderror)
-            output("\n")
-            output("-------------------------\n")
+            output?(res.stderror)
+            output?("-------------------------")
             throw Error.fail(res.stderror)
         }
     }

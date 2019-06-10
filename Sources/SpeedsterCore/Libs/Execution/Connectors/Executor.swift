@@ -13,9 +13,9 @@ public typealias ExecutorOutput = ((String) -> ())
 
 protocol Executor {
     
-    var output: ExecutorOutput { get }
+    var output: ExecutorOutput? { get set }
     
-    init(_ node: Node, on eventLoop: EventLoop, output: @escaping ExecutorOutput)
+    init(_ node: Node, on eventLoop: EventLoop)
     func run(_ phase: Job.Phase) throws
     func close() throws
     

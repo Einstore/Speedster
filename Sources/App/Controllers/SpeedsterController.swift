@@ -7,9 +7,10 @@
 
 import Foundation
 import Vapor
+import SpeedsterCore
 
 
-final class SpeedsterController: Controller {
+final class SpeedsterController {
     
     func routes(_ r: Routes, _ c: Container) throws {
         r.get("local") { req -> String in

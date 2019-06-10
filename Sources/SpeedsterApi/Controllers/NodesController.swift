@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  NodesController.swift
 //  
 //
 //  Created by Ondrej Rafaj on 07/06/2019.
@@ -10,7 +10,7 @@ import Vapor
 import Fluent
 
 
-final class NodesController: DbController {
+final class NodesController: Controller {
     
     let db: Database
     

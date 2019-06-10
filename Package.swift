@@ -8,7 +8,7 @@ let package = Package(
     ],
     products: [
         .library(name: "SpeedsterCore", targets: ["SpeedsterCore"]),
-        .library(name: "SpeedsterDB", targets: ["SpeedsterDB"])
+        .library(name: "SpeedsterApi", targets: ["SpeedsterApi"])
     ],
     dependencies: [
         .package(url: "https://github.com/vapor/vapor.git", from: "4.0.0-alpha"),
@@ -25,7 +25,7 @@ let package = Package(
                 "Fluent",
                 "FluentPostgresDriver",
                 "Vapor",
-                "SpeedsterDB"
+                "SpeedsterApi"
             ]
         ),
         .target(
@@ -37,7 +37,7 @@ let package = Package(
             ]
         ),
         .target(
-            name: "SpeedsterDB",
+            name: "SpeedsterApi",
             dependencies: [
                 "Fluent",
                 "FluentPostgresDriver",

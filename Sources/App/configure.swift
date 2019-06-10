@@ -31,7 +31,7 @@ public func configure(_ s: inout Services) throws {
     
     s.register(Migrations.self) { c in
         var migrations = Migrations()
-        try SpeedsterDb.configure(migrations: &migrations, dbIdentifier: dbId)
+        try Speedster.configure(migrations: &migrations, dbIdentifier: dbId)
         return migrations
     }
     

@@ -18,6 +18,8 @@ public struct Job: Model {
     public let id = Field<Speedster.DbIdType?>("id")
     public let name = Field<String>("name")
     
+    public let githubRepo = Field<String>("github")
+    
     /// Timeout for the whole job (seconds, default 3600)
     public let timeout = Field<Int>("timeout")
     

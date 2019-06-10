@@ -10,11 +10,11 @@ import Fluent
 import SpeedsterCore
 
 
-public class SpeedsterDb {
+public class Speedster {
     
     public typealias DbIdType = UUID
     
-    static let controllers: [DbController.Type] = [
+    static let controllers: [Controller.Type] = [
         NodesController.self
     ]
     

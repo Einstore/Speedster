@@ -30,7 +30,11 @@ public struct Job: Codable {
 
     }
     
+    /// Job name
     public let name: String
+    
+    /// Full repo URL
+    public let repoUrl: String?
     
     /// Timeout for the whole job (seconds, default 3600)
     public let timeout: Int
@@ -49,6 +53,7 @@ public struct Job: Codable {
     
     enum CodingKeys: String, CodingKey {
         case name
+        case repoUrl = "repo_url"
         case timeout
         case timeoutOnInactivity = "timeout_inactivity"
         case preBuild = "pre_build"
@@ -57,8 +62,9 @@ public struct Job: Codable {
     }
     
     /// Initializers
-    public init(name: String, timeout: Int, timeoutOnInactivity: Int, preBuild: [Phase], build: [Phase], postBuild: [Phase]) {
+    public init(name: String, repoUrl: String? = nil, timeout: Int, timeoutOnInactivity: Int, preBuild: [Phase], build: [Phase], postBuild: [Phase]) {
         self.name = name
+        self.repoUrl = repoUrl
         self.timeout = timeout
         self.timeoutOnInactivity = timeoutOnInactivity
         self.preBuild = preBuild

@@ -6,7 +6,7 @@
 //
 
 import Fluent
-import Vapor
+import SpeedsterCore
 
 
 /// Build phase of a job
@@ -43,9 +43,25 @@ public struct Phase: Model {
     public let command = Field<String>("command")
     
     /// Phase description, informative only
-    public let description = Field<String>("description")
+    public let descriptionText = Field<String>("description")
     
     /// Stage (pre-build => setup environment, build, post-build => clear environment)
     public let stage = Field<Stage>("stage", dataType: .int)
 
+}
+
+
+extension Phase {
+    
+    static func row(from phase: SpeedsterCore.Job.Phase, jobId: Speedster.DbIdType, order: Int, stage: Phase.Stage) -> Row<Phase> {
+        let row = Phase.row()
+        row.jobId = jobId
+        row.name = phase.name
+        row.order = order
+        row.command = phase.command
+        row.descriptionText = phase.description
+        row.stage = stage
+        return row
+    }
+    
 }

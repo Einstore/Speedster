@@ -12,4 +12,5 @@ struct SpeedsterFileInfo: Content {
     let org: String
     let repo: String
     let speedster: Bool
+    var invalid: Bool = true
 }

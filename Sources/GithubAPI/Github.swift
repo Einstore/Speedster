@@ -46,9 +46,12 @@ public class Github {
     
     let client: Client
     
+    let container: Container
+    
     public init(_ config: Config, on c: Container) throws {
         self.config = config
         self.client = try c.make()
+        self.container = c
     }
     
 }
@@ -56,17 +59,26 @@ public class Github {
 
 extension Github {
     
-    func get<C>(_ o: C.Type, path: String) throws -> EventLoopFuture<C?> where C: Decodable {
+    func get<C>(path: String) throws -> EventLoopFuture<C> where C: Decodable {
         let uri = URI(string: config.url(for: path))
-        
-//        let loginString = "\(config.username):\(config.token)"
-//        let loginData = loginString.data(using: String.Encoding.utf8)!
-//        let base64LoginString = loginData.base64EncodedString()
-        
-        let base64LoginString = "b3JhZmFqOjZhZTJjYThlOGE5MTkwYmU4ZmI2YTg2NGFhZWFhM2IwZWNiZjFiOWE="
-        
-        return client.get(uri, headers: ["Authorization": "Basic \(base64LoginString)"]).map() { response in
-            let data = try? response.content.decode(C.self)
+
+        let loginString = "\(config.username):\(config.token)"
+        let loginData = loginString.data(using: String.Encoding.utf8)!
+        let base64LoginString = loginData.base64EncodedString()
+
+        let headers: HTTPHeaders = [
+            "Authorization": "Basic \(base64LoginString)"
+        ]
+
+        let clientRequest = ClientRequest(
+            method: .GET,
+            url: uri,
+            headers: headers,
+            body: nil
+        )
+
+        return client.send(clientRequest).map() { response in
+            let data = try! response.content.decode(C.self)
             return data
         }
     }

@@ -23,12 +23,9 @@ final class GithubController: Controller {
     }
     
     func routes(_ r: Routes, _ c: Container) throws {
-        r.get("github", "reload") { req -> EventLoopFuture<GithubAPI.Organization> in
-            return try GithubAPI.Organization.query(on: c).get(organization: "fordeu").map() { org in
-                guard let org = org else {
-                    fatalError()
-                }
-                return org
+        r.get("github", "reload") { req -> EventLoopFuture<[GithubAPI.Organization]> in
+            return try GithubAPI.Organization.query(on: c).getAll().map() { orgs in
+                return orgs
             }
         }
     }

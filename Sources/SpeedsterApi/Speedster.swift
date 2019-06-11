@@ -25,7 +25,7 @@ public class Speedster {
             let config = Github.Config(
                 username: "orafaj",
                 token: "6ae2ca8e8a9190be8fb6a864aaeaa3b0ecbf1b9a",
-                server: "https://github.ford.com"
+                server: "https://github.ford.com/api/v3/"
             )
             return try Github(config, on: container)
         }

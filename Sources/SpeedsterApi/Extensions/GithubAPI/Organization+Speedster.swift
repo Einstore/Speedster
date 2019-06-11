@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  Organization+Speedster.swift
 //  
 //
 //  Created by Ondrej Rafaj on 10/06/2019.
@@ -19,6 +19,27 @@ extension GithubAPI.Organization {
         organization.company = company
         organization.icon = avatarURL
         organization.full = self
+    }
+    
+}
+
+
+extension Array where Element == GithubAPI.Organization {
+    
+    func repos(on c: Container) -> EventLoopFuture<[Repo]> {
+        var futures: [EventLoopFuture<[Repo]>] = []
+        for org in self {
+            do {
+                let future = try Repo.query(on: c).get(organization: org.login)
+                futures.append(future)
+            } catch {
+                return c.eventLoop.makeFailedFuture(error)
+            }
+        }
+        return futures.flatten(on: c.eventLoop).map { reposArr in
+            let repos = reposArr.reduce([], +)
+            return repos
+        }
     }
     
 }

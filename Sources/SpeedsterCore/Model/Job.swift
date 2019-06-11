@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  Job.swift
 //  
 //
 //  Created by Ondrej Rafaj on 09/06/2019.

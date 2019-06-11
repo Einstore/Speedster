@@ -9,6 +9,8 @@ import Vapor
 import Fluent
 import GithubAPI
 
+import AsyncKit
+
 
 final class GithubController: Controller {
     
@@ -22,12 +24,19 @@ final class GithubController: Controller {
         self.db = db
     }
     
-    func routes(_ r: Routes, _ c: Container) throws {
-        r.get("github", "reload") { req -> EventLoopFuture<[GithubAPI.Organization]> in
-            return try GithubAPI.Organization.query(on: c).getAll().map() { orgs in
-                return orgs
+    func routes(_ r: Routes, _ c: Container) throws {        
+        r.get("github", "reload") { req -> EventLoopFuture<[SpeedsterFileInfo]> in
+            return try GithubAPI.Organization.query(on: c).getAll().flatMap() { orgs in
+                return orgs.repos(on: c).flatMap { repos in
+                    return GithubManager.fileData(repos, on: c).map { files in
+                        return files.map({ $0.asInfo() })
+                    }
+                }
             }
         }
     }
     
 }
+
+
+

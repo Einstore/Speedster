@@ -13,6 +13,47 @@ import SpeedsterCore
 final class SpeedsterController {
     
     func routes(_ r: Routes, _ c: Container) throws {
+        r.get("generate") { req -> Job in
+            return Job(
+                name: "Test job",
+                repoUrl: "https://github.com/Einstore/GithubAPI",
+                timeout: 3600,
+                timeoutOnInactivity: 1800,
+                preBuild: [
+                    Job.Phase(
+                        name: "a) Phase 1",
+                        command: """
+for ((i=1;i<=100;i++));
+do
+    echo $i
+    echo "\n"
+done
+""",
+                        description: "Phase 1 description"
+                    )
+                ],
+                build: [
+                    Job.Phase(
+                        name: "b) Phase 1",
+                        command: "pwd",
+                        description: "Phase 1 description"
+                    ),
+                    Job.Phase(
+                        name: "b) Phase 2",
+                        command: "ls -a",
+                        description: "Phase 2 description"
+                    )
+                ],
+                postBuild: [
+                    Job.Phase(
+                        name: "c) Phase 1",
+                        command: "pwd",
+                        description: "Phase 1 description"
+                    )
+                ]
+            )
+        }
+        
         r.get("local") { req -> String in
             let e = Executioner(
                 job: Job(

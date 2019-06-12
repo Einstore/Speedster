@@ -34,7 +34,6 @@ public class Executioner {
         
         executor.output = { out in
             let out = "[\(node.host)] \(out)"
-            print(out)
             self.output(out)
         }
     }

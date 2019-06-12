@@ -26,7 +26,7 @@ extension Row where Model == Job {
     
     func update(from job: SpeedsterCore.Job) {
         self.name = job.name
-        self.disabled = false
+        self.disabled = 0
         self.speedsterFile = job
         self.repoUrl = job.repoUrl
         self.timeout = job.timeout

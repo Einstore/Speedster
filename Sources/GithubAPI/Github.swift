@@ -102,8 +102,6 @@ extension Github {
                 let data = try response.content.decode(C.self)
                 return self.container.eventLoop.makeSucceededFuture(data)
             } catch {
-                print(response)
-                print(uri)
                 return self.container.eventLoop.makeFailedFuture(error)
             }
         }

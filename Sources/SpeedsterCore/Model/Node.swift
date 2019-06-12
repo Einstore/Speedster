@@ -8,7 +8,7 @@
 import Foundation
 
 
-public struct Node: Codable {
+public struct Node: Content {
     
     public enum Auth: String, Codable {
         case none = "na"

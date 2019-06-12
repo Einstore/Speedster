@@ -39,6 +39,9 @@ public struct Organization: Model {
     /// Number of total jobs registered
     public let totalJobs = Field<Int>("total")
     
+    /// Number of total jobs registered
+    public let disabled = Field<Bool>("disabled")
+    
     /// Full API info
     public let full = Field<GithubAPI.Organization>("full")
     

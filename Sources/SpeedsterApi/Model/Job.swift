@@ -33,26 +33,24 @@ public struct Job: Model {
     /// Job name
     public let name = Field<String>("name")
     
+    /// Full URL of a repo (ex.1 https://github.com/Einstore/Speedster)
+    public let repoUrl = Field<String?>("repo_url")
+
     /// Disable job; if a Speedster.json is deleted from an automatically managed repo, Job will get disabled
-    /// TODO: Change to Bool!
-    public let disabled = Field<Int>("disabled")
+    public let disabled = Field<Bool>("disabled")
     
     /// Automatically managed should there be any content
     public let speedsterFile = Field<SpeedsterCore.Job?>("speedster_file")
     
-    /// Repository info for automatically managed jobs (Organization/Repo)
+    /// Github repository name for automatically managed jobs
     public let githubRepo = Field<String?>("github_repo")
+    
+    /// Github organization name for automatically managed jobs
+    public let githubOrg = Field<String?>("github_org")
     
     /// Type of management
     public let managed = Field<Managed>("managed", dataType: .int)
-    
-    /// Full URL of a repo (ex.1 https://github.com/Einstore/Speedster)
-    public let repoUrl = Field<String?>("repo_url")
-    
-    /// Timeout for the whole job (seconds, default 3600)
-    public let timeout = Field<Int>("timeout")
-    
-    /// Job will timeout after an interval if no update is received (seconds, default 1800)
-    public let timeoutOnInactivity = Field<Int>("timeout_inactivity")
+
+
 
 }

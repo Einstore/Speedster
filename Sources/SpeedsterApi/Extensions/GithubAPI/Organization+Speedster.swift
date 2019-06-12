@@ -23,6 +23,15 @@ extension GithubAPI.Organization {
     
 }
 
+extension Row where Model == Organization {
+    
+    /// Update Organization row with data from API
+    func update(_ organization: GithubAPI.Organization) {
+        organization.update(self)
+    }
+    
+}
+
 
 extension Array where Element == GithubAPI.Organization {
     
@@ -40,6 +49,18 @@ extension Array where Element == GithubAPI.Organization {
             let repos = reposArr.reduce([], +)
             return repos
         }
+    }
+    
+    func exists(_ org: Row<SpeedsterApi.Organization>) -> Bool {
+        return filter({ $0.login == org.name }).count > 0
+    }
+    
+    func first(_ org: Row<SpeedsterApi.Organization>) -> GithubAPI.Organization? {
+        return filter({ $0.login == org.name }).first
+    }
+    
+    mutating func remove(_ org: Row<SpeedsterApi.Organization>) {
+        removeAll(where: { $0.login == org.name })
     }
     
 }

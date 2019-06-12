@@ -26,8 +26,9 @@ class LocalExecutor: Executor {
         self.node = node
     }
     
-    func run(_ phase: Job.Phase) throws {
-        try FileManager.default.createDirectory(atPath: node.dir, withIntermediateDirectories: true, attributes: nil)
+    func run(_ phase: Job.Workflow.Phase, identifier: String) throws {
+        let workdir = node.dir.finished(with: "/").appending(identifier)
+        try FileManager.default.createDirectory(atPath: workdir, withIntermediateDirectories: true, attributes: nil)
         
         if !phase.name.isEmpty {
             output?("\(phase.name)")
@@ -37,7 +38,8 @@ class LocalExecutor: Executor {
         }
         output?("$ \(phase.command)")
         
-        let context = CustomContext(main)
+        var context = CustomContext(main)
+        context.currentdirectory = workdir
         let res = context.run(bash: phase.command)
         
         output?(res.stdout)

@@ -38,23 +38,38 @@ public class Executioner {
         }
     }
     
-    /// Execute job
-    public func run(finished: @escaping (() -> ()), failed: @escaping ((Error) -> ())) {
+    public  typealias FailedClosure = ((Error) -> ())
+    
+    private func run(workflow: Job.Workflow, failed: @escaping FailedClosure) throws {
         DispatchQueue.global(qos: .background).async {
             do {
-                for phase in self.job.preBuild {
-                    try self.executor.run(phase)
+                for phase in workflow.preBuild {
+                    try self.executor.run(phase, identifier: self.job.identifier)
                 }
-                for phase in self.job.build {
-                    try self.executor.run(phase)
+                for phase in workflow.build {
+                    try self.executor.run(phase, identifier: self.job.identifier)
                 }
-                for phase in self.job.postBuild {
-                    try self.executor.run(phase)
+                for phase in workflow.postBuild {
+                    try self.executor.run(phase, identifier: self.job.identifier)
                 }
-                finished()
+                for workflow in self.job.workflows.filter({ $0.dependsOn == workflow.name }) {
+                    try self.run(workflow: workflow, failed: failed)
+                }
             } catch {
                 failed(error)
             }
+        }
+    }
+    
+    /// Execute job
+    public func run(finished: @escaping (() -> ()), failed: @escaping FailedClosure) {
+        do {
+            for workflow in job.workflows.filter({ $0.dependsOn == nil || $0.dependsOn?.isEmpty == true }) {
+                try run(workflow: workflow, failed: failed)
+            }
+            finished()
+        } catch {
+            failed(error)
         }
     }
     

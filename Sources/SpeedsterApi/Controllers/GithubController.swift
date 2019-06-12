@@ -9,8 +9,6 @@ import Vapor
 import Fluent
 import GithubAPI
 
-import AsyncKit
-
 
 final class GithubController: Controller {
     
@@ -26,33 +24,11 @@ final class GithubController: Controller {
     
     func routes(_ r: Routes, _ c: Container) throws {        
         r.get("github", "reload") { req -> EventLoopFuture<[SpeedsterFileInfo]> in
-            return try GithubAPI.Organization.query(on: c).getAll().flatMap() { orgs in
-                return orgs.repos(on: c).flatMap { repos in
-                    return GithubManager.fileData(repos, on: c).flatMap { files in
-                        var infos: [SpeedsterFileInfo] = []
-                        var futures: [EventLoopFuture<Row<Job>>] = []
-                        for file in files {
-                            guard file.hasSpeedsteFile else {
-                                continue
-                            }
-                            var fileInfo = file.asInfo()
-                            let decodedJob: SpeedsterCore.Job?
-                            do {
-                                decodedJob = try file.decodeCoreJob()
-                                fileInfo.invalid = false
-                            } catch {
-                                decodedJob = nil
-                            }
-                            infos.append(fileInfo)
-                            
-                            guard let job = decodedJob else {
-                                continue
-                            }
-                            let future = job.guaranteedDbJobRowForAutomaticManagement(org: file.org, repo: file.repo, on: self.db)
-                            futures.append(future)
-                        }
-                        return futures.flatten(on: c.eventLoop).map { _ in
-                            return infos
+            return try GithubAPI.Organization.query(on: c).getAll().flatMap() { githubOrgs in // Get available organizations from Github
+                return GithubManager.update(organizations: githubOrgs, on: self.db).flatMap { dbOrgs in // Update organizations
+                    return githubOrgs.repos(on: c).flatMap { repos in // Get repos
+                        return GithubManager.fileData(repos, on: c).flatMap { files in // Grt Speedster.json from repos
+                            return GithubManager.process(files: files, repos: repos, on: self.db) // Process all Speedster.json files
                         }
                     }
                 }

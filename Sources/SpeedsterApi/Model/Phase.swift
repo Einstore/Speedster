@@ -33,6 +33,9 @@ public struct Phase: Model {
     /// Job relation
     public let jobId = Field<Speedster.DbIdType?>("job_id")
     
+    /// Workflow relation
+    public let workflowId = Field<Speedster.DbIdType?>("workflow_id")
+    
     /// Name of the job
     public let name = Field<String>("name")
     
@@ -53,9 +56,10 @@ public struct Phase: Model {
 
 extension Phase {
     
-    static func row(from phase: SpeedsterCore.Job.Phase, jobId: Speedster.DbIdType, order: Int, stage: Phase.Stage) -> Row<Phase> {
+    static func row(from phase: SpeedsterCore.Job.Workflow.Phase, workflow: Row<Workflow>, order: Int, stage: Phase.Stage) -> Row<Phase> {
         let row = Phase.row()
-        row.jobId = jobId
+        row.jobId = workflow.jobId
+        row.workflowId = workflow.id
         row.name = phase.name
         row.order = order
         row.command = phase.command

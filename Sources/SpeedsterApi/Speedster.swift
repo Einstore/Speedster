@@ -21,10 +21,13 @@ public class Speedster {
     ]
     
     public static func configure(services s: inout Services) throws {
+        guard let token = Environment.get("PERSONAL_ACCESS_TOKEN") else {
+            fatalError("Missing personal access token")
+        }
         s.register(Github.self) { container in
             let config = Github.Config(
                 username: "orafaj",
-                token: "6ae2ca8e8a9190be8fb6a864aaeaa3b0ecbf1b9a",
+                token: token,
                 server: "https://github.ford.com/api/v3/"
             )
             return try Github(config, on: container)
@@ -35,6 +38,7 @@ public class Speedster {
         migrations.add(Node.autoMigration(), to: dbIdentifier)
         migrations.add(Run.autoMigration(), to: dbIdentifier)
         migrations.add(Job.autoMigration(), to: dbIdentifier)
+        migrations.add(Workflow.autoMigration(), to: dbIdentifier)
         migrations.add(Phase.autoMigration(), to: dbIdentifier)
         migrations.add(Organization.autoMigration(), to: dbIdentifier)
         

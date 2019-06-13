@@ -28,7 +28,11 @@ final class GithubController: Controller {
                 return GithubManager.update(organizations: githubOrgs, on: self.db).flatMap { dbOrgs in // Update organizations
                     return githubOrgs.repos(on: c).flatMap { repos in // Get repos
                         return GithubManager.fileData(repos, on: c).flatMap { files in // Grt Speedster.json from repos
-                            return GithubManager.process(files: files, repos: repos, on: self.db) // Process all Speedster.json files
+                            return GithubManager.process(files: files, repos: repos, on: self.db).flatMap { infos in // Process all Speedster.json files
+                                return GithubManager.updateOrgStats(dbOrgs, on: self.db).map { // Update all affected organizations with the latest repo stats
+                                    return infos
+                                }
+                            }
                         }
                     }
                 }

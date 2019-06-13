@@ -7,6 +7,8 @@
 
 import GithubAPI
 import Fluent
+import FluentPostgresDriver
+import FluentSQLiteDriver
 
 
 class GithubManager {
@@ -49,7 +51,7 @@ class GithubManager {
     }
     
     static func disable(organization: Row<Organization>, on db: Database) -> EventLoopFuture<Void> {
-        organization.disabled = true
+        organization.disabled = 1
         organization.activeJobs = 0
         return organization.save(on: db).flatMap { _ in
             return Job.query(on: db).filter(\Job.githubOrg == organization.name).set(["disabled": .custom(true)]).update()
@@ -117,6 +119,21 @@ class GithubManager {
             futures.append(future)
         }
         return futures.flatten(on: db.eventLoop).map({ infos })
+    }
+    
+    static func updateOrgStats(_ orgs: [Row<Organization>], on db: Database) -> EventLoopFuture<Void> {
+        var futures: [EventLoopFuture<Void>] = []
+        for org in orgs {
+            let future: EventLoopFuture<Void> = Job.query(on: db).filter(\Job.githubOrg == org.name).count().flatMap { totalJobs in
+                return Job.query(on: db).filter(\Job.githubOrg == org.name).filter(\Job.disabled == 0).count().flatMap { activeJobs in
+                    org.activeJobs = activeJobs
+                    org.totalJobs = totalJobs
+                    return org.update(on: db)
+                }
+            }
+            futures.append(future)
+        }
+        return futures.flatten(on: db.eventLoop)
     }
     
 }

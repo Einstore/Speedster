@@ -19,6 +19,8 @@ extension GithubAPI.Organization {
         organization.company = company
         organization.icon = avatarURL
         organization.full = self
+        organization.server = "http://some_enterprise_server.com"
+        organization.disabled = 0
     }
     
 }
@@ -69,10 +71,13 @@ extension Array where Element == GithubAPI.Organization {
 extension Organization {
     
     /// Return a guaranteed Organization row
-    static func row(_ organization: GithubAPI.Organization, on database: Database) -> EventLoopFuture<Row<Organization>> {
-        return Organization.query(on: database).filter(\.githubId == organization.id).first().map() { org in
+    static func row(_ organization: GithubAPI.Organization, on db: Database) -> EventLoopFuture<Row<Organization>> {
+        return Organization.query(on: db).filter(\.githubId == organization.id).first().map() { org in
             guard let org = org else {
                 let row = Organization.row()
+                row.activeJobs = 0
+                row.totalJobs = 0
+                
                 organization.update(row)
                 return row
             }

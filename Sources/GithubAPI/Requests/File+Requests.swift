@@ -6,6 +6,7 @@
 //
 
 import Vapor
+import CryptoKit
 
 
 extension File: Queryable { }
@@ -28,6 +29,10 @@ extension EventLoopFuture where Value == File {
         return flatMap { file in
             guard file.type == "file" else {
                 return c.eventLoop.makeFailedFuture(File.Error.notFile(file.type))
+            }
+            
+            if let base64Content = file.content, let data = Data(base64Encoded: base64Content, options: [.ignoreUnknownCharacters]) {
+                return c.eventLoop.makeSucceededFuture(data)
             }
             guard let downloadUrl = file.downloadURL else {
                 return c.eventLoop.makeFailedFuture(File.Error.missingDownloadUrl)

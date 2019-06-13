@@ -37,7 +37,7 @@ public struct Job: Model {
     public let repoUrl = Field<String?>("repo_url")
 
     /// Disable job; if a Speedster.json is deleted from an automatically managed repo, Job will get disabled
-    public let disabled = Field<Bool>("disabled")
+    public let disabled = Field<Int>("disabled")
     
     /// Automatically managed should there be any content
     public let speedsterFile = Field<SpeedsterCore.Job?>("speedster_file")
@@ -47,6 +47,9 @@ public struct Job: Model {
     
     /// Github organization name for automatically managed jobs
     public let githubOrg = Field<String?>("github_org")
+    
+    /// Github server for automatically managed jobs
+    public let githubServer = Field<String?>("github_server")
     
     /// Type of management
     public let managed = Field<Managed>("managed", dataType: .int)

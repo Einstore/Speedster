@@ -8,22 +8,10 @@
 import Foundation
 import SpeedsterCore
 import Fluent
+import GithubAPI
 
 
 extension Row where Model == Job {
-    
-    public func coreJob(on db: Database) -> EventLoopFuture<SpeedsterCore.Job> {
-        return Workflow.query(on: db).filter(\Workflow.jobId == self.id).all().map { workflows in
-            let job = SpeedsterCore.Job(
-                name: self.name,
-                repoUrl: self.repoUrl,
-                // TODO: Map workflows properly!!!!
-                workflows: []
-            )
-            return job
-            
-        }
-    }
     
     func update(from job: SpeedsterCore.Job) {
         self.name = job.name
@@ -37,7 +25,7 @@ extension Row where Model == Job {
 
 extension SpeedsterCore.Job {
     
-    fileprivate func update(phases db: Database, dbWorkflow: Row<SpeedsterApi.Workflow>, coreWorkflow: SpeedsterCore.Job.Workflow) -> EventLoopFuture<Void> {
+    fileprivate func update(phases system: System, dbWorkflow: Row<SpeedsterApi.Workflow>, coreWorkflow: SpeedsterCore.Job.Workflow, info: SpeedsterFileInfo) -> EventLoopFuture<Void> {
         var futures: [EventLoopFuture<Void>] = []
         
         func addTo(futures phases: [Workflow.Phase], stage: SpeedsterApi.Phase.Stage) {
@@ -49,8 +37,21 @@ extension SpeedsterCore.Job {
                     order: x,
                     stage: stage
                 )
-                let future = phase.save(on: db)
-                futures.append(future)
+                if phase.command.contains("file:") {
+                    let path = phase.command.replacingOccurrences(of: "file:", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+                    let future: EventLoopFuture<Void> = try! GithubAPI.File.query(on: system.container).get(
+                        organization: info.org,
+                        repo: info.repo,
+                        path: path
+                        ).download(on: system.container).flatMap { file in
+                            phase.command = file.asString()
+                            return phase.save(on: system.db)
+                    }
+                    futures.append(future)
+                } else {
+                    let future = phase.save(on: system.db)
+                    futures.append(future)
+                }
                 x -= 1
             }
         }
@@ -59,28 +60,28 @@ extension SpeedsterCore.Job {
         addTo(futures: coreWorkflow.build, stage: .build)
         addTo(futures: coreWorkflow.postBuild, stage: .post)
         
-        return futures.flatten(on: db.eventLoop)
+        return futures.flatten(on: system.db.eventLoop)
     }
     
-    fileprivate func update(workflows db: Database, job: Row<Job>) -> EventLoopFuture<Void> {
-        return SpeedsterApi.Workflow.query(on: db).filter(\SpeedsterApi.Workflow.jobId == job.id).delete().flatMap {
-            return Phase.query(on: db).filter(\Phase.jobId == job.id).delete().flatMap {
+    fileprivate func update(workflows system: System, job: Row<SpeedsterApi.Job>, info: SpeedsterFileInfo) -> EventLoopFuture<Void> {
+        return SpeedsterApi.Workflow.query(on: system.db).filter(\SpeedsterApi.Workflow.jobId == job.id).delete().flatMap {
+            return Phase.query(on: system.db).filter(\Phase.jobId == job.id).delete().flatMap {
                 var futures: [EventLoopFuture<Void>] = []
                 for w in self.workflows {
                     let workflow = SpeedsterApi.Workflow.row(from: w, job: job)
-                    let future = workflow.save(on: db).flatMap { _ in
-                        return self.update(phases: db, dbWorkflow: workflow, coreWorkflow: w)
+                    let future = workflow.save(on: system.db).flatMap { _ in
+                        return self.update(phases: system, dbWorkflow: workflow, coreWorkflow: w, info: info)
                     }
                     futures.append(future)
                 }
-                return futures.flatten(on: db.eventLoop)
+                return futures.flatten(on: system.db.eventLoop)
             }
         }
     }
     
-    fileprivate func updateJob(_ info: SpeedsterFileInfo, on db: Database) -> EventLoopFuture<Row<Job>> {
+    fileprivate func updateJob(_ info: SpeedsterFileInfo, on system: System) -> EventLoopFuture<Row<Job>> {
         return Job
-            .query(on: db)
+            .query(on: system.db)
             .filter(\Job.managed == Job.Managed.github)
             .filter(\Job.githubRepo == info.repo)
             .filter(\Job.githubOrg == info.org)
@@ -92,21 +93,21 @@ extension SpeedsterCore.Job {
                     job.managed = Job.Managed.github
                     job.update(from: self)
                     job.disabled = info.disabled ? 1 : 0
-                    return job.save(on: db).map { _ in
+                    return job.save(on: system.db).map { _ in
                         return job
                     }
                 }
                 job.update(from: self)
                 job.disabled = info.disabled ? 1 : 0
-                return job.update(on: db).map { _ in
+                return job.update(on: system.db).map { _ in
                     return job
                 }
         }
     }
     
-    func saveOnDb(_ info: SpeedsterFileInfo, on db: Database) -> EventLoopFuture<Void> {
-        return updateJob(info, on: db).flatMap { job in
-            return self.update(workflows: db, job: job).map { _ in
+    func saveOnDb(_ info: SpeedsterFileInfo, on system: System) -> EventLoopFuture<Void> {
+        return updateJob(info, on: system).flatMap { job in
+            return self.update(workflows: system, job: job, info: info).map { _ in
                 return Void()
             }
         }

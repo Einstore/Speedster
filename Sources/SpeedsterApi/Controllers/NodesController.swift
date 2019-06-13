@@ -32,8 +32,7 @@ final class NodesController: Controller {
 //        r.put("nodes", UUID.parameter?) { req -> EventLoopFuture<Row<Node>> in
 //            req.parameters.get("node")
 //            let node = try req.content.decode(Row<Node>.self)
-//            node.running = 0
-//            return node.save(on: self.db).map { node }
+//            return node.update(on: self.db).map { node }
 //        }
     }
     

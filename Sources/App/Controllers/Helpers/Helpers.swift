@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  Helpers.swift
 //  
 //
 //  Created by Ondrej Rafaj on 12/06/2019.

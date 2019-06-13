@@ -89,7 +89,7 @@ class GithubManager {
         }
     }
     
-    static func process(files: [SpeedsterFileData], repos: [Repo], on db: Database) -> EventLoopFuture<[SpeedsterFileInfo]> {
+    static func process(files: [SpeedsterFileData], repos: [Repo], on system: System) -> EventLoopFuture<[SpeedsterFileInfo]> {
         var infos: [SpeedsterFileInfo] = []
         var futures: [EventLoopFuture<Void>] = []
         for file in files {
@@ -115,10 +115,11 @@ class GithubManager {
             guard let job = decodedJob else {
                 continue
             }
-            let future = job.saveOnDb(fileInfo, on: db)
+            
+            let future = job.saveOnDb(fileInfo, on: system)
             futures.append(future)
         }
-        return futures.flatten(on: db.eventLoop).map({ infos })
+        return futures.flatten(on: system.db.eventLoop).map({ infos })
     }
     
     static func updateOrgStats(_ orgs: [Row<Organization>], on db: Database) -> EventLoopFuture<Void> {

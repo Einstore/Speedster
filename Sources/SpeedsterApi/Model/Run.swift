@@ -6,7 +6,6 @@
 //
 
 import Fluent
-import Vapor
 
 
 /// Single run of a phase in a job
@@ -25,6 +24,9 @@ public struct Run: Model {
     
     /// Node ID
     public let nodeId = Field<Speedster.DbIdType?>("node_id")
+    
+    /// Autorun ID
+    public let autorunId = Field<Speedster.DbIdType?>("autorun_id")
     
     /// Date started execution
     public let date = Field<Date>("date")

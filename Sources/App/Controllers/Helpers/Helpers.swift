@@ -82,15 +82,15 @@ extension Job.Workflow {
         return Job.Workflow(
             name: "Timeout workflow",
             dependsOn: dependsOn,
-            timeout: 2,
-            timeoutOnInactivity: 1,
             preBuild: [
                 Phase.phaseEcho("Starting count to 10")
             ],
             build: [
                 Phase.phaseCount(4)
             ],
-            postBuild: []
+            postBuild: [],
+            timeout: 2,
+            timeoutOnInactivity: 1
         )
     }
     
@@ -98,8 +98,6 @@ extension Job.Workflow {
         return Job.Workflow(
             name: "Fail pre-build workflow",
             dependsOn: dependsOn,
-            timeout: 2,
-            timeoutOnInactivity: 1,
             preBuild: [
                 Phase.phaseEcho("Starting fail"),
                 Phase.phaseFail()
@@ -109,7 +107,9 @@ extension Job.Workflow {
             ],
             postBuild: [
                 Phase.phaseEcho("Should have failed in pre-build")
-            ]
+            ],
+            timeout: 2,
+            timeoutOnInactivity: 1
         )
     }
     
@@ -117,8 +117,6 @@ extension Job.Workflow {
         return Job.Workflow(
             name: "Fail build workflow",
             dependsOn: dependsOn,
-            timeout: 2,
-            timeoutOnInactivity: 1,
             preBuild: [
                 Phase.phaseEcho("Starting fail")
             ],
@@ -128,7 +126,9 @@ extension Job.Workflow {
             ],
             postBuild: [
                 Phase.phaseEcho("Should have failed in build")
-            ]
+            ],
+            timeout: 2,
+            timeoutOnInactivity: 1
         )
     }
     
@@ -136,8 +136,6 @@ extension Job.Workflow {
         return Job.Workflow(
             name: "Fail post-build workflow",
             dependsOn: dependsOn,
-            timeout: 2,
-            timeoutOnInactivity: 1,
             preBuild: [
                 Phase.phaseEcho("Starting fail"),
             ],
@@ -148,7 +146,9 @@ extension Job.Workflow {
                 Phase.phaseEcho("Starting post-build"),
                 Phase.phaseFail(),
                 Phase.phaseEcho("Should have failed step before this one!!!")
-            ]
+            ],
+            timeout: 2,
+            timeoutOnInactivity: 1
         )
     }
     
@@ -156,8 +156,6 @@ extension Job.Workflow {
         return Job.Workflow(
             name: "Timeout workflow",
             dependsOn: dependsOn,
-            timeout: 3600,
-            timeoutOnInactivity: 1800,
             preBuild: [
                 Phase.phaseEcho("Starting \(customName) workflow"),
                 Phase.phaseAptGet()
@@ -169,7 +167,9 @@ extension Job.Workflow {
             ],
             postBuild: [
                 Phase.phaseEcho("Finishing \(customName) workflow"),
-            ]
+            ],
+            timeout: 3600,
+            timeoutOnInactivity: 1800
         )
     }
     
@@ -186,7 +186,10 @@ extension Job {
         
         return Job(
             name: "Dependant job failing",
-            repoUrl: "https://github.com/vapor/postgres-nio/",
+            gitHub: Job.GitHub(
+                cloneGit: "git@github.com:vapor/postgres-nio.git",
+                repoUrl: "https://github.com/vapor/postgres-nio/"
+            ),
             workflows: [w1, w2, w3, w4]
         )
     }
@@ -199,7 +202,10 @@ extension Job {
         
         return Job(
             name: "Dependant job succeeding",
-            repoUrl: "https://github.com/vapor/postgres-nio/",
+            gitHub: Job.GitHub(
+                cloneGit: "git@github.com:vapor/postgres-nio.git",
+                repoUrl: "https://github.com/vapor/postgres-nio/"
+            ),
             workflows: [w1, w2, w3, w4]
         )
     }
@@ -213,7 +219,10 @@ extension Job {
         
         return Job(
             name: "All workflows",
-            repoUrl: "https://github.com/vapor/postgres-nio/",
+            gitHub: Job.GitHub(
+                cloneGit: "git@github.com:vapor/postgres-nio.git",
+                repoUrl: "https://github.com/vapor/postgres-nio/"
+            ),
             workflows: [w1, w2, w3, w4, w5]
         )
     }

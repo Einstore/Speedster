@@ -69,8 +69,8 @@
         "repositoryURL": "https://github.com/vapor/fluent-postgres-driver.git",
         "state": {
           "branch": null,
-          "revision": "ecb582c80290b7e0cc6fccc8cc0a64a2628d32fb",
-          "version": "2.0.0-alpha.1"
+          "revision": "d5fe3aa9d82c5f64d1b2395b0e2d24a13c998b77",
+          "version": "2.0.0-alpha.1.1"
         }
       },
       {

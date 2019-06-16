@@ -1,5 +1,5 @@
 //
-//  Job+CoreJob.swift
+//  Job+Core.swift
 //  
 //
 //  Created by Ondrej Rafaj on 09/06/2019.
@@ -15,7 +15,7 @@ extension Row where Model == Job {
     
     func update(from job: SpeedsterCore.Job) {
         self.name = job.name
-        self.repoUrl = job.repoUrl
+        self.gitHubBuild = job.gitHub
         self.disabled = 0
         self.speedsterFile = job
     }

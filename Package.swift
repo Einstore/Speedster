@@ -7,6 +7,7 @@ let package = Package(
         .macOS(.v10_13)
     ],
     products: [
+        .executable(name: "random-generator", targets: ["RandomGenerator"]),
         .library(name: "SpeedsterCore", targets: ["SpeedsterCore"]),
         .library(name: "SpeedsterApi", targets: ["SpeedsterApi"])
     ],
@@ -15,11 +16,18 @@ let package = Package(
         .package(url: "https://github.com/vapor/fluent.git", from: "4.0.0-alpha.1.1"),
         .package(url: "https://github.com/vapor/fluent-postgres-driver.git", from: "2.0.0-alpha.1"),
         .package(url: "https://github.com/vapor/fluent-sqlite-driver.git", from: "4.0.0-alpha.1"),
+        .package(url: "https://github.com/vapor/crypto-kit.git", from: "4.0.0-alpha.1"),
         //.package(url: "https://github.com/Einstore/GithubAPI.git", from: "1.0.0"),
         .package(url: "https://github.com/jakeheis/Shout.git", from: "0.5.0"),
         .package(url: "https://github.com/kareman/SwiftShell.git", from: "5.0.0")
     ],
     targets: [
+        .target(
+            name: "RandomGenerator",
+            dependencies: [
+                "CryptoKit"
+            ]
+        ),
         .target(
             name: "App",
             dependencies: [
@@ -51,7 +59,8 @@ let package = Package(
                 "FluentSQLiteDriver",
                 "SpeedsterCore",
                 "Vapor",
-                "GithubAPI"
+                "GithubAPI",
+                "CryptoKit"
             ]
         ),
         .target(

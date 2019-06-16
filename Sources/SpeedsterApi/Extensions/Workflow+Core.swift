@@ -1,0 +1,56 @@
+//
+//  Workflow+Core.swift
+//  
+//
+//  Created by Ondrej Rafaj on 13/06/2019.
+//
+
+import SpeedsterCore
+import Fluent
+import GithubAPI
+
+
+extension Array where Element == Row<Phase> {
+    
+    func filterAsCore(_ stage: Phase.Stage) -> [SpeedsterCore.Job.Workflow.Phase] {
+        return filter({ $0.stage == stage }).map({ $0.asCorePhase() })
+    }
+    
+}
+
+extension Array where Element == Row<Workflow> {
+    
+    func assembleAsCore(_ phases: [Row<Phase>]) -> [SpeedsterCore.Job.Workflow] {
+        return map({ $0.asCoreWorkflow(phases: phases) })
+    }
+    
+}
+
+
+extension Row where Model == Workflow {
+    
+    func asCoreWorkflow(phases: [Row<Phase>]) -> SpeedsterCore.Job.Workflow {
+        return SpeedsterCore.Job.Workflow(
+            name: self.name,
+            preBuild: phases.filterAsCore(.pre),
+            build: phases.filterAsCore(.build),
+            postBuild: phases.filterAsCore(.post),
+            timeout: self.timeout,
+            timeoutOnInactivity: self.timeoutOnInactivity
+        )
+    }
+    
+}
+
+
+extension Row where Model == Phase {
+    
+    func asCorePhase() -> SpeedsterCore.Job.Workflow.Phase {
+        return SpeedsterCore.Job.Workflow.Phase(
+            name: self.name,
+            command: self.command,
+            description: self.description
+        )
+    }
+    
+}

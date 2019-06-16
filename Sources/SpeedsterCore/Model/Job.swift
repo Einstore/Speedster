@@ -47,6 +47,15 @@ public struct Job: Content {
         /// Post-build phases
         public let postBuild: [Phase]
         
+        /// Phase description, informative only
+        public let fail: Phase?
+        
+        /// Phase description, informative only
+        public let success: Phase?
+        
+        /// Phase description, informative only
+        public let always: Phase?
+        
         /// Timeout for the whole job (seconds, default 3600)
         public let timeout: Int
         
@@ -56,45 +65,72 @@ public struct Job: Content {
         enum CodingKeys: String, CodingKey {
             case name
             case dependsOn = "depends"
-            case timeout
-            case timeoutOnInactivity = "timeout_inactivity"
             case preBuild = "pre_build"
             case build
             case postBuild = "post_build"
+            case fail
+            case success
+            case always
+            case timeout
+            case timeoutOnInactivity = "timeout_inactivity"
         }
 
         /// Initializer
-        public init(name: String, dependsOn: String? = nil, timeout: Int, timeoutOnInactivity: Int, preBuild: [Phase], build: [Phase], postBuild: [Phase]) {
+        public init(name: String, dependsOn: String? = nil, preBuild: [Phase], build: [Phase], postBuild: [Phase], fail: Phase? = nil, success: Phase? = nil, always: Phase? = nil, timeout: Int, timeoutOnInactivity: Int) {
             self.name = name
             self.dependsOn = dependsOn
-            self.timeout = timeout
-            self.timeoutOnInactivity = timeoutOnInactivity
             self.preBuild = preBuild
             self.build = build
             self.postBuild = postBuild
+            self.fail = fail
+            self.success = success
+            self.always = always
+            self.timeout = timeout
+            self.timeoutOnInactivity = timeoutOnInactivity
         }
 
+    }
+    
+    /// GitHub info
+    public struct GitHub: Codable {
+        
+        /// Manage clone on job level
+        public let cloneGit: String?
+        
+        /// Full repo URL
+        public let repoUrl: String?
+        
+        enum CodingKeys: String, CodingKey {
+            case cloneGit = "clone"
+            case repoUrl = "repo_url"
+        }
+        
+        public init(cloneGit: String?, repoUrl: String?) {
+            self.cloneGit = cloneGit
+            self.repoUrl = repoUrl
+        }
+        
     }
     
     /// Job name
     public let name: String
     
-    /// Full repo URL
-    public let repoUrl: String?
+    /// GitHub info & settings
+    public let gitHub: GitHub?
     
     /// Workflows
     public let workflows: [Workflow]
     
     enum CodingKeys: String, CodingKey {
         case name
-        case repoUrl = "repo_url"
+        case gitHub = "github"
         case workflows
     }
     
     /// Initializer
-    public init(name: String, repoUrl: String? = nil, workflows: [Workflow]) {
+    public init(name: String, gitHub: GitHub? = nil, workflows: [Workflow]) {
         self.name = name
-        self.repoUrl = repoUrl
+        self.gitHub = gitHub
         self.workflows = workflows
     }
     

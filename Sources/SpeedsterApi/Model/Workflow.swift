@@ -6,7 +6,6 @@
 //
 
 import Fluent
-import Vapor
 
 
 /// Single run of a phase in a job
@@ -31,6 +30,15 @@ public struct Workflow: Model {
     
     /// Job will timeout after an interval if no update is received (seconds, default 1800)
     public let timeoutOnInactivity = Field<Int>("timeout_inactivity")
+    
+    /// Perform on workflow fail (before always)
+    public let fail = Field<SpeedsterCore.Job.Workflow.Phase?>("fail")
+    
+    /// Perform on workflow success (before always)
+    public let success = Field<SpeedsterCore.Job.Workflow.Phase?>("success")
+    
+    /// Always perform action wherever workflow succeeds of fails (always last to run)
+    public let always = Field<SpeedsterCore.Job.Workflow.Phase?>("always")
     
 }
 

@@ -17,7 +17,9 @@ public class Speedster {
     
     static let controllers: [Controller.Type] = [
         NodesController.self,
-        GithubController.self
+        GithubController.self,
+        JobsController.self,
+        AutojobController.self
     ]
     
     public static func configure(services s: inout Services) throws {
@@ -38,6 +40,8 @@ public class Speedster {
         migrations.add(Node.autoMigration(), to: dbIdentifier)
         migrations.add(Run.autoMigration(), to: dbIdentifier)
         migrations.add(Job.autoMigration(), to: dbIdentifier)
+        migrations.add(AutoJob.autoMigration(), to: dbIdentifier)
+        migrations.add(AutoRun.autoMigration(), to: dbIdentifier)
         migrations.add(Workflow.autoMigration(), to: dbIdentifier)
         migrations.add(Phase.autoMigration(), to: dbIdentifier)
         migrations.add(Organization.autoMigration(), to: dbIdentifier)

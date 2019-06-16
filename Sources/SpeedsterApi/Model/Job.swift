@@ -6,7 +6,6 @@
 //
 
 import Fluent
-import Vapor
 
 
 /// Executable job, has phases and runs
@@ -33,8 +32,8 @@ public struct Job: Model {
     /// Job name
     public let name = Field<String>("name")
     
-    /// Full URL of a repo (ex.1 https://github.com/Einstore/Speedster)
-    public let repoUrl = Field<String?>("repo_url")
+    /// GitHub info & settings
+    public let gitHubBuild = Field<SpeedsterCore.Job.GitHub?>("github_build")
 
     /// Disable job; if a Speedster.json is deleted from an automatically managed repo, Job will get disabled
     public let disabled = Field<Int>("disabled")

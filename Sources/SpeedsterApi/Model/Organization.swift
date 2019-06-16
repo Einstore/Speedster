@@ -6,7 +6,6 @@
 //
 
 import Fluent
-import Vapor
 import GithubAPI
 
 

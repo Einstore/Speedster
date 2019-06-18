@@ -7,7 +7,7 @@
 
 import SpeedsterCore
 import Fluent
-import GithubAPI
+import GitHubKit
 
 
 extension Array where Element == Row<Phase> {
@@ -32,6 +32,7 @@ extension Row where Model == Workflow {
     func asCoreWorkflow(phases: [Row<Phase>]) -> SpeedsterCore.Job.Workflow {
         return SpeedsterCore.Job.Workflow(
             name: self.name,
+            nodeLabels: self.nodeLabels,
             preBuild: phases.filterAsCore(.pre),
             build: phases.filterAsCore(.build),
             postBuild: phases.filterAsCore(.post),
@@ -47,6 +48,7 @@ extension Row where Model == Phase {
     
     func asCorePhase() -> SpeedsterCore.Job.Workflow.Phase {
         return SpeedsterCore.Job.Workflow.Phase(
+            identifier: self.id?.uuidString,
             name: self.name,
             command: self.command,
             description: self.description

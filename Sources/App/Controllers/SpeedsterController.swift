@@ -13,12 +13,16 @@ import SpeedsterCore
 final class SpeedsterController {
     
     func routes(_ r: Routes, _ c: Container) throws {
-        r.get("generate") { req -> Job in
-            return Job.jobAll()
+        r.get("example") { req -> Response in
+            return try Response.make.yaml(Job.jobAll())
         }
         
-        r.get("generate", "fail") { req -> Job in
-            return Job.jobDependentFailing()
+        r.get("example", "fail") { req -> Response in
+            return try Response.make.yaml(Job.jobDependentFailing())
+        }
+        
+        r.get("example", "success") { req -> Response in
+            return try Response.make.yaml(Job.jobDependentSucceeding())
         }
         
         r.get("local") { req -> String in
@@ -34,7 +38,7 @@ final class SpeedsterController {
                     auth: .none
                 ),
                 on: req.eventLoop
-            ) { out in
+            ) { out, identifier in
 
             }
 
@@ -54,7 +58,7 @@ final class SpeedsterController {
                     auth: .password
                 ),
                 on: req.eventLoop
-            ) { out in
+            ) { out, identifier in
                 webSocket.send("\(out)\n")
             }
             

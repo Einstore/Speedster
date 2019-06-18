@@ -6,7 +6,7 @@
 //
 
 import Fluent
-import GithubAPI
+import GitHubKit
 
 
 /// Informational object about automatically managed organizations
@@ -44,6 +44,6 @@ public struct Organization: Model {
     public let server = Field<String>("server")
     
     /// Full API info
-    public let full = Field<GithubAPI.Organization>("full", dataType: .json)
+    public let full = Field<GitHubKit.Organization>("full", dataType: .json)
     
 }

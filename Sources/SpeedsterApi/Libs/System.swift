@@ -6,7 +6,7 @@
 //
 
 import Fluent
-import GithubAPI
+import GitHubKit
 
 
 struct System {

@@ -5,10 +5,11 @@
 //  Created by Ondrej Rafaj on 11/06/2019.
 //
 
-import GithubAPI
+import GitHubKit
 import Fluent
 import FluentPostgresDriver
 import FluentSQLiteDriver
+import Yams
 
 
 class GithubManager {
@@ -25,11 +26,16 @@ class GithubManager {
         
     }
     
-    static func fileData(_ repos: [Repo], file: String = "Speedster.json", on c: Container) -> EventLoopFuture<[SpeedsterFileData]> {
+    static func setup(webhooks repo: SpeedsterCore.Job.GitHub, on c: Container) -> EventLoopFuture<Void> {
+        return c.eventLoop.future()
+    }
+    
+    static func fileData(_ repos: [Repo], file: String = "Speedster.yml", on c: Container) -> EventLoopFuture<[SpeedsterFileData]> {
         var futures: [EventLoopFuture<SpeedsterFileData>] = []
         do {
+            let github = try c.make(Github.self)
             for repo in repos {
-                let future = try GithubAPI.File.query(on: c).get(organization: repo.owner.login, repo: repo.name, path: file).download(on: c).map({ data in
+                let future = try GitHubKit.File.query(on: github).get(organization: repo.owner.login, repo: repo.name, path: file).download(on: github).map({ data in
                     return SpeedsterFileData(
                         org: repo.owner.login,
                         repo: repo.name,
@@ -54,11 +60,15 @@ class GithubManager {
         organization.disabled = 1
         organization.activeJobs = 0
         return organization.save(on: db).flatMap { _ in
-            return Job.query(on: db).filter(\Job.githubOrg == organization.name).set(["disabled": .custom(true)]).update()
+            return Job.query(on: db)
+                .join(\GitHubJob.jobId, to: \Job.id)
+                .filter(\GitHubJob.organization == organization.name)
+                .set(["disabled": .custom(true)])
+                .update()
         }
     }
     
-    static func update(organizations githubOrgs: [GithubAPI.Organization], on db: Database) -> EventLoopFuture<[Row<Organization>]> {
+    static func update(organizations githubOrgs: [GitHubKit.Organization], on db: Database) -> EventLoopFuture<[Row<Organization>]> {
         return Organization.query(on: db).all().flatMap { dbOrgs in
             var futures: [EventLoopFuture<Row<Organization>>] = []
             
@@ -125,12 +135,19 @@ class GithubManager {
     static func updateOrgStats(_ orgs: [Row<Organization>], on db: Database) -> EventLoopFuture<Void> {
         var futures: [EventLoopFuture<Void>] = []
         for org in orgs {
-            let future: EventLoopFuture<Void> = Job.query(on: db).filter(\Job.githubOrg == org.name).count().flatMap { totalJobs in
-                return Job.query(on: db).filter(\Job.githubOrg == org.name).filter(\Job.disabled == 0).count().flatMap { activeJobs in
-                    org.activeJobs = activeJobs
-                    org.totalJobs = totalJobs
-                    return org.update(on: db)
-                }
+            let future: EventLoopFuture<Void> = Job.query(on: db)
+                .join(\GitHubJob.jobId, to: \Job.id)
+                .filter(\GitHubJob.organization == org.name)
+                .count().flatMap { totalJobs in
+                    return Job.query(on: db)
+                        .join(\GitHubJob.jobId, to: \Job.id)
+                        .filter(\GitHubJob.organization == org.name)
+                        .filter(\Job.disabled == 0)
+                        .count().flatMap { activeJobs in
+                            org.activeJobs = activeJobs
+                            org.totalJobs = totalJobs
+                            return org.update(on: db)
+                    }
             }
             futures.append(future)
         }
@@ -157,10 +174,10 @@ extension GithubManager.SpeedsterFileData {
     }
     
     func decodeCoreJob() throws -> SpeedsterCore.Job {
-        guard let file = file else {
+        guard let file = file, let string = String(data: file, encoding: .utf8) else {
             throw Error.invalidSpeedsterFile
         }
-        let data = try JSONDecoder().decode(SpeedsterCore.Job.self, from: file)
+        let data = try YAMLDecoder().decode(SpeedsterCore.Job.self, from: string)
         return data
     }
     

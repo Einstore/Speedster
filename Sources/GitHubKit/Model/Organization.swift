@@ -5,11 +5,11 @@
 //  Created by Ondrej Rafaj on 10/06/2019.
 //
 
-import Vapor
+import Foundation
 
 
 /// Organization
-public struct Organization: Content {
+public struct Organization: Codable {
     
     public struct Plan: Codable {
         
@@ -50,7 +50,7 @@ public struct Organization: Content {
     public let followers: Int?
     public let following: Int?
     public let htmlURL: String?
-    public let createdAt: Date?
+    public let createdAt: String?
     public let type: String?
     public let totalPrivateRepos: Int?
     public let ownedPrivateRepos: Int?

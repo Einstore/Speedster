@@ -8,7 +8,7 @@
 import Foundation
 
 
-public typealias ExecutorOutput = ((String) -> ())
+public typealias ExecutorOutput = ((_ output: String, _ identifier: String?) -> ())
 
 
 protocol Executor {

@@ -5,8 +5,8 @@
 //  Created by Ondrej Rafaj on 11/06/2019.
 //
 
-import Vapor
-import CryptoKit
+import Foundation
+import NIO
 
 
 extension File: Queryable { }
@@ -25,20 +25,18 @@ extension QueryableProperty where QueryableType == File {
 extension EventLoopFuture where Value == File {
     
     /// Download file content if available
-    public func download(on c: Container) throws -> EventLoopFuture<Data> {
+    public func download(on github: Github) throws -> EventLoopFuture<Data> {
         return flatMap { file in
             guard file.type == "file" else {
-                return c.eventLoop.makeFailedFuture(File.Error.notFile(file.type))
+                return github.eventLoop.makeFailedFuture(File.Error.notFile(file.type))
             }
-            
             if let base64Content = file.content, let data = Data(base64Encoded: base64Content, options: [.ignoreUnknownCharacters]) {
-                return c.eventLoop.makeSucceededFuture(data)
+                return github.eventLoop.makeSucceededFuture(data)
             }
             guard let downloadUrl = file.downloadURL else {
-                return c.eventLoop.makeFailedFuture(File.Error.missingDownloadUrl)
+                return github.eventLoop.makeFailedFuture(File.Error.missingDownloadUrl)
             }
             do {
-                let github = try c.make(Github.self)
                 return try github.get(file: downloadUrl).flatMapThrowing({ data in
                     guard let data = data else {
                         throw File.Error.missingDownloadUrl
@@ -46,7 +44,7 @@ extension EventLoopFuture where Value == File {
                     return data
                 })
             } catch {
-                return c.eventLoop.makeFailedFuture(error)
+                return github.eventLoop.makeFailedFuture(error)
             }
         }
     }

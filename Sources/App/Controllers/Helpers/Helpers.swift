@@ -51,9 +51,7 @@ extension Job.Workflow.Phase {
     
     static func phaseEcho(_ message: String = "Speedster message") -> Job.Workflow.Phase {
         return Job.Workflow.Phase(
-            name: "Phase echo",
-            command: "echo '\(message)'",
-            description: "Phase echo \(message) description"
+            command: "echo '\(message)'"
         )
     }
     
@@ -81,6 +79,7 @@ extension Job.Workflow {
     static func workflowTimeout(dependsOn: String? = nil) -> Job.Workflow {
         return Job.Workflow(
             name: "Timeout workflow",
+            nodeLabels: "linux,mac",
             dependsOn: dependsOn,
             preBuild: [
                 Phase.phaseEcho("Starting count to 10")
@@ -89,6 +88,9 @@ extension Job.Workflow {
                 Phase.phaseCount(4)
             ],
             postBuild: [],
+            fail: Phase.phaseEcho("I have failed you master! :("),
+            success: Phase.phaseEcho("Yay!"),
+            always: Phase.phaseEcho("I am done!"),
             timeout: 2,
             timeoutOnInactivity: 1
         )
@@ -97,6 +99,7 @@ extension Job.Workflow {
     static func workflowFailPreBuild(dependsOn: String? = nil) -> Job.Workflow {
         return Job.Workflow(
             name: "Fail pre-build workflow",
+            nodeLabels: "linux,mac",
             dependsOn: dependsOn,
             preBuild: [
                 Phase.phaseEcho("Starting fail"),
@@ -108,6 +111,9 @@ extension Job.Workflow {
             postBuild: [
                 Phase.phaseEcho("Should have failed in pre-build")
             ],
+            fail: Phase.phaseEcho("I have failed you master! :("),
+            success: Phase.phaseEcho("Yay!"),
+            always: Phase.phaseEcho("I am done!"),
             timeout: 2,
             timeoutOnInactivity: 1
         )
@@ -116,6 +122,7 @@ extension Job.Workflow {
     static func workflowFailBuild(dependsOn: String? = nil) -> Job.Workflow {
         return Job.Workflow(
             name: "Fail build workflow",
+            nodeLabels: "linux,mac",
             dependsOn: dependsOn,
             preBuild: [
                 Phase.phaseEcho("Starting fail")
@@ -127,6 +134,9 @@ extension Job.Workflow {
             postBuild: [
                 Phase.phaseEcho("Should have failed in build")
             ],
+            fail: Phase.phaseEcho("I have failed you master! :("),
+            success: Phase.phaseEcho("Yay!"),
+            always: Phase.phaseEcho("I am done!"),
             timeout: 2,
             timeoutOnInactivity: 1
         )
@@ -135,6 +145,7 @@ extension Job.Workflow {
     static func workflowFailPostBuild(dependsOn: String? = nil) -> Job.Workflow {
         return Job.Workflow(
             name: "Fail post-build workflow",
+            nodeLabels: "linux,mac",
             dependsOn: dependsOn,
             preBuild: [
                 Phase.phaseEcho("Starting fail"),
@@ -147,6 +158,9 @@ extension Job.Workflow {
                 Phase.phaseFail(),
                 Phase.phaseEcho("Should have failed step before this one!!!")
             ],
+            fail: Phase.phaseEcho("I have failed you master! :("),
+            success: Phase.phaseEcho("Yay!"),
+            always: Phase.phaseEcho("I am done!"),
             timeout: 2,
             timeoutOnInactivity: 1
         )
@@ -155,6 +169,7 @@ extension Job.Workflow {
     static func workflowFull(_ customName: String = "Full", dependsOn: String? = nil) -> Job.Workflow {
         return Job.Workflow(
             name: "Timeout workflow",
+            nodeLabels: "linux",
             dependsOn: dependsOn,
             preBuild: [
                 Phase.phaseEcho("Starting \(customName) workflow"),
@@ -168,6 +183,9 @@ extension Job.Workflow {
             postBuild: [
                 Phase.phaseEcho("Finishing \(customName) workflow"),
             ],
+            fail: Phase.phaseEcho("I have failed you master! :("),
+            success: Phase.phaseEcho("Yay!"),
+            always: Phase.phaseEcho("I am done!"),
             timeout: 3600,
             timeoutOnInactivity: 1800
         )
@@ -187,10 +205,20 @@ extension Job {
         return Job(
             name: "Dependant job failing",
             gitHub: Job.GitHub(
-                cloneGit: "git@github.com:vapor/postgres-nio.git",
-                repoUrl: "https://github.com/vapor/postgres-nio/"
+                cloneGit: "git@github.com:vapor/postgres-nio.git"
             ),
-            workflows: [w1, w2, w3, w4]
+            workflows: [w1, w2, w3, w4],
+            branches: [
+                Branch(name: "master", action: .commit),
+                Branch(name: "development", action: .message("test please")),
+                Branch(
+                    name: "master",
+                    action: .message("build please"),
+                    workflows: [
+                        Workflow.workflowFull("Build")
+                    ]
+                )
+            ]
         )
     }
     
@@ -203,10 +231,20 @@ extension Job {
         return Job(
             name: "Dependant job succeeding",
             gitHub: Job.GitHub(
-                cloneGit: "git@github.com:vapor/postgres-nio.git",
-                repoUrl: "https://github.com/vapor/postgres-nio/"
+                cloneGit: "git@github.com:vapor/postgres-nio.git"
             ),
-            workflows: [w1, w2, w3, w4]
+            workflows: [w1, w2, w3, w4],
+            branches: [
+                Branch(name: "master", action: .commit),
+                Branch(name: "development", action: .message("test please")),
+                Branch(
+                    name: "master",
+                    action: .message("build please"),
+                    workflows: [
+                        Workflow.workflowFull("Build")
+                    ]
+                )
+            ]
         )
     }
     
@@ -219,11 +257,22 @@ extension Job {
         
         return Job(
             name: "All workflows",
+            nodeLabels: "linux",
             gitHub: Job.GitHub(
-                cloneGit: "git@github.com:vapor/postgres-nio.git",
-                repoUrl: "https://github.com/vapor/postgres-nio/"
+                cloneGit: "git@github.com:vapor/postgres-nio.git"
             ),
-            workflows: [w1, w2, w3, w4, w5]
+            workflows: [w1, w2, w3, w4, w5],
+            branches: [
+                Branch(name: "master", action: .commit),
+                Branch(name: "development", action: .message("test please")),
+                Branch(
+                    name: "master",
+                    action: .message("build please"),
+                    workflows: [
+                        Workflow.workflowFull("Build")
+                    ]
+                )
+            ]
         )
     }
     

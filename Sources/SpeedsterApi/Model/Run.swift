@@ -19,17 +19,8 @@ public struct Run: Model {
     /// Job ID
     public let jobId = Field<Speedster.DbIdType?>("job_id")
     
-    /// Phase ID
-    public let phaseId = Field<Speedster.DbIdType?>("phase_id")
-    
-    /// Node ID
-    public let nodeId = Field<Speedster.DbIdType?>("node_id")
-    
-    /// Autorun ID
-    public let autorunId = Field<Speedster.DbIdType?>("autorun_id")
-    
     /// Date started execution
-    public let date = Field<Date>("date")
+    public let started = Field<Date>("started")
     
     /// Date finished execution
     public let finished = Field<Date>("finished")
@@ -39,5 +30,8 @@ public struct Run: Model {
     
     /// Output log
     public let output = Field<String>("output")
+    
+    /// Copy of the  Speedster file
+    public let speedster = Field<SpeedsterCore.Job>("speedster")
     
 }

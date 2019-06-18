@@ -5,11 +5,11 @@
 //  Created by Ondrej Rafaj on 10/06/2019.
 //
 
-import GithubAPI
+import GitHubKit
 import Fluent
 
 
-extension GithubAPI.Organization {
+extension GitHubKit.Organization {
     
     /// Update Organization row with data from API
     func update(_ organization: Row<Organization>) {
@@ -28,20 +28,21 @@ extension GithubAPI.Organization {
 extension Row where Model == Organization {
     
     /// Update Organization row with data from API
-    func update(_ organization: GithubAPI.Organization) {
+    func update(_ organization: GitHubKit.Organization) {
         organization.update(self)
     }
     
 }
 
 
-extension Array where Element == GithubAPI.Organization {
+extension Array where Element == GitHubKit.Organization {
     
     func repos(on c: Container) -> EventLoopFuture<[Repo]> {
         var futures: [EventLoopFuture<[Repo]>] = []
         for org in self {
             do {
-                let future = try Repo.query(on: c).get(organization: org.login)
+                let github = try c.make(Github.self)
+                let future = try Repo.query(on: github).get(organization: org.login)
                 futures.append(future)
             } catch {
                 return c.eventLoop.makeFailedFuture(error)
@@ -57,7 +58,7 @@ extension Array where Element == GithubAPI.Organization {
         return filter({ $0.login == org.name }).count > 0
     }
     
-    func first(_ org: Row<SpeedsterApi.Organization>) -> GithubAPI.Organization? {
+    func first(_ org: Row<SpeedsterApi.Organization>) -> GitHubKit.Organization? {
         return filter({ $0.login == org.name }).first
     }
     
@@ -71,7 +72,7 @@ extension Array where Element == GithubAPI.Organization {
 extension Organization {
     
     /// Return a guaranteed Organization row
-    static func row(_ organization: GithubAPI.Organization, on db: Database) -> EventLoopFuture<Row<Organization>> {
+    static func row(_ organization: GitHubKit.Organization, on db: Database) -> EventLoopFuture<Row<Organization>> {
         return Organization.query(on: db).filter(\.githubId == organization.id).first().map() { org in
             guard let org = org else {
                 let row = Organization.row()

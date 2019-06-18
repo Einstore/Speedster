@@ -17,7 +17,7 @@ extension Speedster {
     @discardableResult public static func setup(database s: inout Services) throws -> DatabaseID {
         let dbId: DatabaseID
         
-        if try Environment.detect().arguments.first! != "psql" {
+        if Environment.get("DB") == "postgres" {
             dbId = .psql
             
             s.extend(Databases.self) { dbs, c in
@@ -46,7 +46,7 @@ extension Speedster {
             }
             
             s.register(SQLiteConfiguration.self) { c in
-                return .init(storage: .connection(.file(path: "/tmp/speedster.sqlite")))
+                return .init(storage: .connection(.file(path: "/temp/speedster.sqlite")))
             }
             
             s.register(Database.self) { c in

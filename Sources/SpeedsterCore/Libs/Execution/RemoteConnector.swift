@@ -54,26 +54,26 @@ class RemoteExecutor: Executor {
             throw err
         }
         
-        if !phase.name.isEmpty {
-            output?("\(phase.name)")
+        if let name = phase.name, !name.isEmpty {
+            output?("\(name)", phase.identifier)
         }
-        if !phase.description.isEmpty {
-            output?("\(phase.description)")
+        if let description = phase.description, !description.isEmpty {
+            output?("\(description)", phase.identifier)
         }
-        output?("$ \(phase.command)")
+        output?("$ \(phase.command)", phase.identifier)
         
         do {
             let res = try ssh?.execute("cd \(node.dir) && \(phase.command)", output: { string in
                 if !string.isEmpty {
-                    output?(string)
+                    output?(string, phase.identifier)
                 }
             })
-            output?("\(res == 0 ? "Success" : "Failure")")
-            output?("-------------------------")
+            output?("\(res == 0 ? "Success" : "Failure")", phase.identifier)
+            output?("-------------------------", phase.identifier)
         } catch {
-            output?("Failure\n")
-            output?(error.localizedDescription)
-            output?("-------------------------")
+            output?("Failure\n", phase.identifier)
+            output?(error.localizedDescription, phase.identifier)
+            output?("-------------------------", phase.identifier)
             throw Error.fail(error.localizedDescription)
         }
     }

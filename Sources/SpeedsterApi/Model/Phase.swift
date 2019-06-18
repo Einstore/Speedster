@@ -37,7 +37,7 @@ public struct Phase: Model {
     public let workflowId = Field<Speedster.DbIdType?>("workflow_id")
     
     /// Name of the job
-    public let name = Field<String>("name")
+    public let name = Field<String?>("name")
     
     /// Order in which Phase should be displayed
     public let order = Field<Int>("order")
@@ -46,7 +46,7 @@ public struct Phase: Model {
     public let command = Field<String>("command")
     
     /// Phase description, informative only
-    public let descriptionText = Field<String>("description")
+    public let descriptionText = Field<String?>("description")
     
     /// Stage (pre-build => setup environment, build, post-build => clear environment)
     public let stage = Field<Stage>("stage", dataType: .int)

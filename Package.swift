@@ -17,7 +17,8 @@ let package = Package(
         .package(url: "https://github.com/vapor/fluent-postgres-driver.git", from: "2.0.0-alpha.1"),
         .package(url: "https://github.com/vapor/fluent-sqlite-driver.git", from: "4.0.0-alpha.1"),
         .package(url: "https://github.com/vapor/crypto-kit.git", from: "4.0.0-alpha.1"),
-        //.package(url: "https://github.com/Einstore/GithubAPI.git", from: "1.0.0"),
+        //.package(url: "https://github.com/Einstore/GitHubKit.git", from: "1.0.0"),
+        .package(url: "https://github.com/rafiki270/Yams.git", .branch("master")),
         .package(url: "https://github.com/jakeheis/Shout.git", from: "0.5.0"),
         .package(url: "https://github.com/kareman/SwiftShell.git", from: "5.0.0")
     ],
@@ -46,7 +47,7 @@ let package = Package(
             ]
         ),
         .target(
-            name: "GithubAPI",
+            name: "GitHubKit",
             dependencies: [
                 "Vapor"
             ]
@@ -59,8 +60,9 @@ let package = Package(
                 "FluentSQLiteDriver",
                 "SpeedsterCore",
                 "Vapor",
-                "GithubAPI",
-                "CryptoKit"
+                "GitHubKit",
+                "CryptoKit",
+                "Yams"
             ]
         ),
         .target(

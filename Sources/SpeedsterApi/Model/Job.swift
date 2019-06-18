@@ -11,17 +11,34 @@ import Fluent
 /// Executable job, has phases and runs
 public struct Job: Model {
     
-    /// Management level
-    public enum Managed: Int, Codable {
+    public struct Short: Content {
         
-        // Not managed, job is setup manually
-        case not = 0
+        public let name: String
+        public let gitHub: SpeedsterCore.Job.GitHub?
+        public let nodeLabels: [String]
+        public let disabled: Bool
+        public let managed: Bool?
         
-        /// Fully managed through connected personal access token
-        case github = 1
+        enum CodingKeys: String, CodingKey {
+            case name
+            case gitHub
+            case nodeLabels = "node_labels"
+            case disabled
+            case managed
+        }
         
-        /// Manually pointing to a Speedsted.json file
-        case manual = 2
+        public init(_ row: Row<Job>, _ managed: Bool? = nil) {
+            self.name = row.name
+            self.gitHub = row.gitHub
+            if let labels = row.nodeLabels {
+                self.nodeLabels = labels.split(separator: ",").map({ String($0).trimmingCharacters(in: .whitespacesAndNewlines) })
+            } else {
+                self.nodeLabels = []
+            }
+            self.disabled = row.disabled == 0 ? false : true
+            self.managed = managed
+        }
+        
     }
     
     public static let shared = Job()
@@ -33,26 +50,42 @@ public struct Job: Model {
     public let name = Field<String>("name")
     
     /// GitHub info & settings
-    public let gitHubBuild = Field<SpeedsterCore.Job.GitHub?>("github_build")
+    public let gitHub = Field<SpeedsterCore.Job.GitHub?>("github")
 
-    /// Disable job; if a Speedster.json is deleted from an automatically managed repo, Job will get disabled
+    /// Disable job; if a Speedster.yml is deleted from an automatically managed repo, Job will get disabled
     public let disabled = Field<Int>("disabled")
+    
+    /// Node labels
+    public let nodeLabels = Field<String?>("node_labels")
+    
+    /// Script to start environment
+    public let environmnetStart = Field<String?>("environmnet_start")
+    
+    /// Script to stop environment
+    public let environmnetFinish = Field<String?>("environmnet_finish")
     
     /// Automatically managed should there be any content
     public let speedsterFile = Field<SpeedsterCore.Job?>("speedster_file")
     
-    /// Github repository name for automatically managed jobs
-    public let githubRepo = Field<String?>("github_repo")
-    
-    /// Github organization name for automatically managed jobs
-    public let githubOrg = Field<String?>("github_org")
-    
-    /// Github server for automatically managed jobs
-    public let githubServer = Field<String?>("github_server")
-    
-    /// Type of management
-    public let managed = Field<Managed>("managed", dataType: .int)
+    /// Automatically managed should there be any content
+    public let dockerDependendencies = Field<[SpeedsterCore.Job.Dependency]?>("docker_dependendencies")
+
+}
 
 
+extension Row where Model == Job {
+    
+    public func asShort(managed: Bool? = nil) -> Job.Short {
+        return Job.Short(self, managed)
+    }
+    
+}
 
+
+extension Array where Element == Row<Job> {
+    
+    @inlinable public func map<T>(toResponse status: HTTPStatus = .ok, headers: HTTPHeaders = [:], transform: (Element) throws -> T) rethrows -> Response where T: Encodable {
+        return try map({ try transform($0) }).asDisplayResponse()
+    }
+    
 }

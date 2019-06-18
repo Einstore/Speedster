@@ -22,6 +22,9 @@ public struct Workflow: Model {
     /// Name
     public let name = Field<String>("name")
     
+    /// Node labels
+    public let nodeLabels = Field<String?>("node_labels")
+    
     /// Depends on (name)
     public let dependsOn = Field<String?>("depends")
     
@@ -30,6 +33,12 @@ public struct Workflow: Model {
     
     /// Job will timeout after an interval if no update is received (seconds, default 1800)
     public let timeoutOnInactivity = Field<Int>("timeout_inactivity")
+    
+    /// Script to start workspace specific environment
+    public let environmnetStart = Field<String?>("environmnet_start")
+    
+    /// Script to stop workspace specific environment
+    public let environmnetFinish = Field<String?>("environmnet_ finish")
     
     /// Perform on workflow fail (before always)
     public let fail = Field<SpeedsterCore.Job.Workflow.Phase?>("fail")

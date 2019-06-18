@@ -30,25 +30,25 @@ class LocalExecutor: Executor {
         let workdir = node.dir.finished(with: "/").appending(identifier)
         try FileManager.default.createDirectory(atPath: workdir, withIntermediateDirectories: true, attributes: nil)
         
-        if !phase.name.isEmpty {
-            output?("\(phase.name)")
+        if let name = phase.name, !name.isEmpty {
+            output?("\(name)", phase.identifier)
         }
-        if !phase.description.isEmpty {
-            output?("\(phase.description)")
+        if let description = phase.description, !description.isEmpty {
+            output?("\(description)", phase.identifier)
         }
-        output?("$ \(phase.command)")
+        output?("$ \(phase.command)", phase.identifier)
         
         var context = CustomContext(main)
         context.currentdirectory = workdir
         let res = context.run(bash: phase.command)
         
-        output?(res.stdout)
+        output?(res.stdout, phase.identifier)
         
         if res.succeeded {
-            output?("-------------------------")
+            output?("-------------------------", phase.identifier)
         } else {
-            output?(res.stderror)
-            output?("-------------------------")
+            output?(res.stderror, phase.identifier)
+            output?("-------------------------", phase.identifier)
             throw Error.fail(res.stderror)
         }
     }

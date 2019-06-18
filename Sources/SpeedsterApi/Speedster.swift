@@ -8,7 +8,7 @@
 import Vapor
 import Fluent
 import SpeedsterCore
-import GithubAPI
+import GitHubKit
 
 
 public class Speedster {
@@ -18,8 +18,7 @@ public class Speedster {
     static let controllers: [Controller.Type] = [
         NodesController.self,
         GithubController.self,
-        JobsController.self,
-        AutojobController.self
+        JobsController.self
     ]
     
     public static func configure(services s: inout Services) throws {
@@ -32,7 +31,7 @@ public class Speedster {
                 token: token,
                 server: "https://github.ford.com/api/v3/"
             )
-            return try Github(config, on: container)
+            return try Github(config, eventLoop: container.eventLoop)
         }
     }
     
@@ -40,11 +39,11 @@ public class Speedster {
         migrations.add(Node.autoMigration(), to: dbIdentifier)
         migrations.add(Run.autoMigration(), to: dbIdentifier)
         migrations.add(Job.autoMigration(), to: dbIdentifier)
-        migrations.add(AutoJob.autoMigration(), to: dbIdentifier)
-        migrations.add(AutoRun.autoMigration(), to: dbIdentifier)
+        migrations.add(GitHubJob.autoMigration(), to: dbIdentifier)
         migrations.add(Workflow.autoMigration(), to: dbIdentifier)
         migrations.add(Phase.autoMigration(), to: dbIdentifier)
         migrations.add(Organization.autoMigration(), to: dbIdentifier)
+        migrations.add(Scheduled.autoMigration(), to: dbIdentifier)
         
         migrations.add(Setup(), to: dbIdentifier)
     }

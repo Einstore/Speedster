@@ -8,14 +8,17 @@
 import Foundation
 import SpeedsterCore
 import Fluent
-import GithubAPI
+import GitHubKit
 
 
 extension Row where Model == Job {
     
     func update(from job: SpeedsterCore.Job) {
         self.name = job.name
-        self.gitHubBuild = job.gitHub
+        self.gitHub = job.gitHub
+        self.environmnetStart = job.environmnetStart
+        self.environmnetFinish = job.environmnetFinish
+        self.dockerDependendencies = job.dockerDependendencies
         self.disabled = 0
         self.speedsterFile = job
     }
@@ -39,11 +42,13 @@ extension SpeedsterCore.Job {
                 )
                 if phase.command.contains("file:") {
                     let path = phase.command.replacingOccurrences(of: "file:", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
-                    let future: EventLoopFuture<Void> = try! GithubAPI.File.query(on: system.container).get(
+                    // TODO: Fix try!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    let github = try! system.container.make(Github.self)
+                    let future: EventLoopFuture<Void> = try! GitHubKit.File.query(on: github).get(
                         organization: info.org,
                         repo: info.repo,
                         path: path
-                        ).download(on: system.container).flatMap { file in
+                        ).download(on: github).flatMap { file in
                             phase.command = file.asString()
                             return phase.save(on: system.db)
                     }
@@ -82,19 +87,22 @@ extension SpeedsterCore.Job {
     fileprivate func updateJob(_ info: SpeedsterFileInfo, on system: System) -> EventLoopFuture<Row<Job>> {
         return Job
             .query(on: system.db)
-            .filter(\Job.managed == Job.Managed.github)
-            .filter(\Job.githubRepo == info.repo)
-            .filter(\Job.githubOrg == info.org)
+            .join(\GitHubJob.jobId, to: \Job.id)
+            .filter(\GitHubJob.organization == info.org)
+            .filter(\GitHubJob.repo == info.repo)
             .first().flatMap { job in
                 guard let job = job else {
                     let job = Job.row()
-                    job.githubRepo = info.repo
-                    job.githubOrg = info.org
-                    job.managed = Job.Managed.github
                     job.update(from: self)
                     job.disabled = info.disabled ? 1 : 0
-                    return job.save(on: system.db).map { _ in
-                        return job
+                    return job.save(on: system.db).flatMap { _ in
+                        let githubJob = GitHubJob.row()
+                        githubJob.repo = info.repo
+                        githubJob.organization = info.org
+                        githubJob.jobId = job.id
+                        return githubJob.save(on: system.db).map { _ in
+                            return job
+                        }
                     }
                 }
                 job.update(from: self)

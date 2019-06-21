@@ -133,9 +133,17 @@ public struct Job: Content {
     public struct GitHub: Codable {
         
         public struct Location: Codable {
-            let organization: String
-            let repo: String
-            let commit: String
+            
+            public let organization: String
+            public let repo: String
+            public let commit: String?
+            
+            public init(organization: String, repo: String, commit: String? = nil) {
+                self.organization = organization
+                self.repo = repo
+                self.commit = commit
+            }
+            
         }
         
         /// Manage clone on job level

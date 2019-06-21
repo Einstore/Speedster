@@ -42,7 +42,7 @@ extension Array where Element == GitHubKit.Organization {
         for org in self {
             do {
                 let github = try c.make(Github.self)
-                let future = try Repo.query(on: github).get(organization: org.login)
+                let future = try Repo.query(on: github).get(org: org.login)
                 futures.append(future)
             } catch {
                 return c.eventLoop.makeFailedFuture(error)

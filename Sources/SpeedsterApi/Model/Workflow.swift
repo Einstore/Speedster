@@ -58,9 +58,15 @@ extension Workflow {
         let row = Workflow.row()
         row.jobId = job.id
         row.name = workflow.name
+        row.nodeLabels = workflow.nodeLabels
         row.dependsOn = workflow.dependsOn
         row.timeout = workflow.timeout
         row.timeoutOnInactivity = workflow.timeoutOnInactivity
+        row.environmnetStart = workflow.environmnetStart
+        row.environmnetFinish = workflow.environmnetFinish
+        row.fail = workflow.fail
+        row.success = workflow.success
+        row.always = workflow.always
         return row
     }
     

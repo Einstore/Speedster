@@ -12,6 +12,14 @@ public enum HTTPError: Error {
     
     case notFound
     
+    case missingParamaters
+    
+}
+
+public enum GenericError: Error {
+    
+    case decodingError
+    
 }
 
 /// Generic error for work with database

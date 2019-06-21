@@ -55,7 +55,7 @@ final class NodesController: Controller {
             }
         }
         
-        r.on(.DELETE, "nodes", ":node_id") { req -> EventLoopFuture<Response> in
+        r.delete("nodes", ":node_id") { req -> EventLoopFuture<Response> in
             let id = req.parameters.get("node_id", as: Speedster.DbIdType.self)
             return Node.find(id, on: self.db).flatMap { node in
                 guard let node = node else {

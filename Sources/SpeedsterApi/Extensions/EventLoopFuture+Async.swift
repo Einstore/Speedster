@@ -24,6 +24,10 @@ import Vapor
 
 extension EventLoopFuture {
     
+    public func void() -> EventLoopFuture<Void> {
+        return map { _ in Void() }
+    }
+    
     public func convert<T>(to type: T.Type = T.self, _ callback: @escaping (Value) throws -> EventLoopFuture<T>) -> EventLoopFuture<T> {
         let promise = eventLoop.makePromise(of: T.self)
         return always { (res) in

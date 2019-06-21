@@ -23,35 +23,104 @@ final class GithubController: Controller {
     }
     
     func routes(_ r: Routes, _ c: Container) throws {
+        let github = try c.make(Github.self)
+        let githubManager = GithubManager(
+            github: github,
+            container: c,
+            on: self.db
+        )
+        
+        r.get("github", "api", "organizations") { req -> EventLoopFuture<[GitHubKit.Organization]> in
+            return try GitHubKit.Organization.query(on: github).get()
+        }
+        
+        r.get("github", "api", "organizations", ":org", "repos") { req -> EventLoopFuture<[GitHubKit.Repo]> in
+            guard let org = req.parameters.get("org", as: String.self) else {
+                    return c.eventLoop.makeFailedFuture(HTTPError.missingParamaters)
+            }
+            return try GitHubKit.Repo.query(on: github).get(org: org)
+        }
+        
+        r.get("github", "api", "organizations", ":org", ":repo", "branches") { req -> EventLoopFuture<[GitHubKit.Branch]> in
+            guard
+                let org = req.parameters.get("org", as: String.self),
+                let repo = req.parameters.get("repo", as: String.self)
+                else {
+                    return c.eventLoop.makeFailedFuture(HTTPError.missingParamaters)
+            }
+            return try GitHubKit.Branch.query(on: github).get(org: org, repo: repo)
+        }
+        
+        r.get("github", "api", "organizations", ":org", ":repo", "hooks") { req -> EventLoopFuture<[GitHubKit.Webhook]> in
+            guard
+                let org = req.parameters.get("org", as: String.self),
+                let repo = req.parameters.get("repo", as: String.self)
+                else {
+                    return c.eventLoop.makeFailedFuture(HTTPError.missingParamaters)
+            }
+            return try GitHubKit.Webhook.query(on: github).get(org: org, repo: repo)
+        }
+        
         r.get("github", ":githubjob_id", "schedule") { req -> EventLoopFuture<Response> in
             let id = req.parameters.get("githubjob_id", as: Speedster.DbIdType.self)
             return Job.query(on: self.db)
                 .join(\GitHubJob.jobId, to: \Job.id)
-                .filter(\GitHubJob.id == id)
+                .filter(\Job.id == id)
                 .firstUnwrapped().flatMap { job in
                     return GitHubJob.query(on: self.db)
                         .filter(\GitHubJob.jobId == job.id)
                         .firstUnwrapped().flatMap { githubJob in
-//                            return GitHubKit.Commit
-                            return job.scheduledResponse(on: self.db)
+                            return githubManager.getCommitForSchedule(
+                                org: githubJob.organization,
+                                repo: githubJob.repo,
+                                branch: nil
+                                ).flatMap { branch in
+                                    let gh = SpeedsterCore.Job.GitHub(
+                                        cloneGit: nil,
+                                        location: SpeedsterCore.Job.GitHub.Location(
+                                            organization: githubJob.organization,
+                                            repo: githubJob.repo,
+                                            commit: branch.commit.sha
+                                        )
+                                    )
+                                    return job.scheduledResponse(gh, on: self.db)
+                            }
                     }
             }
         }
+        
+        r.post("github", ":githubjob_id", "webhooks", "reset") { req -> EventLoopFuture<Response> in
+            let id = req.parameters.get("githubjob_id", as: Speedster.DbIdType.self)
+            return GitHubJob.query(on: self.db)
+                .join(\Job.id, to: \GitHubJob.jobId)
+                .filter(\Job.id == id)
+                .firstUnwrapped().flatMap { job in
+                    let infos = [
+                        SpeedsterFileInfo(
+                            job: job.jobId,
+                            org: job.organization,
+                            repo: job.repo,
+                            speedster: true,
+                            invalid: false,
+                            disabled: false
+                        )
+                    ]
+                    return githubManager.reset(webhooks: infos).map { // Setup webhooks
+                        return Response.make.noContent()
+                    }
+            }
+        }
+        
         r.get("github", "reload") { req -> EventLoopFuture<Response> in
-            let system = try System(
-                db: self.db,
-                container: c,
-                github: c.make()
-            )
-            let github = try c.make(Github.self)
-            return try GitHubKit.Organization.query(on: github).getAll().flatMap() { githubOrgs in // Get available organizations from Github
-                return GithubManager.update(organizations: githubOrgs, on: self.db).flatMap { dbOrgs in // Update organizations
+            return try GitHubKit.Organization.query(on: github).get().flatMap() { githubOrgs in // Get available organizations from Github
+                return githubManager.update(organizations: githubOrgs).flatMap { dbOrgs in // Update organizations
                     return githubOrgs.repos(on: c).flatMap { repos in // Get repos
-                        return GithubManager.fileData(repos, on: c).flatMap { files in // Get Speedster.yml from repos
-                            return GithubManager.process(files: files, repos: repos, on: system).flatMap { infos in // Process all Speedster.yml files
-                                
-                                return GithubManager.updateOrgStats(dbOrgs, on: self.db).map { // Update all affected organizations with the latest repo stats
-                                    return infos.asDisplayResponse()
+                        return githubManager.fileData(repos).flatMap { files in // Get Speedster.yml from repos
+                            return githubManager.process(files: files, repos: repos).flatMap { infos in // Process all Speedster.yml files
+                                return githubManager.update(orgStats: dbOrgs).flatMap { _ in // Update all affected organizations with the latest repo stats
+                                    return githubManager.setup(webhooks: infos).map { // Setup webhooks
+                                        return infos.asDisplayResponse()
+                                    }
                                 }
                             }
                         }

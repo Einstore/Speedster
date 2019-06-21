@@ -13,13 +13,15 @@ public struct Job: Model {
     
     public struct Short: Content {
         
+        public let id: Speedster.DbIdType?
         public let name: String
         public let gitHub: SpeedsterCore.Job.GitHub?
-        public let nodeLabels: [String]
+        public let nodeLabels: [String]?
         public let disabled: Bool
         public let managed: Bool?
         
         enum CodingKeys: String, CodingKey {
+            case id
             case name
             case gitHub
             case nodeLabels = "node_labels"
@@ -28,9 +30,10 @@ public struct Job: Model {
         }
         
         public init(_ row: Row<Job>, _ managed: Bool? = nil) {
+            self.id = row.id
             self.name = row.name
             self.gitHub = row.gitHub
-            if let labels = row.nodeLabels {
+            if let labels = row.nodeLabels, !labels.isEmpty {
                 self.nodeLabels = labels.split(separator: ",").map({ String($0).trimmingCharacters(in: .whitespacesAndNewlines) })
             } else {
                 self.nodeLabels = []

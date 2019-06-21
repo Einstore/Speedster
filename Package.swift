@@ -17,6 +17,8 @@ let package = Package(
         .package(url: "https://github.com/vapor/fluent-postgres-driver.git", from: "2.0.0-alpha.1"),
         .package(url: "https://github.com/vapor/fluent-sqlite-driver.git", from: "4.0.0-alpha.1"),
         .package(url: "https://github.com/vapor/crypto-kit.git", from: "4.0.0-alpha.1"),
+        .package(url: "https://github.com/vapor/jobs.git", from: "1.0.0-alpha.1.1"),
+        .package(url: "https://github.com/vapor/redis-kit.git", from: "1.0.0-alpha.1"),
         //.package(url: "https://github.com/Einstore/GitHubKit.git", from: "1.0.0"),
         .package(url: "https://github.com/rafiki270/Yams.git", .branch("master")),
         .package(url: "https://github.com/jakeheis/Shout.git", from: "0.5.0"),
@@ -62,7 +64,9 @@ let package = Package(
                 "Vapor",
                 "GitHubKit",
                 "CryptoKit",
-                "Yams"
+                "Yams",
+                "Jobs",
+                "RedisKit"
             ]
         ),
         .target(

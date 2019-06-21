@@ -9,6 +9,7 @@ import Vapor
 
 
 struct SpeedsterFileInfo: Content {
+    let job: Speedster.DbIdType?
     let org: String
     let repo: String
     let speedster: Bool

@@ -15,7 +15,7 @@ extension Repo: Queryable { }
 extension QueryableProperty where QueryableType == Repo {
     
     /// Get organization detail
-    public func get(organization org: String, repo: String) throws -> EventLoopFuture<Repo> {
+    public func get(org: String, repo: String) throws -> EventLoopFuture<Repo> {
         return try github.get(path: "repos/\(org.lowercased())/\(repo.lowercased())")
     }
     
@@ -25,12 +25,12 @@ extension QueryableProperty where QueryableType == Repo {
     }
     
     /// Get all repos for an organization
-    public func get(organization org: String) throws -> EventLoopFuture<[Repo]> {
+    public func get(org: String) throws -> EventLoopFuture<[Repo]> {
         return try github.get(path: "orgs/\(org.lowercased())/repos")
     }
     
     /// Get all organizations for authenticated user
-    public func getAll() throws -> EventLoopFuture<[Repo]> {
+    public func get() throws -> EventLoopFuture<[Repo]> {
         return try github.get(path: "user/repos")
     }
     

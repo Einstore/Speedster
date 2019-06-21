@@ -83,6 +83,15 @@
         }
       },
       {
+        "package": "jobs",
+        "repositoryURL": "https://github.com/vapor/jobs.git",
+        "state": {
+          "branch": null,
+          "revision": "b99a22ead7657bf5cffd7b3830f9c902ef7cd53f",
+          "version": "1.0.0-alpha.1.2"
+        }
+      },
+      {
         "package": "nio-websocket-client",
         "repositoryURL": "https://github.com/vapor/nio-websocket-client.git",
         "state": {
@@ -107,6 +116,15 @@
           "branch": null,
           "revision": "4c008b8a12b8c03316916135e13188c8d75f2f5c",
           "version": "1.0.0-alpha.1.2"
+        }
+      },
+      {
+        "package": "redis-kit",
+        "repositoryURL": "https://github.com/vapor/redis-kit.git",
+        "state": {
+          "branch": null,
+          "revision": "3f18ba44f5e1773a56840a286b4024c028aaab67",
+          "version": "1.0.0-alpha.1"
         }
       },
       {
@@ -215,6 +233,15 @@
           "branch": null,
           "revision": "77173ac9038e8e9b92f3efe8780923447e3c890b",
           "version": "2.1.1"
+        }
+      },
+      {
+        "package": "swift-redis-nio-client",
+        "repositoryURL": "https://gitlab.com/mordil/swift-redis-nio-client.git",
+        "state": {
+          "branch": null,
+          "revision": "531a7d4021cce91ce5f65ef1c152db5b6c370b7c",
+          "version": "1.0.0-alpha.2.1"
         }
       },
       {

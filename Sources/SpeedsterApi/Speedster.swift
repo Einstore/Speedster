@@ -9,6 +9,8 @@ import Vapor
 import Fluent
 import SpeedsterCore
 import GitHubKit
+import Jobs
+import RedisKit
 
 
 public class Speedster {
@@ -33,6 +35,47 @@ public class Speedster {
             )
             return try Github(config, eventLoop: container.eventLoop)
         }
+        
+        // Redis
+//        s.register(Redis.self) { c in
+//            return Redis
+//        }
+        
+        // Jobs
+//        s.register(JobsProvider.self) { c in
+//            return JobsProvider(refreshInterval: .seconds(1))
+//        }
+//
+//        s.extend(JobsConfiguration.self) { configuration, container in
+//            let job = try ExecutorJob(container)
+//            configuration.add(job)
+//        }
+        
+//        s.extend(CommandConfiguration.self) { configuration, c in
+//            try configuration.use(c.make(JobsCommand.self), as: "jobs")
+//        }
+        
+//        s.register(JobsProvider.self, { c in
+//            return JobsProvider(refreshInterval: .seconds(1))
+//        })
+//
+//        // Register the Jobs command
+//        s.extend(CommandConfiguration.self) { configuration, c in
+//            try configuration.use(c.make(JobsCommand.self), as: "jobs")
+//        }
+//
+//        s.register(JobsCommand.self) { c in
+//            return try .init(queueService: c.make(), jobContext: .init(eventLoop: c.eventLoop), config: c.make())
+//        }
+//
+//        s.register(JobsConfiguration.self) { c in
+//            var config = JobsConfiguration()
+//
+//            let job = try ExecutorJob(c)
+//            config.add(job)
+//
+//            return config
+//        }
     }
     
     public static func configure(migrations: inout Migrations, dbIdentifier: DatabaseID) throws {

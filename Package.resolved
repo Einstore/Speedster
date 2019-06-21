@@ -92,6 +92,15 @@
         }
       },
       {
+        "package": "JobsRedisDriver",
+        "repositoryURL": "https://github.com/vapor/jobs-redis-driver.git",
+        "state": {
+          "branch": null,
+          "revision": "f43f35458fc0355f201c9e0e0354316b6d0e284a",
+          "version": "1.0.0-alpha.1.2"
+        }
+      },
+      {
         "package": "nio-websocket-client",
         "repositoryURL": "https://github.com/vapor/nio-websocket-client.git",
         "state": {

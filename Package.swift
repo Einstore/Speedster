@@ -19,6 +19,7 @@ let package = Package(
         .package(url: "https://github.com/vapor/crypto-kit.git", from: "4.0.0-alpha.1"),
         .package(url: "https://github.com/vapor/jobs.git", from: "1.0.0-alpha.1.1"),
         .package(url: "https://github.com/vapor/redis-kit.git", from: "1.0.0-alpha.1"),
+        .package(url: "https://github.com/vapor/jobs-redis-driver.git", from: "1.0.0-alpha.1.2"),
         //.package(url: "https://github.com/Einstore/GitHubKit.git", from: "1.0.0"),
         .package(url: "https://github.com/rafiki270/Yams.git", .branch("master")),
         .package(url: "https://github.com/jakeheis/Shout.git", from: "0.5.0"),
@@ -66,7 +67,8 @@ let package = Package(
                 "CryptoKit",
                 "Yams",
                 "Jobs",
-                "RedisKit"
+                "RedisKit",
+                "JobsRedisDriver"
             ]
         ),
         .target(

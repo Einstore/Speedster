@@ -35,6 +35,13 @@ final class JobsController: Controller {
                 .firstUnwrapped()
         }
         
+        r.get("jobs", ":job_id") { req -> EventLoopFuture<Row<Job>> in
+            let id = req.parameters.get("job_id", as: Speedster.DbIdType.self)
+            return Job.query(on: self.db)
+                .filter(\Job.id == id)
+                .firstUnwrapped()
+        }
+        
         r.post("jobs", "add") { req -> EventLoopFuture<Response> in
             let post = try req.content.decode(SpeedsterCore.Job.self, using: YAMLDecoder())
             return post.save(on: self.db).flatMap { job in

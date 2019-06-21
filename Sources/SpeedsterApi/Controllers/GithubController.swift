@@ -61,34 +61,6 @@ final class GithubController: Controller {
             return try GitHubKit.Webhook.query(on: github).get(org: org, repo: repo)
         }
         
-        r.get("github", ":githubjob_id", "schedule") { req -> EventLoopFuture<Response> in
-            let id = req.parameters.get("githubjob_id", as: Speedster.DbIdType.self)
-            return Job.query(on: self.db)
-                .join(\GitHubJob.jobId, to: \Job.id)
-                .filter(\Job.id == id)
-                .firstUnwrapped().flatMap { job in
-                    return GitHubJob.query(on: self.db)
-                        .filter(\GitHubJob.jobId == job.id)
-                        .firstUnwrapped().flatMap { githubJob in
-                            return githubManager.getCommitForSchedule(
-                                org: githubJob.organization,
-                                repo: githubJob.repo,
-                                branch: nil
-                                ).flatMap { branch in
-                                    let gh = SpeedsterCore.Job.GitHub(
-                                        cloneGit: nil,
-                                        location: SpeedsterCore.Job.GitHub.Location(
-                                            organization: githubJob.organization,
-                                            repo: githubJob.repo,
-                                            commit: branch.commit.sha
-                                        )
-                                    )
-                                    return job.scheduledResponse(gh, on: self.db)
-                            }
-                    }
-            }
-        }
-        
         r.post("github", ":githubjob_id", "webhooks", "reset") { req -> EventLoopFuture<Response> in
             let id = req.parameters.get("githubjob_id", as: Speedster.DbIdType.self)
             return GitHubJob.query(on: self.db)

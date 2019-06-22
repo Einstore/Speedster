@@ -80,23 +80,6 @@ final class JobsController: Controller {
             }
         }
         
-        r.get("jobs", "scheduled") { req -> EventLoopFuture<Response> in
-            // TODO: Remove Scheduled query when .alsoDecode becomes available!!!!
-            return Scheduled.query(on: self.db).all().flatMap { scheduled in
-                    return Job.query(on: self.db)
-                        .join(\Scheduled.jobId, to: \Job.id)
-                        .sort(\Scheduled.requested, .ascending)
-                        .all().map { jobs in
-                            return jobs.map { job in
-                                Scheduled.Wrapper(
-                                    job: job.asShort(managed: true),
-                                    scheduled: scheduled.first(where: { $0.jobId == job.id })?.asShort()
-                                )
-                            }
-                    }
-            }
-        }
-        
         r.get("jobs") { req -> EventLoopFuture<Response> in
             return GitHubJob.query(on: self.db).all().flatMap { githubJobs in
                 return Job.query(on: self.db)

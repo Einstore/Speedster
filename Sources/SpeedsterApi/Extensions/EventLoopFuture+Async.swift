@@ -28,6 +28,10 @@ extension EventLoopFuture {
         return map { _ in Void() }
     }
     
+    public func asNoContent() -> EventLoopFuture<Response> {
+        return map { _ in Response.make.noContent() }
+    }
+    
     public func convert<T>(to type: T.Type = T.self, _ callback: @escaping (Value) throws -> EventLoopFuture<T>) -> EventLoopFuture<T> {
         let promise = eventLoop.makePromise(of: T.self)
         return always { (res) in

@@ -21,7 +21,8 @@ public class Speedster {
     static let controllers: [Controller.Type] = [
         NodesController.self,
         GithubController.self,
-        JobsController.self
+        JobsController.self,
+        ScheduledController.self
     ]
     
     public static func configure(services s: inout Services) throws {

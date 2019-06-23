@@ -35,10 +35,7 @@ public struct Workflow: Model {
     public let timeoutOnInactivity = Field<Int>("timeout_inactivity")
     
     /// Script to start workspace specific environment
-    public let environmnetStart = Field<String?>("environmnet_start")
-    
-    /// Script to stop workspace specific environment
-    public let environmnetFinish = Field<String?>("environmnet_ finish")
+    public let environment = Field<SpeedsterCore.Job.Env?>("environment")
     
     /// Perform on workflow fail (before always)
     public let fail = Field<SpeedsterCore.Job.Workflow.Phase?>("fail")
@@ -62,8 +59,7 @@ extension Workflow {
         row.dependsOn = workflow.dependsOn
         row.timeout = workflow.timeout
         row.timeoutOnInactivity = workflow.timeoutOnInactivity
-        row.environmnetStart = workflow.environmnetStart
-        row.environmnetFinish = workflow.environmnetFinish
+        row.environment = workflow.environment
         row.fail = workflow.fail
         row.success = workflow.success
         row.always = workflow.always

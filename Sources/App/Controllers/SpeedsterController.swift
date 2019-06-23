@@ -21,6 +21,10 @@ final class SpeedsterController {
             return try Response.make.yaml(Job.jobDependentFailing())
         }
         
+        r.get("example", "small") { req -> Response in
+            return try Response.make.yaml(Job.jobSmall())
+        }
+        
         r.get("example", "success") { req -> Response in
             return try Response.make.yaml(Job.jobDependentSucceeding())
         }

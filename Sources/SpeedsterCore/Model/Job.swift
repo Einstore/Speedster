@@ -44,11 +44,8 @@ public struct Job: Content {
         /// Depends on workflow (name)
         public let dependsOn: String?
         
-        /// Script to start workspace specific environment
-        public let environmnetStart: String?
-        
-        /// Script to stop workspace specific environment
-        public let environmnetFinish: String?
+        /// Scripts to manage workspace specific environment
+        public let environment: Env?
         
         /// Pre-build phases
         public let preBuild: [Phase]
@@ -81,8 +78,7 @@ public struct Job: Content {
             case name
             case nodeLabels = "node_labels"
             case dependsOn = "depends"
-            case environmnetStart = "environmnet_start"
-            case environmnetFinish = "environmnet_finish"
+            case environment = "environment"
             case preBuild = "pre_build"
             case build
             case postBuild = "post_build"
@@ -99,8 +95,7 @@ public struct Job: Content {
             name: String,
             nodeLabels: String? = nil,
             dependsOn: String? = nil,
-            environmnetStart: String? = nil,
-            environmnetFinish: String? = nil,
+            environment: Env? = nil,
             preBuild: [Phase],
             build: [Phase],
             postBuild: [Phase],
@@ -114,8 +109,7 @@ public struct Job: Content {
             self.name = name
             self.nodeLabels = nodeLabels
             self.dependsOn = dependsOn
-            self.environmnetStart = environmnetStart
-            self.environmnetFinish = environmnetFinish
+            self.environment = environment
             self.preBuild = preBuild
             self.build = build
             self.postBuild = postBuild
@@ -223,16 +217,39 @@ public struct Job: Content {
     public struct Dependency: Codable {
         
         public let image: String
-        
         public let networkName: String
-        
         public let exposeOnPort: Int?
+        public let cmd: String?
+        public let entrypoint: String?
+        public let variables: [String: String]?
         
-        public let cmd: String
+        public init(
+            image: String,
+            networkName: String,
+            exposeOnPort: Int? = nil,
+            cmd: String? = nil,
+            entrypoint: String? = nil,
+            variables: [String: String]? = nil
+            ) {
+            self.image = image
+            self.networkName = networkName
+            self.exposeOnPort = exposeOnPort
+            self.cmd = cmd
+            self.entrypoint = entrypoint
+            self.variables = variables
+        }
         
-        public let entrypoint: String
+    }
+    
+    public struct Env: Codable {
         
-        public let variables: [String: String]
+        public let start: String
+        public let finish: String
+        
+        public init(start: String, finish: String) {
+            self.start = start
+            self.finish = finish
+        }
         
     }
     
@@ -248,11 +265,8 @@ public struct Job: Content {
     /// Workflows
     public let workflows: [Workflow]
     
-    /// Script to start environment
-    public let environmnetStart: String?
-    
-    /// Script to stop environment
-    public let environmnetFinish: String?
+    /// Scripts to manage environment
+    public let environment: Env?
     
     /// Docker dependencies
     public let dockerDependendencies: [Dependency]?
@@ -265,8 +279,7 @@ public struct Job: Content {
         case nodeLabels = "node_labels"
         case gitHub = "github"
         case workflows
-        case environmnetStart = "environmnet_start"
-        case environmnetFinish = "environmnet_finish"
+        case environment = "environment"
         case dockerDependendencies = "docker_dependencies"
         case branches
     }
@@ -277,8 +290,7 @@ public struct Job: Content {
         nodeLabels: String? = nil,
         gitHub: GitHub? = nil,
         workflows: [Workflow],
-        environmnetStart: String? = nil,
-        environmnetFinish: String? = nil,
+        environment: Env? = nil,
         dockerDependendencies: [Dependency]? = nil,
         branches: [Branch]
         ) {
@@ -287,8 +299,7 @@ public struct Job: Content {
         self.gitHub = gitHub
         self.workflows = workflows
         self.branches = branches
-        self.environmnetStart = environmnetStart
-        self.environmnetFinish = environmnetFinish
+        self.environment = environment
         self.dockerDependendencies = dockerDependendencies
     }
     

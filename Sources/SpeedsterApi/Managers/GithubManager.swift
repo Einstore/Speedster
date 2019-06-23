@@ -17,6 +17,8 @@ class GithubManager {
     enum Error: Swift.Error {
         case unableToRetrieveGithubData
         case invalidSpeedsterFile
+        case noFilesFoundInCommitTree
+        case missingSpeedsterFile
     }
     
     struct SpeedsterFileData {
@@ -26,13 +28,13 @@ class GithubManager {
     }
     
     let github: Github
-    let database: Database
+    let db: Database
     let container: Container
     
     init(github: Github, container: Container, on database: Database) {
         self.github = github
         self.container = container
-        self.database = database
+        self.db = database
     }
     
     fileprivate func hook(for url: String) -> Webhook.Post {
@@ -72,10 +74,10 @@ class GithubManager {
                 }
                 futures.append(future)
             } catch {
-                futures.append(self.database.eventLoop.makeFailedFuture(error))
+                futures.append(self.db.eventLoop.makeFailedFuture(error))
             }
         }
-        return futures.flatten(on: self.database.eventLoop)
+        return futures.flatten(on: self.db.eventLoop)
     }
     
     func reset(webhooks infos: [SpeedsterFileInfo]) -> EventLoopFuture<Void> {
@@ -105,32 +107,32 @@ class GithubManager {
                 }
                 futures.append(future)
             } catch {
-                futures.append(self.database.eventLoop.makeFailedFuture(error))
+                futures.append(self.db.eventLoop.makeFailedFuture(error))
             }
         }
-        return futures.flatten(on: self.database.eventLoop)
+        return futures.flatten(on: self.db.eventLoop)
     }
     
     func update(orgStats orgs: [Row<Organization>]) -> EventLoopFuture<Void> {
         var futures: [EventLoopFuture<Void>] = []
         for org in orgs {
-            let future: EventLoopFuture<Void> = Job.query(on: self.database)
+            let future: EventLoopFuture<Void> = Job.query(on: self.db)
                 .join(\GitHubJob.jobId, to: \Job.id)
                 .filter(\GitHubJob.organization == org.name)
                 .count().flatMap { totalJobs in
-                    return Job.query(on: self.database)
+                    return Job.query(on: self.db)
                         .join(\GitHubJob.jobId, to: \Job.id)
                         .filter(\GitHubJob.organization == org.name)
                         .filter(\Job.disabled == 0)
                         .count().flatMap { activeJobs in
                             org.activeJobs = activeJobs
                             org.totalJobs = totalJobs
-                            return org.update(on: self.database)
+                            return org.update(on: self.db)
                     }
             }
             futures.append(future)
         }
-        return futures.flatten(on: self.database.eventLoop)
+        return futures.flatten(on: self.db.eventLoop)
     }
     
     func process(files: [SpeedsterFileData], repos: [Repo]) -> EventLoopFuture<[SpeedsterFileInfo]> {
@@ -160,7 +162,7 @@ class GithubManager {
                 continue
             }
             
-            let future = job.saveOnDb(fileInfo, container: container, on: database)
+            let future = job.saveOnDb(fileInfo, github: github, on: db)
             futures.append(future)
         }
         return futures.flatten(on: self.container.eventLoop).map({ infos })
@@ -170,21 +172,102 @@ class GithubManager {
         fatalError()
     }
     
-    func getCommitForSchedule(org: String, repo: String, branch: String? = nil) -> EventLoopFuture<Branch> {
+    func getCommitForSchedule(org: String, repo: String, ref: Scheduled.Ref? = nil) -> EventLoopFuture<Commit> {
         do {
-            // TODO: Handle if someone doesn't have a master branch
-            return try GitHubKit.Branch.query(on: github).get(org: org, repo: repo, branch: branch ?? "master")
+            guard let ref = ref else {
+                return try GitHubKit.Branch.query(on: github).get(org: org, repo: repo, branch: "master").latestCommit()
+            }
+            switch ref.type {
+            case .branch:
+                return try GitHubKit.Branch.query(on: github).get(org: org, repo: repo, branch: ref.value).latestCommit()
+            case .tag:
+                fatalError("Tag not supported yet")
+            //                return try GitHubKit.Branch.query(on: github).get(org: org, repo: repo, branch: ref.value).latestCommit()
+            case .commit:
+                return try GitHubKit.Commit.query(on: github).get(org: org, repo: repo, sha: ref.value)
+            }
         } catch {
             return container.eventLoop.makeFailedFuture(Error.unableToRetrieveGithubData)
         }
     }
     
+    func blob(_ fileName: String, for location: SpeedsterCore.Job.GitHub.Location) -> EventLoopFuture<GitBlob> {
+        guard let commit = location.commit else {
+            return self.db.eventLoop.makeFailedFuture(GenericError.decodingError)
+        }
+        do {
+            return try GitHubKit.GitCommit.query(on: self.github).get(
+                org: location.organization,
+                repo: location.repo,
+                sha: commit
+                ).flatMap { commit in
+                    do {
+                        return try GitHubKit.GitTree.query(on: self.github).get(
+                            org: location.organization,
+                            repo: location.repo,
+                            sha: commit.tree.sha
+                            ).flatMap { tree in
+                                guard let objects = tree.objects else {
+                                    return self.db.eventLoop.makeFailedFuture(Error.noFilesFoundInCommitTree)
+                                }
+                                
+                                for object in objects {
+                                    guard object.path == fileName else {
+                                        continue
+                                    }
+                                    do {
+                                        return try GitHubKit.GitBlob.query(on: self.github).get(
+                                            org: location.organization,
+                                            repo: location.repo,
+                                            sha: object.sha
+                                            )
+                                    } catch {
+                                        return self.db.eventLoop.makeFailedFuture(error)
+                                    }
+                                }
+                                return self.db.eventLoop.makeFailedFuture(Error.missingSpeedsterFile)
+                        }
+                    } catch {
+                        return self.db.eventLoop.makeFailedFuture(error)
+                    }
+            }
+        } catch {
+            return db.eventLoop.makeFailedFuture(error)
+        }
+    }
+    
+    func file(_ fileName: String, for location: SpeedsterCore.Job.GitHub.Location) -> EventLoopFuture<Data> {
+        return blob(fileName, for: location).flatMap { blob in
+            guard let data = Data(base64Encoded: blob.content, options: [.ignoreUnknownCharacters]) else {
+                return self.db.eventLoop.makeFailedFuture(GenericError.decodingError)
+            }
+            return self.db.eventLoop.makeSucceededFuture(data)
+        }
+    }
+    
+    func speedster(for location: SpeedsterCore.Job.GitHub.Location) -> EventLoopFuture<SpeedsterCore.Job> {
+        return blob("Speedster.yml", for: location).flatMap { blob in
+            do {
+                guard
+                    let data = Data(base64Encoded: blob.content, options: [.ignoreUnknownCharacters]),
+                    let string = String(data: data, encoding: .utf8),
+                    let job: SpeedsterCore.Job = try YAMLDecoder().decode(from: string)
+                    else {
+                        return self.db.eventLoop.makeFailedFuture(GenericError.decodingError)
+                }
+                return self.db.eventLoop.makeSucceededFuture(job)
+            } catch {
+                return self.db.eventLoop.makeFailedFuture(error)
+            }
+        }
+    }
+    
+    // TODO: Re-evaluate, following method seems to do the same as the previous one!!!!
     func fileData(_ repos: [Repo], file: String = "Speedster.yml") -> EventLoopFuture<[SpeedsterFileData]> {
         var futures: [EventLoopFuture<SpeedsterFileData>] = []
         do {
-            let github = try container.make(Github.self)
             for repo in repos {
-                let future = try GitHubKit.File.query(on: github).get(organization: repo.owner.login, repo: repo.name, path: file).download(on: github).map({ data in
+                let future = try GitHubKit.File.query(on: github).get(org: repo.owner.login, repo: repo.name, path: file).download(on: github).map({ data in
                     return SpeedsterFileData(
                         org: repo.owner.login,
                         repo: repo.name,
@@ -208,8 +291,8 @@ class GithubManager {
     func disable(organization: Row<Organization>) -> EventLoopFuture<Void> {
         organization.disabled = 1
         organization.activeJobs = 0
-        return organization.save(on: database).flatMap { _ in
-            return Job.query(on: self.database)
+        return organization.save(on: db).flatMap { _ in
+            return Job.query(on: self.db)
                 .join(\GitHubJob.jobId, to: \Job.id)
                 .filter(\GitHubJob.organization == organization.name)
                 .set(["disabled": .custom(true)])
@@ -218,7 +301,7 @@ class GithubManager {
     }
     
     func update(organizations githubOrgs: [GitHubKit.Organization]) -> EventLoopFuture<[Row<Organization>]> {
-        return Organization.query(on: database).all().flatMap { dbOrgs in
+        return Organization.query(on: db).all().flatMap { dbOrgs in
             var futures: [EventLoopFuture<Row<Organization>>] = []
             
             var githubOrgsMutable = githubOrgs
@@ -232,19 +315,19 @@ class GithubManager {
                         continue
                     }
                     dbOrg.update(githubOrg)
-                    let future = dbOrg.update(on: self.database).map({ dbOrg })
+                    let future = dbOrg.update(on: self.db).map({ dbOrg })
                     futures.append(future)
                 }
                 githubOrgsMutable.remove(dbOrg)
             }
             for githubOrg in githubOrgsMutable {
-                let future = Organization.row(githubOrg, on: self.database).flatMap { org in
-                    return org.save(on: self.database).map({ org })
+                let future = Organization.row(githubOrg, on: self.db).flatMap { org in
+                    return org.save(on: self.db).map({ org })
                 }
                 futures.append(future)
             }
             
-            return futures.flatten(on: self.database.eventLoop)
+            return futures.flatten(on: self.db.eventLoop)
         }
     }
     

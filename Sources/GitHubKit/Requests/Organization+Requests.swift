@@ -5,7 +5,6 @@
 //  Created by Ondrej Rafaj on 10/06/2019.
 //
 
-import Foundation
 import NIO
 
 
@@ -16,7 +15,7 @@ extension QueryableProperty where QueryableType == Organization {
     
     /// Get organization detail
     public func get(name: String) throws -> EventLoopFuture<Organization> {
-        return try github.get(path: "orgs/\(name.lowercased())")
+        return try github.get(path: "orgs/\(name)")
     }
     
     /// Get all organizations for a user

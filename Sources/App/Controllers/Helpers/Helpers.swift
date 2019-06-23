@@ -168,7 +168,7 @@ extension Job.Workflow {
     
     static func workflowFull(_ customName: String = "Full", dependsOn: String? = nil) -> Job.Workflow {
         return Job.Workflow(
-            name: "Timeout workflow",
+            name: "\(customName) workflow",
             nodeLabels: "linux",
             dependsOn: dependsOn,
             preBuild: [
@@ -191,6 +191,28 @@ extension Job.Workflow {
         )
     }
     
+    static func workflowSmall(_ customName: String = "Small", dependsOn: String? = nil) -> Job.Workflow {
+        return Job.Workflow(
+            name: "\(customName) workflow",
+            nodeLabels: "linux",
+            dependsOn: dependsOn,
+            preBuild: [
+                Phase.phaseEcho("Starting \(customName) workflow"),
+            ],
+            build: [
+                Phase.phaseLs()
+            ],
+            postBuild: [
+                Phase.phaseEcho("Finishing \(customName) workflow"),
+            ],
+            fail: Phase.phaseEcho("I have failed you master! :("),
+            success: Phase.phaseEcho("Yay!"),
+            always: Phase.phaseEcho("I am done!"),
+            timeout: 10,
+            timeoutOnInactivity: 5
+        )
+    }
+    
 }
 
 
@@ -208,6 +230,46 @@ extension Job {
                 cloneGit: "git@github.com:vapor/postgres-nio.git"
             ),
             workflows: [w1, w2, w3, w4],
+            branches: [
+                Branch(name: "master", action: .commit),
+                Branch(name: "development", action: .message("test please")),
+                Branch(
+                    name: "master",
+                    action: .message("build please"),
+                    workflows: [
+                        Workflow.workflowFull("Build")
+                    ]
+                )
+            ]
+        )
+    }
+    
+    static func jobSmall() -> Job {
+        let w1 = Workflow.workflowSmall()
+        
+        return Job(
+            name: "Small job",
+            gitHub: Job.GitHub(
+                cloneGit: "git@github.com:vapor/postgres-nio.git"
+            ),
+            workflows: [w1],
+            environment: Job.Env(
+                start: "github:rafiki270/docker-environment:master",
+                finish: "github:rafiki270/docker-environment:master"
+            ),
+            dockerDependendencies: [
+                Dependency(
+                    image: "postgres:11",
+                    networkName: "psql",
+                    cmd: nil,
+                    entrypoint: nil,
+                    variables: [
+                        "POSTGRES_USER": "speedster",
+                        "POSTGRES_DB": "speedster",
+                        "POSTGRES_PASSWORD": "aaaaaa"
+                    ]
+                )
+            ],
             branches: [
                 Branch(name: "master", action: .commit),
                 Branch(name: "development", action: .message("test please")),

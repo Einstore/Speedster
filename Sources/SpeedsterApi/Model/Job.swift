@@ -62,10 +62,7 @@ public struct Job: Model {
     public let nodeLabels = Field<String?>("node_labels")
     
     /// Script to start environment
-    public let environmnetStart = Field<String?>("environmnet_start")
-    
-    /// Script to stop environment
-    public let environmnetFinish = Field<String?>("environmnet_finish")
+    public let environment = Field<SpeedsterCore.Job.Env?>("environment")
     
     /// Automatically managed should there be any content
     public let speedsterFile = Field<SpeedsterCore.Job?>("speedster_file")

@@ -83,7 +83,7 @@ final class GithubController: Controller {
             }
         }
         
-        r.get("github", "reload") { req -> EventLoopFuture<Response> in
+        r.post("github", "reload") { req -> EventLoopFuture<Response> in
             return try GitHubKit.Organization.query(on: github).get().flatMap() { githubOrgs in // Get available organizations from Github
                 return githubManager.update(organizations: githubOrgs).flatMap { dbOrgs in // Update organizations
                     return githubOrgs.repos(on: c).flatMap { repos in // Get repos

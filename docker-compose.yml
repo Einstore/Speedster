@@ -4,8 +4,8 @@ services:
   db:
     image: postgres:11
     environment:
-      POSTGRES_USER: vapor_username
-      POSTGRES_DB: vapor_database
-      POSTGRES_PASSWORD: vapor_password
+      POSTGRES_USER: speedster
+      POSTGRES_DB: speedster
+      POSTGRES_PASSWORD: aaaaaa
     ports:
       - 5432:5432

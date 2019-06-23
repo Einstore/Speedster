@@ -39,14 +39,16 @@ public class Speedster {
         }
         
         // Jobs
-        s.provider(JobsProvider(refreshInterval: .seconds(1)))
+        s.provider(JobsProvider())
 
         s.extend(JobsConfiguration.self) { configuration, container in
+            configuration.refreshInterval = .seconds(1)
+            
             let job = try ExecutorJob(container)
             configuration.add(job)
         }
         
-        s.register(JobsPersistenceLayer.self) { c in
+        s.register(JobsDriver.self) { c in
             let source = RedisConnectionSource(
                 config: RedisConfiguration(
                     hostname: "127.0.0.1",
@@ -58,7 +60,7 @@ public class Speedster {
                 eventLoop: c.eventLoop
             )
             let pool = ConnectionPool<RedisConnectionSource>(source: source)
-            return JobsRedisDriver(client: pool, eventLoop: c.eventLoop)
+            return JobsRedisDriver(client: pool)
         }
     }
     

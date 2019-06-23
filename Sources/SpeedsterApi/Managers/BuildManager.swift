@@ -13,24 +13,55 @@ import GitHubKit
 class BuildManager {
     
     let db: Database
+    let github: Github
+    let container: Container
     
-    init(_ db: Database) {
-        self.db = db
+    init(github: Github, container: Container, on database: Database) {
+        self.github = github
+        self.container = container
+        self.db = database
     }
     
-    func build(job: Row<Job>) -> EventLoopFuture<Void> {
+    func build(_ job: Row<Job>) -> EventLoopFuture<Void> {
         fatalError()
     }
     
-    func build(github: SpeedsterCore.Job.GitHub.Location) -> EventLoopFuture<Void> {
-        fatalError()
+    func build(_ location: SpeedsterCore.Job.GitHub.Location) -> EventLoopFuture<Void> {
+        let githubManager = GithubManager(
+            github: github,
+            container: container,
+            on: db
+        )
+        return githubManager.speedster(for: location).flatMap { job in
+            let promise = self.db.eventLoop.makePromise(of: Void.self)
+            let ex = Executioner(
+                job: job,
+                node: SpeedsterCore.Node(
+                    name: "Ubuntu Test",
+                    host: "157.230.106.39",
+                    port: 22,
+                    user: "root",
+                    password: "exploited",
+                    publicKey: nil,
+                    auth: .password
+                ),
+                on: self.db.eventLoop) { (output, identifier) in
+                    print(output)
+            }
+            ex.run(finished: {
+                promise.succeed(Void())
+            }) { error in
+                promise.fail(error)
+            }
+            return promise.futureResult
+        }
     }
     
     func build(_ tuple: ScheduledManager.Tuple) -> EventLoopFuture<Void> {
         if let location = tuple.scheduled.github?.location {
-            return build(github: location)
+            return build(location)
         } else {
-            return build(job: tuple.job)
+            return build(tuple.job)
         }
     }
     

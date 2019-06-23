@@ -31,6 +31,19 @@ public struct Scheduled: Model {
         
     }
     
+    public struct Ref: Codable {
+        
+        public enum RefType: String, Codable {
+            case branch
+            case commit
+            case tag
+        }
+        
+        public let value: String
+        public let type: RefType
+        
+    }
+    
     public static let shared = Scheduled()
     public static let entity = "scheduled"
     

@@ -17,8 +17,7 @@ extension Row where Model == Job {
         self.name = job.name
         self.nodeLabels = job.nodeLabels
         self.gitHub = job.gitHub
-        self.environmnetStart = job.environmnetStart
-        self.environmnetFinish = job.environmnetFinish
+        self.environment = job.environment
         self.dockerDependendencies = job.dockerDependendencies
         self.disabled = 0
         self.speedsterFile = job
@@ -29,7 +28,7 @@ extension Row where Model == Job {
 
 extension SpeedsterCore.Job {
     
-    fileprivate func update(phases dbWorkflow: Row<SpeedsterApi.Workflow>, coreWorkflow: SpeedsterCore.Job.Workflow, info: SpeedsterFileInfo, container c: Container, on db: Database) -> EventLoopFuture<Void> {
+    fileprivate func update(phases dbWorkflow: Row<SpeedsterApi.Workflow>, coreWorkflow: SpeedsterCore.Job.Workflow, info: SpeedsterFileInfo, github: Github, on db: Database) -> EventLoopFuture<Void> {
         var futures: [EventLoopFuture<Void>] = []
         
         func addTo(futures phases: [Workflow.Phase], stage: SpeedsterApi.Phase.Stage) {
@@ -44,9 +43,8 @@ extension SpeedsterCore.Job {
                 if phase.command.prefix(5) == "file:" {
                     let path = phase.command.replacingOccurrences(of: "file:", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
                     do {
-                        let github = try c.make(Github.self)
                         let future: EventLoopFuture<Void> = try GitHubKit.File.query(on: github).get(
-                            organization: info.org,
+                            org: info.org,
                             repo: info.repo,
                             path: path
                             ).download(on: github).flatMap { file in
@@ -55,7 +53,7 @@ extension SpeedsterCore.Job {
                         }
                         futures.append(future)
                     } catch {
-                        futures.append(c.eventLoop.makeFailedFuture(error))
+                        futures.append(db.eventLoop.makeFailedFuture(error))
                     }
                 } else {
                     let future = phase.save(on: db)
@@ -72,14 +70,14 @@ extension SpeedsterCore.Job {
         return futures.flatten(on: db.eventLoop)
     }
     
-    func update(jobChildren job: Row<SpeedsterApi.Job>, info: SpeedsterFileInfo, container c: Container, on db: Database) -> EventLoopFuture<Void> {
+    func update(jobChildren job: Row<SpeedsterApi.Job>, info: SpeedsterFileInfo, github: Github, on db: Database) -> EventLoopFuture<Void> {
         return SpeedsterApi.Workflow.query(on: db).filter(\SpeedsterApi.Workflow.jobId == job.id).delete().flatMap {
             return Phase.query(on: db).filter(\Phase.jobId == job.id).delete().flatMap {
                 var futures: [EventLoopFuture<Void>] = []
                 for w in self.workflows {
                     let workflow = SpeedsterApi.Workflow.row(from: w, job: job)
                     let future = workflow.save(on: db).flatMap { _ in
-                        return self.update(phases: workflow, coreWorkflow: w, info: info, container: c, on: db)
+                        return self.update(phases: workflow, coreWorkflow: w, info: info, github: github, on: db)
                     }
                     futures.append(future)
                 }
@@ -126,9 +124,9 @@ extension SpeedsterCore.Job {
         }
     }
     
-    func saveOnDb(_ info: SpeedsterFileInfo, container c: Container, on db: Database) -> EventLoopFuture<Void> {
+    func saveOnDb(_ info: SpeedsterFileInfo, github: Github, on db: Database) -> EventLoopFuture<Void> {
         return updateJob(info, on: db).flatMap { job in
-            return self.update(jobChildren: job, info: info, container: c, on: db).map { _ in
+            return self.update(jobChildren: job, info: info, github: github, on: db).map { _ in
                 return Void()
             }
         }

@@ -11,18 +11,18 @@ import Fluent
 
 extension Row where Model == SpeedsterApi.Job {
     
-    func schedule(_ github: SpeedsterCore.Job.GitHub? = nil, on db: Database) -> EventLoopFuture<Void> {
+    func schedule(_ github: SpeedsterCore.Job.GitHub? = nil, on db: Database) -> EventLoopFuture<Row<Scheduled>> {
         let scheduled = Scheduled.row()
         scheduled.jobId = self.id
         scheduled.requested = Date()
         scheduled.github = github
-        return scheduled.save(on: db)
+        return scheduled.save(on: db).map { _ in
+            return scheduled
+        }
     }
     
-    func scheduledResponse(_ github: SpeedsterCore.Job.GitHub? = nil, on db: Database) -> EventLoopFuture<Response> {
-        return schedule(github, on: db).map { _ in
-            return Response.make.noContent()
-        }
+    func scheduledResponse(_ github: SpeedsterCore.Job.GitHub? = nil, on db: Database) -> EventLoopFuture<Row<Scheduled>> {
+        return schedule(github, on: db)
     }
     
     func coreJob(from workflows: [Row<Workflow>], phases: [Row<Phase>], on eventLoop: EventLoop) -> EventLoopFuture<SpeedsterCore.Job> {
@@ -31,8 +31,7 @@ extension Row where Model == SpeedsterApi.Job {
             nodeLabels: self.nodeLabels,
             gitHub: self.gitHub,
             workflows: workflows.assembleAsCore(phases),
-            environmnetStart: self.environmnetStart,
-            environmnetFinish: self.environmnetFinish,
+            environment: self.environment,
             dockerDependendencies: self.dockerDependendencies,
             branches: []
         )

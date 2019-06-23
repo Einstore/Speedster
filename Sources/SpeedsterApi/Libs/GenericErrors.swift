@@ -8,17 +8,25 @@
 import Vapor
 
 
+/// Generic HTTP error
 public enum HTTPError: Error {
     
+    /// Not found
     case notFound
     
+    /// Missing query  or POST parameters
     case missingParamaters
     
 }
 
+/// Generic error
 public enum GenericError: Error {
     
+    /// Error decoding content
     case decodingError
+    
+    /// Missing expected data
+    case missingParamaters
     
 }
 

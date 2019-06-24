@@ -87,10 +87,9 @@ extension Job.Workflow {
             build: [
                 Phase.phaseCount(4)
             ],
-            postBuild: [],
-            fail: Phase.phaseEcho("I have failed you master! :("),
-            success: Phase.phaseEcho("Yay!"),
-            always: Phase.phaseEcho("I am done!"),
+            fail: [Phase.phaseEcho("I have failed you master! :(")],
+            success: [Phase.phaseEcho("Yay!")],
+            always: [Phase.phaseEcho("I am done!")],
             timeout: 2,
             timeoutOnInactivity: 1
         )
@@ -108,12 +107,9 @@ extension Job.Workflow {
             build: [
                 Phase.phaseEcho("Should have failed in pre-build")
             ],
-            postBuild: [
-                Phase.phaseEcho("Should have failed in pre-build")
-            ],
-            fail: Phase.phaseEcho("I have failed you master! :("),
-            success: Phase.phaseEcho("Yay!"),
-            always: Phase.phaseEcho("I am done!"),
+            fail: [Phase.phaseEcho("I have failed you master! :(")],
+            success: [Phase.phaseEcho("Yay!")],
+            always: [Phase.phaseEcho("I am done!")],
             timeout: 2,
             timeoutOnInactivity: 1
         )
@@ -131,12 +127,9 @@ extension Job.Workflow {
                 Phase.phaseEcho("Starting build"),
                 Phase.phaseFail()
             ],
-            postBuild: [
-                Phase.phaseEcho("Should have failed in build")
-            ],
-            fail: Phase.phaseEcho("I have failed you master! :("),
-            success: Phase.phaseEcho("Yay!"),
-            always: Phase.phaseEcho("I am done!"),
+            fail: [Phase.phaseEcho("I have failed you master! :(")],
+            success: [Phase.phaseEcho("Yay!")],
+            always: [Phase.phaseEcho("I am done!")],
             timeout: 2,
             timeoutOnInactivity: 1
         )
@@ -153,14 +146,9 @@ extension Job.Workflow {
             build: [
                 Phase.phaseEcho("Starting build")
             ],
-            postBuild: [
-                Phase.phaseEcho("Starting post-build"),
-                Phase.phaseFail(),
-                Phase.phaseEcho("Should have failed step before this one!!!")
-            ],
-            fail: Phase.phaseEcho("I have failed you master! :("),
-            success: Phase.phaseEcho("Yay!"),
-            always: Phase.phaseEcho("I am done!"),
+            fail: [Phase.phaseEcho("I have failed you master! :(")],
+            success: [Phase.phaseEcho("Yay!")],
+            always: [Phase.phaseEcho("I am done!")],
             timeout: 2,
             timeoutOnInactivity: 1
         )
@@ -180,12 +168,9 @@ extension Job.Workflow {
                 Phase.phasePwd(),
                 Phase.phaseLs()
             ],
-            postBuild: [
-                Phase.phaseEcho("Finishing \(customName) workflow"),
-            ],
-            fail: Phase.phaseEcho("I have failed you master! :("),
-            success: Phase.phaseEcho("Yay!"),
-            always: Phase.phaseEcho("I am done!"),
+            fail: [Phase.phaseEcho("I have failed you master! :(")],
+            success: [Phase.phaseEcho("Yay!")],
+            always: [Phase.phaseEcho("I am done!")],
             timeout: 3600,
             timeoutOnInactivity: 1800
         )
@@ -202,12 +187,9 @@ extension Job.Workflow {
             build: [
                 Phase.phaseLs()
             ],
-            postBuild: [
-                Phase.phaseEcho("Finishing \(customName) workflow"),
-            ],
-            fail: Phase.phaseEcho("I have failed you master! :("),
-            success: Phase.phaseEcho("Yay!"),
-            always: Phase.phaseEcho("I am done!"),
+            fail: [Phase.phaseEcho("I have failed you master! :(")],
+            success: [Phase.phaseEcho("Yay!")],
+            always: [Phase.phaseEcho("I am done!")],
             timeout: 10,
             timeoutOnInactivity: 5
         )
@@ -230,7 +212,7 @@ extension Job {
                 cloneGit: "git@github.com:vapor/postgres-nio.git"
             ),
             workflows: [w1, w2, w3, w4],
-            branches: [
+            pipelines: [
                 Branch(name: "master", action: .commit),
                 Branch(name: "development", action: .message("test please")),
                 Branch(
@@ -270,7 +252,7 @@ extension Job {
                     ]
                 )
             ],
-            branches: [
+            pipelines: [
                 Branch(name: "master", action: .commit),
                 Branch(name: "development", action: .message("test please")),
                 Branch(
@@ -296,7 +278,7 @@ extension Job {
                 cloneGit: "git@github.com:vapor/postgres-nio.git"
             ),
             workflows: [w1, w2, w3, w4],
-            branches: [
+            pipelines: [
                 Branch(name: "master", action: .commit),
                 Branch(name: "development", action: .message("test please")),
                 Branch(
@@ -324,7 +306,7 @@ extension Job {
                 cloneGit: "git@github.com:vapor/postgres-nio.git"
             ),
             workflows: [w1, w2, w3, w4, w5],
-            branches: [
+            pipelines: [
                 Branch(name: "master", action: .commit),
                 Branch(name: "development", action: .message("test please")),
                 Branch(

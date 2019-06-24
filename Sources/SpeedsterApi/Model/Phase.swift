@@ -21,7 +21,13 @@ public struct Phase: Model {
         case pre = 1
         
         /// Post-build phase
-        case post = 2
+        case success = 2
+        
+        /// On fail phase
+        case fail = 3
+        
+        /// Always phase
+        case always = 4
         
     }
     
@@ -43,10 +49,10 @@ public struct Phase: Model {
     public let order = Field<Int>("order")
     
     /// Command to be executed
-    public let command = Field<String>("command")
+    public let command = Field<String>("cmd")
     
     /// Phase description, informative only
-    public let descriptionText = Field<String?>("description")
+    public let descriptionText = Field<String?>("desc")
     
     /// Stage (pre-build => setup environment, build, post-build => clear environment)
     public let stage = Field<Stage>("stage", dataType: .int)

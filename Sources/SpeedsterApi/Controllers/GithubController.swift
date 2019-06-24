@@ -64,8 +64,8 @@ final class GithubController: Controller {
         r.post("github", ":githubjob_id", "webhooks", "reset") { req -> EventLoopFuture<Response> in
             let id = req.parameters.get("githubjob_id", as: Speedster.DbIdType.self)
             return GitHubJob.query(on: self.db)
-                .join(\Job.id, to: \GitHubJob.jobId)
-                .filter(\Job.id == id)
+                .join(\Root.id, to: \GitHubJob.jobId)
+                .filter(\Root.id == id)
                 .firstUnwrapped().flatMap { job in
                     let infos = [
                         SpeedsterFileInfo(

@@ -116,14 +116,14 @@ class GithubManager {
     func update(orgStats orgs: [Row<Organization>]) -> EventLoopFuture<Void> {
         var futures: [EventLoopFuture<Void>] = []
         for org in orgs {
-            let future: EventLoopFuture<Void> = Job.query(on: self.db)
-                .join(\GitHubJob.jobId, to: \Job.id)
+            let future: EventLoopFuture<Void> = Root.query(on: self.db)
+                .join(\GitHubJob.jobId, to: \Root.id)
                 .filter(\GitHubJob.organization == org.name)
                 .count().flatMap { totalJobs in
-                    return Job.query(on: self.db)
-                        .join(\GitHubJob.jobId, to: \Job.id)
+                    return Root.query(on: self.db)
+                        .join(\GitHubJob.jobId, to: \Root.id)
                         .filter(\GitHubJob.organization == org.name)
-                        .filter(\Job.disabled == 0)
+                        .filter(\Root.disabled == 0)
                         .count().flatMap { activeJobs in
                             org.activeJobs = activeJobs
                             org.totalJobs = totalJobs
@@ -292,8 +292,8 @@ class GithubManager {
         organization.disabled = 1
         organization.activeJobs = 0
         return organization.save(on: db).flatMap { _ in
-            return Job.query(on: self.db)
-                .join(\GitHubJob.jobId, to: \Job.id)
+            return Root.query(on: self.db)
+                .join(\GitHubJob.jobId, to: \Root.id)
                 .filter(\GitHubJob.organization == organization.name)
                 .set(["disabled": .custom(true)])
                 .update()

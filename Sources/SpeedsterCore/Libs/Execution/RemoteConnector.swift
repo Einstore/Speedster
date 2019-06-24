@@ -78,6 +78,18 @@ class RemoteExecutor: Executor {
         }
     }
     
+    func run(_ bash: String) throws -> Int {
+        guard let ssh = ssh else {
+            throw Error.fail("No SSH")
+        }
+        let res = try ssh.execute(bash, output: { string in
+            if !string.isEmpty {
+                output?(string, nil)
+            }
+        })
+        return Int(res)
+    }
+    
     func close() throws {
         try ssh?.execute("exit")
     }

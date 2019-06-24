@@ -38,20 +38,20 @@ public struct Workflow: Model {
     public let environment = Field<SpeedsterCore.Job.Env?>("environment")
     
     /// Perform on workflow fail (before always)
-    public let fail = Field<SpeedsterCore.Job.Workflow.Phase?>("fail")
+    public let fail = Field<[SpeedsterCore.Job.Workflow.Phase]?>("fail")
     
     /// Perform on workflow success (before always)
-    public let success = Field<SpeedsterCore.Job.Workflow.Phase?>("success")
+    public let success = Field<[SpeedsterCore.Job.Workflow.Phase]?>("success")
     
     /// Always perform action wherever workflow succeeds of fails (always last to run)
-    public let always = Field<SpeedsterCore.Job.Workflow.Phase?>("always")
+    public let always = Field<[SpeedsterCore.Job.Workflow.Phase]?>("always")
     
 }
 
 
 extension Workflow {
     
-    static func row(from workflow: SpeedsterCore.Job.Workflow, job: Row<Job>) -> Row<Workflow> {
+    static func row(from workflow: SpeedsterCore.Job.Workflow, job: Row<Root>) -> Row<Workflow> {
         let row = Workflow.row()
         row.jobId = job.id
         row.name = workflow.name

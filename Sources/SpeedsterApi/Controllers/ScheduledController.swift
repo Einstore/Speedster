@@ -30,8 +30,8 @@ final class ScheduledController: Controller {
                 container: c,
                 on: self.db
             )
-            return Job.query(on: self.db)
-                .filter(\Job.id == id)
+            return Root.query(on: self.db)
+                .filter(\Root.id == id)
                 .firstUnwrapped().flatMap { job in
                     return GitHubJob.query(on: self.db)
                         .filter(\GitHubJob.jobId == job.id)
@@ -66,8 +66,8 @@ final class ScheduledController: Controller {
         r.get("jobs", "scheduled") { req -> EventLoopFuture<Response> in
             // TODO: Remove Scheduled query when .alsoDecode becomes available!!!!
             return Scheduled.query(on: self.db).all().flatMap { scheduled in
-                return Job.query(on: self.db)
-                    .join(\Scheduled.jobId, to: \Job.id)
+                return Root.query(on: self.db)
+                    .join(\Scheduled.jobId, to: \Root.id)
                     .sort(\Scheduled.requested, .ascending)
                     .all().map { jobs in
                         return jobs.map { job in

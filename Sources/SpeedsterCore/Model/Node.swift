@@ -54,3 +54,15 @@ public struct Node: Content {
     }
     
 }
+
+
+extension Node {
+    
+    public func run(bash command: String, on eventLoop: EventLoop, output: ((String) -> ())? = nil) throws -> Int {
+        let ex = Executioner(node: self, on: eventLoop, output: { out, id in
+            output?(out)
+        })
+        return try ex.run(bash: command)
+    }
+    
+}

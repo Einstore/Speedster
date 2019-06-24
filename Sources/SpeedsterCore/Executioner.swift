@@ -10,20 +10,24 @@ import Vapor
 
 public class Executioner {
     
+    public enum Error: Swift.Error {
+        case missingJob
+    }
+    
     /// Connector
     private(set) var executor: Executor
     
     /// Job to be executed
-    let job: Job
+    let job: Job?
     
     let eventLoop: EventLoop
     
-    var output: ExecutorOutput
+    var output: ExecutorOutput?
     
     var processed: [String] = []
     
     /// Initializer
-    public init(job: Job, node: Node, on eventLoop: EventLoop, output: @escaping ExecutorOutput) {
+    public init(job: Job? = nil, node: Node, on eventLoop: EventLoop, output: ExecutorOutput? = nil) {
         self.eventLoop = eventLoop
         self.job = job
         self.output = output
@@ -37,34 +41,50 @@ public class Executioner {
         executor.output = { out, identifier in
             let out = "[\(node.host)] \(out)"
             eventLoop.execute {
-                self.output(out, identifier)
+                self.output?(out, identifier)
             }
         }
     }
     
-    public  typealias FailedClosure = ((Error) -> ())
+    public  typealias FailedClosure = ((Swift.Error) -> ())
     
     private func run(workflow: Job.Workflow, failed: @escaping FailedClosure) throws {
+        guard let job = self.job else {
+            throw Error.missingJob
+        }
         //let address = Unmanaged.passUnretained().toOpaque()
         let identifier = try MD5.hash(.string("\(workflow)"))
         processed.append("\(identifier.string())")
         do {
             for phase in workflow.preBuild {
-                try self.executor.run(phase, identifier: self.job.identifier)
+                try self.executor.run(phase, identifier: job.workspaceName)
             }
             for phase in workflow.build {
-                try self.executor.run(phase, identifier: self.job.identifier)
+                try self.executor.run(phase, identifier: job.workspaceName)
             }
-            for phase in workflow.postBuild {
-                try self.executor.run(phase, identifier: self.job.identifier)
+            for phase in workflow.success ?? [] {
+                try self.executor.run(phase, identifier: job.workspaceName)
             }
-            for workflow in self.job.workflows.filter({ $0.dependsOn == workflow.name }) {
+            for phase in workflow.always ?? [] {
+                try self.executor.run(phase, identifier: job.workspaceName)
+            }
+            for workflow in job.workflows.filter({ $0.dependsOn == workflow.name }) {
                 let identifier = try MD5.hash(.string("\(workflow)"))
                 if !processed.contains(identifier.string()) {
                     try self.run(workflow: workflow, failed: failed)
                 }
             }
         } catch {
+            do {
+                for phase in workflow.fail ?? [] {
+                    try self.executor.run(phase, identifier: job.workspaceName)
+                }
+            } catch {
+                eventLoop.execute {
+                    failed(error)
+                }
+                return
+            }
             eventLoop.execute {
                 failed(error)
             }
@@ -73,20 +93,32 @@ public class Executioner {
     
     /// Execute job
     public func run(finished: @escaping (() -> ()), failed: @escaping FailedClosure) {
+        guard let job = self.job else {
+            self.eventLoop.execute {
+                failed(Error.missingJob)
+            }
+            return
+        }
         DispatchQueue.global(qos: .background).async {
             do {
-                for workflow in self.job.workflows.filter({ $0.dependsOn == nil || $0.dependsOn?.isEmpty == true }) {
+                for workflow in job.workflows.filter({ $0.dependsOn == nil || $0.dependsOn?.isEmpty == true }) {
                     do {
                         try self.run(workflow: workflow, failed: failed)
                         if let success = workflow.success {
-                            try self.executor.run(success, identifier: self.job.identifier)
+                            for p in success {
+                                try self.executor.run(p, identifier: job.workspaceName)
+                            }
                         }
                         if let always = workflow.always {
-                            try self.executor.run(always, identifier: self.job.identifier)
+                            for p in always {
+                                try self.executor.run(p, identifier: job.workspaceName)
+                            }
                         }
                     } catch {
                         if let fail = workflow.fail {
-                            try self.executor.run(fail, identifier: self.job.identifier)
+                            for p in fail {
+                                try self.executor.run(p, identifier: job.workspaceName)
+                            }
                         }
                         throw error
                     }
@@ -102,7 +134,12 @@ public class Executioner {
         }
     }
     
+    @discardableResult public func run(bash: String) throws -> Int {
+        return try executor.run(bash)
+    }
+    
     deinit {
+        // TODO: This neeeds to be called!!!!!!!!!!!!!!!
         print(":)")
     }
     

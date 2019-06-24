@@ -22,7 +22,7 @@ class BuildManager {
         self.db = database
     }
     
-    func build(_ job: Row<Job>) -> EventLoopFuture<Void> {
+    func build(_ job: Row<Root>) -> EventLoopFuture<Void> {
         fatalError()
     }
     

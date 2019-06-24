@@ -53,6 +53,13 @@ class LocalExecutor: Executor {
         }
     }
     
+    func run(_ bash: String) throws -> Int {
+        let context = CustomContext(main)
+        let res = context.run(bash: bash)
+        output?(res.stdout, nil)
+        return res.exitcode
+    }
+    
     func close() throws {
         
     }

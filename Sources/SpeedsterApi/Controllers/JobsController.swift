@@ -20,10 +20,10 @@ final class JobsController: Controller {
     }
     
     func routes(_ r: Routes, _ c: Container) throws {
-        r.get("jobs", ":job_id") { req -> EventLoopFuture<Row<Job>> in
+        r.get("jobs", ":job_id") { req -> EventLoopFuture<Row<Root>> in
             let id = req.parameters.get("job_id", as: Speedster.DbIdType.self)
-            return Job.query(on: self.db)
-                .filter(\Job.id == id)
+            return Root.query(on: self.db)
+                .filter(\Root.id == id)
                 .firstUnwrapped()
         }
         
@@ -47,8 +47,8 @@ final class JobsController: Controller {
         
         r.get("jobs") { req -> EventLoopFuture<Response> in
             return GitHubJob.query(on: self.db).all().flatMap { githubJobs in
-                return Job.query(on: self.db)
-                    .sort(\Job.name, .ascending)
+                return Root.query(on: self.db)
+                    .sort(\Root.name, .ascending)
                     .all().map { jobs in
                         return jobs.map { job in job.asShort(managed: githubJobs.contains(where: { git in
                             job.id == git.id

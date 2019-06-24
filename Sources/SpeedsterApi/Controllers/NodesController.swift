@@ -10,6 +10,10 @@ import Fluent
 
 final class NodesController: Controller {
     
+    enum Error: Swift.Error {
+        case errorExitCode
+    }
+    
     let db: Database
     
     init(_ db: Database) {
@@ -35,21 +39,37 @@ final class NodesController: Controller {
         
         r.get("nodes", ":node_id") { req -> EventLoopFuture<Response> in
             let id = req.parameters.get("node_id", as: Speedster.DbIdType.self)
-            return Node.find(id, on: self.db).flatMapThrowing { node in
-                guard let node = node else {
-                    throw HTTPError.notFound
-                }
+            return Node.find(failing: id, on: self.db).map { node in
                 return node.asDisplayResponse()
+            }
+        }
+        
+        r.post("nodes", ":node_id", "install-docker") { req -> EventLoopFuture<String> in
+            let id = req.parameters.get("node_id", as: Speedster.DbIdType.self)
+            return Node.find(failing: id, on: self.db).flatMap { node in
+                guard let coreNode = try? node.asCore() else {
+                    return c.eventLoop.makeFailedFuture(GenericError.decodingError)
+                }
+                do {
+                    var output = ""
+                    let res = try coreNode.run(bash: "ls", on: c.eventLoop) { out in
+                        output += out
+                    }
+                    if res == 0 {
+                        return c.eventLoop.makeSucceededFuture(output)
+                    } else {
+                        return c.eventLoop.makeFailedFuture(Error.errorExitCode)
+                    }
+                } catch {
+                    return c.eventLoop.makeFailedFuture(error)
+                }
             }
         }
         
         r.put("nodes", ":node_id") { req -> EventLoopFuture<Response> in
             let id = req.parameters.get("node_id", as: Speedster.DbIdType.self)
             let nodeData = try req.content.decode(Node.Post.self)
-            return Node.find(id, on: self.db).flatMap { node in
-                guard let node = node else {
-                    return req.eventLoop.makeFailedFuture(HTTPError.notFound)
-                }
+            return Node.find(failing: id, on: self.db).flatMap { node in
                 node.update(from: nodeData)
                 return node.update(on: self.db).map { node.asDisplayResponse() }
             }
@@ -57,10 +77,7 @@ final class NodesController: Controller {
         
         r.delete("nodes", ":node_id") { req -> EventLoopFuture<Response> in
             let id = req.parameters.get("node_id", as: Speedster.DbIdType.self)
-            return Node.find(id, on: self.db).flatMap { node in
-                guard let node = node else {
-                    return req.eventLoop.makeFailedFuture(HTTPError.notFound)
-                }
+            return Node.find(failing: id, on: self.db).flatMap { node in
                 return node.delete(on: self.db).asDeletedResponse(on: c)
             }
         }

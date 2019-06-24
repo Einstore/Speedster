@@ -9,7 +9,7 @@ import Fluent
 
 
 /// Executable job, has phases and runs
-public struct Job: Model {
+public struct Root: Model {
     
     public struct Short: Content {
         
@@ -29,7 +29,7 @@ public struct Job: Model {
             case managed
         }
         
-        public init(_ row: Row<Job>, _ managed: Bool? = nil) {
+        public init(_ row: Row<Root>, _ managed: Bool? = nil) {
             self.id = row.id
             self.name = row.name
             self.gitHub = row.gitHub
@@ -44,7 +44,7 @@ public struct Job: Model {
         
     }
     
-    public static let shared = Job()
+    public static let shared = Root()
     public static let entity = "jobs"
     
     public let id = Field<Speedster.DbIdType?>("id")
@@ -73,16 +73,16 @@ public struct Job: Model {
 }
 
 
-extension Row where Model == Job {
+extension Row where Model == Root {
     
-    public func asShort(managed: Bool? = nil) -> Job.Short {
-        return Job.Short(self, managed)
+    public func asShort(managed: Bool? = nil) -> Root.Short {
+        return Root.Short(self, managed)
     }
     
 }
 
 
-extension Array where Element == Row<Job> {
+extension Array where Element == Row<Root> {
     
     @inlinable public func map<T>(toResponse status: HTTPStatus = .ok, headers: HTTPHeaders = [:], transform: (Element) throws -> T) rethrows -> Response where T: Encodable {
         return try map({ try transform($0) }).asDisplayResponse()

@@ -53,17 +53,14 @@ public struct Job: Content {
         /// Build phases
         public let build: [Phase]
         
-        /// Post-build phases
-        public let postBuild: [Phase]
+        /// Phase description, informative only
+        public let fail: [Phase]?
         
         /// Phase description, informative only
-        public let fail: Phase?
+        public let success: [Phase]?
         
         /// Phase description, informative only
-        public let success: Phase?
-        
-        /// Phase description, informative only
-        public let always: Phase?
+        public let always: [Phase]?
         
         /// Docker dependencies
         public let dockerDependendencies: [Dependency]?
@@ -81,7 +78,6 @@ public struct Job: Content {
             case environment = "environment"
             case preBuild = "pre_build"
             case build
-            case postBuild = "post_build"
             case fail
             case success
             case always
@@ -98,10 +94,9 @@ public struct Job: Content {
             environment: Env? = nil,
             preBuild: [Phase],
             build: [Phase],
-            postBuild: [Phase],
-            fail: Phase? = nil,
-            success: Phase? = nil,
-            always: Phase? = nil,
+            fail: [Phase]? = nil,
+            success: [Phase]? = nil,
+            always: [Phase]? = nil,
             dockerDependendencies: [Dependency]? = nil,
             timeout: Int,
             timeoutOnInactivity: Int
@@ -112,7 +107,6 @@ public struct Job: Content {
             self.environment = environment
             self.preBuild = preBuild
             self.build = build
-            self.postBuild = postBuild
             self.fail = fail
             self.success = success
             self.always = always
@@ -206,6 +200,12 @@ public struct Job: Content {
         
         public let workflows: [Workflow]?
         
+        enum CodingKeys: String, CodingKey {
+            case name = "branch"
+            case action
+            case workflows = "jobs"
+        }
+        
         public init(name: String, action: Action, workflows: [Workflow]? = nil) {
             self.name = name
             self.action = action
@@ -245,16 +245,25 @@ public struct Job: Content {
         
         public let start: String
         public let finish: String
+        public let variables: [String: String]?
         
-        public init(start: String, finish: String) {
+        public init(
+            start: String,
+            finish: String,
+            variables: [String: String]? = nil
+            ) {
             self.start = start
             self.finish = finish
+            self.variables = variables
         }
         
     }
     
     /// Job name
     public let name: String
+    
+    /// Job identifier
+    public let identifier: String?
     
     /// Node labels
     public let nodeLabels: String?
@@ -272,35 +281,38 @@ public struct Job: Content {
     public let dockerDependendencies: [Dependency]?
     
     /// Branch management
-    public let branches: [Branch]
+    public let pipelines: [Branch]
     
     enum CodingKeys: String, CodingKey {
         case name
+        case identifier
         case nodeLabels = "node_labels"
         case gitHub = "github"
-        case workflows
+        case workflows = "jobs"
         case environment = "environment"
         case dockerDependendencies = "docker_dependencies"
-        case branches
+        case pipelines
     }
     
     /// Initializer
     public init(
         name: String,
+        identifier: String? = nil,
         nodeLabels: String? = nil,
         gitHub: GitHub? = nil,
         workflows: [Workflow],
         environment: Env? = nil,
         dockerDependendencies: [Dependency]? = nil,
-        branches: [Branch]
+        pipelines: [Branch]
         ) {
         self.name = name
+        self.identifier = identifier
         self.nodeLabels = nodeLabels
         self.gitHub = gitHub
         self.workflows = workflows
-        self.branches = branches
         self.environment = environment
         self.dockerDependendencies = dockerDependendencies
+        self.pipelines = pipelines
     }
     
 }
@@ -308,8 +320,8 @@ public struct Job: Content {
 
 extension Job {
     
-    public var identifier: String {
-        return name
+    public var workspaceName: String {
+        return name + "-" + (identifier ?? "direct")
     }
     
 }

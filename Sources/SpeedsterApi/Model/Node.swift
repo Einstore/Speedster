@@ -73,8 +73,8 @@ public struct Node: Model {
             self.port = row.port
             self.user = row.user ?? (row.auth == .password ? "root" : nil)
             self.labels = row.labels
-            self.password = row.password != nil
-            self.publicKey = row.publicKey != nil
+            self.password = (row.password?.count ?? 0) > 0
+            self.publicKey = (row.publicKey?.count ?? 0) > 0
             self.auth = row.auth
             self.executors = row.executors
             self.running = row.running

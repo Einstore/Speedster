@@ -11,7 +11,7 @@ import Fluent
 import GitHubKit
 
 
-extension Row where Model == Job {
+extension Row where Model == Root {
     
     func update(from job: SpeedsterCore.Job) {
         self.name = job.name
@@ -65,12 +65,14 @@ extension SpeedsterCore.Job {
         
         addTo(futures: coreWorkflow.preBuild, stage: .pre)
         addTo(futures: coreWorkflow.build, stage: .build)
-        addTo(futures: coreWorkflow.postBuild, stage: .post)
+        addTo(futures: coreWorkflow.success ?? [], stage: .success)
+        addTo(futures: coreWorkflow.fail ?? [], stage: .fail)
+        addTo(futures: coreWorkflow.always ?? [], stage: .always)
         
         return futures.flatten(on: db.eventLoop)
     }
     
-    func update(jobChildren job: Row<SpeedsterApi.Job>, info: SpeedsterFileInfo, github: Github, on db: Database) -> EventLoopFuture<Void> {
+    func update(jobChildren job: Row<SpeedsterApi.Root>, info: SpeedsterFileInfo, github: Github, on db: Database) -> EventLoopFuture<Void> {
         return SpeedsterApi.Workflow.query(on: db).filter(\SpeedsterApi.Workflow.jobId == job.id).delete().flatMap {
             return Phase.query(on: db).filter(\Phase.jobId == job.id).delete().flatMap {
                 var futures: [EventLoopFuture<Void>] = []
@@ -86,8 +88,8 @@ extension SpeedsterCore.Job {
         }
     }
     
-    func save(on db: Database) -> EventLoopFuture<Row<Job>> {
-        let job = Job.row()
+    func save(on db: Database) -> EventLoopFuture<Row<Root>> {
+        let job = Root.row()
         job.update(from: self)
         job.disabled = 0
         return job.save(on: db).map { _ in
@@ -95,15 +97,15 @@ extension SpeedsterCore.Job {
         }
     }
     
-    fileprivate func updateJob(_ info: SpeedsterFileInfo, on db: Database) -> EventLoopFuture<Row<Job>> {
-        return Job
+    fileprivate func updateJob(_ info: SpeedsterFileInfo, on db: Database) -> EventLoopFuture<Row<Root>> {
+        return Root
             .query(on: db)
-            .join(\GitHubJob.jobId, to: \Job.id)
+            .join(\GitHubJob.jobId, to: \Root.id)
             .filter(\GitHubJob.organization == info.org)
             .filter(\GitHubJob.repo == info.repo)
             .first().flatMap { job in
                 guard let job = job else {
-                    let job = Job.row()
+                    let job = Root.row()
                     job.update(from: self)
                     job.disabled = info.disabled ? 1 : 0
                     return job.save(on: db).flatMap { _ in

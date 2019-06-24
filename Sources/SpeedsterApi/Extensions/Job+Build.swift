@@ -9,7 +9,7 @@ import SpeedsterCore
 import Fluent
 
 
-extension Row where Model == SpeedsterApi.Job {
+extension Row where Model == SpeedsterApi.Root {
     
     func schedule(_ github: SpeedsterCore.Job.GitHub? = nil, on db: Database) -> EventLoopFuture<Row<Scheduled>> {
         let scheduled = Scheduled.row()
@@ -33,7 +33,7 @@ extension Row where Model == SpeedsterApi.Job {
             workflows: workflows.assembleAsCore(phases),
             environment: self.environment,
             dockerDependendencies: self.dockerDependendencies,
-            branches: []
+            pipelines: []
         )
         return eventLoop.makeSucceededFuture(job)
     }

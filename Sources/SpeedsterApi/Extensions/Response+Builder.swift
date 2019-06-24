@@ -24,7 +24,7 @@ public struct ResponseMakeProperty {
     
     public static func deleted(headers: HTTPHeaders = [:]) -> Response {
         return Response(
-            status: .ok,
+            status: .noContent,
             headers: headers,
             body: Response.Body()
         )

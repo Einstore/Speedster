@@ -35,7 +35,9 @@ extension Row where Model == Workflow {
             nodeLabels: self.nodeLabels,
             preBuild: phases.filterAsCore(.pre),
             build: phases.filterAsCore(.build),
-            postBuild: phases.filterAsCore(.post),
+            fail: phases.filterAsCore(.fail),
+            success: phases.filterAsCore(.success),
+            always: phases.filterAsCore(.always),
             timeout: self.timeout,
             timeoutOnInactivity: self.timeoutOnInactivity
         )

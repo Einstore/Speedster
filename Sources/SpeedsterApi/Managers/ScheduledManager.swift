@@ -10,7 +10,7 @@ import Fluent
 
 class ScheduledManager {
     
-    typealias Tuple = (job: Row<Job>, scheduled: Row<Scheduled>)
+    typealias Tuple = (job: Row<Root>, scheduled: Row<Scheduled>)
     
     let db: Database
     
@@ -22,8 +22,8 @@ class ScheduledManager {
         return Scheduled.query(on: self.db)
             .filter(\Scheduled.id == id)
             .firstUnwrapped().flatMap { scheduled in
-                return Job.query(on: self.db)
-                    .filter(\Job.id == scheduled.jobId)
+                return Root.query(on: self.db)
+                    .filter(\Root.id == scheduled.jobId)
                     .firstUnwrapped().map { job in
                         return (job, scheduled)
                 }

@@ -11,7 +11,7 @@ import Fluent
 
 extension Speedster {
     
-    public static func build(job: Row<SpeedsterApi.Job>, node: Row<SpeedsterApi.Node>, db: Database) throws -> EventLoopFuture<Void> {
+    public static func build(job: Row<SpeedsterApi.Root>, node: Row<SpeedsterApi.Node>, db: Database) throws -> EventLoopFuture<Void> {
         return job.relatedData(on: db).flatMap { relatedData in
             return job.coreJob(from: relatedData.workflows, phases: relatedData.phases, on: db.eventLoop).flatMap { coreJob in
                 let run = Run.row()

@@ -13,7 +13,7 @@ import SpeedsterCore
 public struct Scheduled: Model {
     
     public struct Wrapper: Content {
-        public let job: Job.Short
+        public let job: Root.Short
         public let scheduled: Scheduled.Short?
     }
     

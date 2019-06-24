@@ -20,41 +20,15 @@ final class RootController: Controller {
     }
     
     func routes(_ r: Routes, _ c: Container) throws {
-        r.get("jobs", ":job_id") { req -> EventLoopFuture<Row<Root>> in
+        r.get("jobs", ":job_id") { req -> EventLoopFuture<Row<GitHubJob>> in
             let id = req.parameters.get("job_id", as: Speedster.DbIdType.self)
-            return Root.query(on: self.db)
-                .filter(\Root.id == id)
+            return GitHubJob.query(on: self.db)
+                .filter(\GitHubJob.id == id)
                 .firstUnwrapped()
         }
         
-        r.post("jobs", "add") { req -> EventLoopFuture<Response> in
-            let post = try req.content.decode(SpeedsterCore.Root.self, using: YAMLDecoder())
-            let github = try c.make(Github.self)
-            return post.save(on: self.db).flatMap { job in
-                let info = SpeedsterFileInfo(
-                    job: job.id,
-                    org: "",
-                    repo: "",
-                    speedster: true,
-                    invalid: false,
-                    disabled: false
-                )
-                return post.update(jobChildren: job, info: info, github: github, on: self.db).flatMap { _ in
-                    return job.asShort().encodeResponse(status: .created, for: req)
-                }
-            }
-        }
-        
-        r.get("jobs") { req -> EventLoopFuture<Response> in
-            return GitHubRoot.query(on: self.db).all().flatMap { githubJobs in
-                return Root.query(on: self.db)
-                    .sort(\Root.name, .ascending)
-                    .all().map { jobs in
-                        return jobs.map { job in job.asShort(managed: githubJobs.contains(where: { git in
-                            job.id == git.id
-                        })) }
-                }
-            }
+        r.get("jobs") { req -> EventLoopFuture<[Row<GitHubJob>]> in
+            return GitHubJob.query(on: self.db).all()
         }
         
         r.post("jobs", "validate") { req -> SpeedsterCore.Root in

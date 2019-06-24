@@ -116,14 +116,12 @@ class GithubManager {
     func update(orgStats orgs: [Row<Organization>]) -> EventLoopFuture<Void> {
         var futures: [EventLoopFuture<Void>] = []
         for org in orgs {
-            let future: EventLoopFuture<Void> = Root.query(on: self.db)
-                .join(\GitHubRoot.rootId, to: \Root.id)
-                .filter(\GitHubRoot.organization == org.name)
+            let future: EventLoopFuture<Void> = GitHubJob.query(on: self.db)
+                .filter(\GitHubJob.org == org.name)
                 .count().flatMap { totalJobs in
-                    return Root.query(on: self.db)
-                        .join(\GitHubRoot.rootId, to: \Root.id)
-                        .filter(\GitHubRoot.organization == org.name)
-                        .filter(\Root.disabled == 0)
+                    return GitHubJob.query(on: self.db)
+                        .filter(\GitHubJob.org == org.name)
+                        .filter(\GitHubJob.disabled == 0)
                         .count().flatMap { activeJobs in
                             org.activeJobs = activeJobs
                             org.totalJobs = totalJobs
@@ -143,26 +141,33 @@ class GithubManager {
                 continue
             }
             var fileInfo = file.asInfo()
-            let decodedJob: SpeedsterCore.Root?
             if let repo = repos.first(where: { $0.name == file.repo && $0.owner.login == file.org }), repo.archived == true {
                 fileInfo.disabled = true
-                decodedJob = nil
             } else {
                 fileInfo.disabled = false
                 do {
-                    decodedJob = try file.decodeCoreJob()
+                    _ = try file.decodeCoreJob()
                     fileInfo.invalid = false
-                } catch {
-                    decodedJob = nil
-                }
+                } catch { }
             }
             infos.append(fileInfo)
             
-            guard let job = decodedJob else {
-                continue
+            let future: EventLoopFuture<Void> = GitHubJob.query(on: self.db)
+                .filter(\GitHubJob.org == fileInfo.org)
+                .filter(\GitHubJob.repo == fileInfo.repo)
+                .first().flatMap { githubJob in
+                    guard githubJob == nil else {
+                        return self.container.eventLoop.future()
+                    }
+                    let githubJob = GitHubJob.row()
+                    githubJob.server = "not implemented"
+                    githubJob.user = "not implemented"
+                    githubJob.accessToken = "not implemented"
+                    githubJob.org = fileInfo.org
+                    githubJob.repo = fileInfo.repo
+                    githubJob.disabled = fileInfo.disabled ? 1 : 0
+                    return githubJob.save(on: self.db)
             }
-            
-            let future = job.saveOnDb(fileInfo, github: github, on: db)
             futures.append(future)
         }
         return futures.flatten(on: self.container.eventLoop).map({ infos })
@@ -172,7 +177,7 @@ class GithubManager {
         fatalError()
     }
     
-    func getCommitForSchedule(org: String, repo: String, ref: Scheduled.Ref? = nil) -> EventLoopFuture<Commit> {
+    func getCommitForSchedule(org: String, repo: String, ref: GitReference? = nil) -> EventLoopFuture<Commit> {
         do {
             guard let ref = ref else {
                 return try GitHubKit.Branch.query(on: github).get(org: org, repo: repo, branch: "master").latestCommit()
@@ -191,19 +196,16 @@ class GithubManager {
         }
     }
     
-    func blob(_ fileName: String, for location: SpeedsterCore.Root.GitHub.Location) -> EventLoopFuture<GitBlob> {
-        guard let commit = location.commit else {
-            return self.db.eventLoop.makeFailedFuture(GenericError.decodingError)
-        }
+    func blob(_ fileName: String, for location: GitLocation) -> EventLoopFuture<GitBlob> {
         do {
             return try GitHubKit.GitCommit.query(on: self.github).get(
-                org: location.organization,
+                org: location.org,
                 repo: location.repo,
-                sha: commit
+                sha: location.commit
                 ).flatMap { commit in
                     do {
                         return try GitHubKit.GitTree.query(on: self.github).get(
-                            org: location.organization,
+                            org: location.org,
                             repo: location.repo,
                             sha: commit.tree.sha
                             ).flatMap { tree in
@@ -217,7 +219,7 @@ class GithubManager {
                                     }
                                     do {
                                         return try GitHubKit.GitBlob.query(on: self.github).get(
-                                            org: location.organization,
+                                            org: location.org,
                                             repo: location.repo,
                                             sha: object.sha
                                             )
@@ -236,7 +238,7 @@ class GithubManager {
         }
     }
     
-    func file(_ fileName: String, for location: SpeedsterCore.Root.GitHub.Location) -> EventLoopFuture<Data> {
+    func file(_ fileName: String, for location: GitLocation) -> EventLoopFuture<Data> {
         return blob(fileName, for: location).flatMap { blob in
             guard let data = Data(base64Encoded: blob.content, options: [.ignoreUnknownCharacters]) else {
                 return self.db.eventLoop.makeFailedFuture(GenericError.decodingError)
@@ -245,7 +247,7 @@ class GithubManager {
         }
     }
     
-    func speedster(for location: SpeedsterCore.Root.GitHub.Location) -> EventLoopFuture<SpeedsterCore.Root> {
+    func speedster(for location: GitLocation) -> EventLoopFuture<SpeedsterCore.Root> {
         return blob("Speedster.yml", for: location).flatMap { blob in
             do {
                 guard
@@ -262,12 +264,12 @@ class GithubManager {
         }
     }
     
-    // TODO: Re-evaluate, following method seems to do the same as the previous one!!!!
-    func fileData(_ repos: [Repo], file: String = "Speedster.yml") -> EventLoopFuture<[SpeedsterFileData]> {
+//    // TODO: Re-evaluate, following method seems to do the same as the previous one!!!!
+    func fileData(_ repos: [Repo]) -> EventLoopFuture<[SpeedsterFileData]> {
         var futures: [EventLoopFuture<SpeedsterFileData>] = []
         do {
             for repo in repos {
-                let future = try GitHubKit.File.query(on: github).get(org: repo.owner.login, repo: repo.name, path: file).download(on: github).map({ data in
+                let future = try GitHubKit.File.query(on: github).get(org: repo.owner.login, repo: repo.name, path: "Speedster.yml").download(on: github).map({ data in
                     return SpeedsterFileData(
                         org: repo.owner.login,
                         repo: repo.name,
@@ -289,15 +291,16 @@ class GithubManager {
     }
     
     func disable(organization: Row<Organization>) -> EventLoopFuture<Void> {
-        organization.disabled = 1
-        organization.activeJobs = 0
-        return organization.save(on: db).flatMap { _ in
-            return Root.query(on: self.db)
-                .join(\GitHubRoot.rootId, to: \Root.id)
-                .filter(\GitHubRoot.organization == organization.name)
-                .set(["disabled": .custom(true)])
-                .update()
-        }
+        fatalError()
+//        organization.disabled = 1
+//        organization.activeJobs = 0
+//        return organization.save(on: db).flatMap { _ in
+//            return Root.query(on: self.db)
+//                .join(\GitHubJob.rootId, to: \Root.id)
+//                .filter(\GitHubJob.organization == organization.name)
+//                .set(["disabled": .custom(true)])
+//                .update()
+//        }
     }
     
     func update(organizations githubOrgs: [GitHubKit.Organization]) -> EventLoopFuture<[Row<Organization>]> {

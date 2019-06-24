@@ -22,11 +22,7 @@ class BuildManager {
         self.db = database
     }
     
-    func build(_ job: Row<Root>) -> EventLoopFuture<Void> {
-        fatalError()
-    }
-    
-    func build(_ location: SpeedsterCore.Root.GitHub.Location) -> EventLoopFuture<Void> {
+    func build(_ location: GitLocation) -> EventLoopFuture<Void> {
         let githubManager = GithubManager(
             github: github,
             container: container,
@@ -57,12 +53,12 @@ class BuildManager {
         }
     }
     
-    func build(_ tuple: ScheduledManager.Tuple) -> EventLoopFuture<Void> {
-        if let location = tuple.scheduled.github?.location {
-            return build(location)
-        } else {
-            return build(tuple.job)
-        }
-    }
+//    func build(_ tuple: ScheduledManager.Tuple) -> EventLoopFuture<Void> {
+//        if let location = tuple.scheduled.github?.location {
+//            return build(location)
+//        } else {
+//            return build(tuple.job)
+//        }
+//    }
     
 }

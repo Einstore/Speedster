@@ -23,81 +23,53 @@ final class ScheduledController: Controller {
         
         r.post("jobs", ":job_id", "schedule") { req -> EventLoopFuture<Response> in
             let id = req.parameters.get("job_id", as: Speedster.DbIdType.self)
-            let post = try? req.content.decode(Scheduled.Ref.self)
+            let post = try? req.content.decode(GitReference.self)
             let github = try c.make(Github.self)
             let githubManager = GithubManager(
                 github: github,
                 container: c,
                 on: self.db
             )
-            return Root.query(on: self.db)
-                .filter(\Root.id == id)
-                .firstUnwrapped().flatMap { job in
-                    return GitHubRoot.query(on: self.db)
-                        .filter(\GitHubRoot.rootId == job.id)
-                        .first().flatMap { githubJob in
-                            guard let githubJob = githubJob else {
-                                return job.scheduledResponse(nil, on: self.db).encodeResponse(status: .created, for: req)
-                            }
-                            
-                            func schedule(for commit: Commit) -> EventLoopFuture<Row<Scheduled>> {
-                                let gh = SpeedsterCore.Root.GitHub(
-                                    cloneGit: nil,
-                                    location: SpeedsterCore.Root.GitHub.Location(
-                                        organization: githubJob.organization,
-                                        repo: githubJob.repo,
-                                        commit: commit.sha
-                                    )
-                                )
-                                return job.scheduledResponse(gh, on: self.db)
-                            }
-                            
-                            return githubManager.getCommitForSchedule(
-                                org: githubJob.organization,
-                                repo: githubJob.repo,
-                                ref: post
-                                ).flatMap { commit in
-                                    return schedule(for: commit).encodeResponse(status: .created, for: req)
-                            }
+            return GitHubJob.find(failing: id, on: self.db).flatMap { githubJob in
+                    return githubManager.getCommitForSchedule(
+                        org: githubJob.org,
+                        repo: githubJob.repo,
+                        ref: post
+                        ).flatMap { commit in
+                            return githubJob.schedule(commit.sha, on: self.db).encodeResponse(status: .created, for: req)
                     }
             }
         }
         
-        r.get("jobs", "scheduled") { req -> EventLoopFuture<Response> in
-            // TODO: Remove Scheduled query when .alsoDecode becomes available!!!!
-            return Scheduled.query(on: self.db).all().flatMap { scheduled in
-                return Root.query(on: self.db)
-                    .join(\Scheduled.jobId, to: \Root.id)
-                    .sort(\Scheduled.requested, .ascending)
-                    .all().map { jobs in
-                        return jobs.map { job in
-                            Scheduled.Wrapper(
-                                job: job.asShort(managed: true),
-                                scheduled: scheduled.first(where: { $0.jobId == job.id })?.asShort()
-                            )
-                        }
-                }
-            }
+        r.get("jobs", "scheduled") { req -> EventLoopFuture<[Row<Scheduled>]> in
+            return Scheduled.query(on: self.db).all()
         }
         
-        r.get("scheduled", ":scheduled_id") { req -> EventLoopFuture<Scheduled.Wrapper> in
+        r.get("scheduled", ":scheduled_id") { req -> EventLoopFuture<Row<Scheduled>> in
             let id = req.parameters.get("scheduled_id", as: Speedster.DbIdType.self)
-            return scheduleManager.scheduled(id).map { tuple in
-                return Scheduled.Wrapper(
-                    job: tuple.job.asShort(),
-                    scheduled: tuple.scheduled.asShort()
-                )
-            }
+            return scheduleManager.scheduled(id)
         }
         
         r.post("scheduled", ":scheduled_id", "run") { req -> EventLoopFuture<Response> in
             let id = req.parameters.get("scheduled_id", as: Speedster.DbIdType.self)
             let github = try c.make(Github.self)
-            return scheduleManager.scheduled(id).flatMap { tuple in
-                let buildManager = BuildManager(github: github, container: c, on: self.db)
-                return buildManager.build(tuple).flatMap { _ in
-                    return Scheduled.delete(failing: id, on: self.db).map {
-                        return Response.make.noContent()
+            return scheduleManager.scheduled(id).flatMap { scheduledJob in
+                return GitHubJob.find(failing: scheduledJob.jobId, on: self.db).flatMap { githubJob in
+                    let buildManager = BuildManager(github: github, container: c, on: self.db)
+                    let loc = GitLocation(
+                        org: githubJob.org,
+                        repo: githubJob.repo,
+                        commit: scheduledJob.commit
+                    )
+                    return buildManager.build(loc).flatMap { _ in
+                        return Scheduled.delete(failing: id, on: self.db).map {
+                            return Response.make.noContent()
+                        }
+                        }.flatMapError { error -> EventLoopFuture<Response> in
+                            // TODO: Write error into a log etc!!!!!!!!!!
+                            return Scheduled.delete(failing: id, on: self.db).map {
+                                return Response.make.noContent()
+                            }
                     }
                 }
             }

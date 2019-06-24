@@ -258,7 +258,7 @@ extension Root {
     
     static func rootSmall() -> Root {
         let w1 = Job.jobSmall()
-        var w2 = Job.jobSmall("Linux", env: true)
+        let w2 = Job.jobSmall("Linux", env: true)
         
         return Root(
             name: "Small root",

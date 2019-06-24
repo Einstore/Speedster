@@ -9,38 +9,42 @@ import Fluent
 import SpeedsterCore
 
 
+public struct GitReference: Codable {
+    
+    public enum RefType: String, Codable {
+        case branch
+        case commit
+        case tag
+    }
+    
+    public let value: String
+    public let type: RefType
+    
+}
+
+public struct GitLocation: Codable {
+    
+    public let org: String
+    public let repo: String
+    public let commit: String
+    
+}
+
+
 /// Single run of a phase in a job
 public struct Scheduled: Model {
-    
-    public struct Wrapper: Content {
-        public let job: Root.Short
-        public let scheduled: Scheduled.Short?
-    }
     
     public struct Short: Content {
         
         public let id: Speedster.DbIdType?
-        public let github: SpeedsterCore.Root.GitHub?
+        public let commit: String?
         public let requested: Date
         
         public init(_ row: Row<Scheduled>) {
             id = row.id
-            github = row.github
+            commit = row.commit
             requested = row.requested
         }
-        
-    }
-    
-    public struct Ref: Codable {
-        
-        public enum RefType: String, Codable {
-            case branch
-            case commit
-            case tag
-        }
-        
-        public let value: String
-        public let type: RefType
         
     }
     
@@ -52,8 +56,8 @@ public struct Scheduled: Model {
     /// Job ID
     public let jobId = Field<Speedster.DbIdType?>("job_id")
     
-    /// Github info
-    public let github = Field<SpeedsterCore.Root.GitHub?>("github")
+    /// Commit info
+    public let commit = Field<String>("commit")
     
     /// Date requested execution
     public let requested = Field<Date>("requested")

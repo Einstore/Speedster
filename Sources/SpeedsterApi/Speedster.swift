@@ -67,10 +67,7 @@ public class Speedster {
     public static func configure(migrations: inout Migrations, dbIdentifier: DatabaseID) throws {
         migrations.add(Node.autoMigration(), to: dbIdentifier)
         migrations.add(Run.autoMigration(), to: dbIdentifier)
-        migrations.add(Root.autoMigration(), to: dbIdentifier)
-        migrations.add(GitHubRoot.autoMigration(), to: dbIdentifier)
-        migrations.add(Job.autoMigration(), to: dbIdentifier)
-        migrations.add(Phase.autoMigration(), to: dbIdentifier)
+        migrations.add(GitHubJob.autoMigration(), to: dbIdentifier)
         migrations.add(Organization.autoMigration(), to: dbIdentifier)
         migrations.add(Scheduled.autoMigration(), to: dbIdentifier)
         

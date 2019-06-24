@@ -10,10 +10,6 @@ import Fluent
 
 final class NodesController: Controller {
     
-    enum Error: Swift.Error {
-        case errorExitCode
-    }
-    
     let db: Database
     
     init(_ db: Database) {
@@ -21,6 +17,8 @@ final class NodesController: Controller {
     }
     
     func routes(_ r: Routes, _ c: Container) throws {
+        let nodesManager = NodesManager(self.db)
+        
         r.get("nodes") { req -> EventLoopFuture<Response> in
             return Node.query(on: self.db).all().map { rows in
                 return rows.asDisplayResponse()
@@ -44,26 +42,12 @@ final class NodesController: Controller {
             }
         }
         
+        r.webSocket("nodes", ":node_id", "install-docker") { (req, webSocket) in
+            nodesManager.install("ls", req: req, webSocket: webSocket)
+        }
+        
         r.post("nodes", ":node_id", "install-docker") { req -> EventLoopFuture<String> in
-            let id = req.parameters.get("node_id", as: Speedster.DbIdType.self)
-            return Node.find(failing: id, on: self.db).flatMap { node in
-                guard let coreNode = try? node.asCore() else {
-                    return c.eventLoop.makeFailedFuture(GenericError.decodingError)
-                }
-                do {
-                    var output = ""
-                    let res = try coreNode.run(bash: "ls", on: c.eventLoop) { out in
-                        output += out
-                    }
-                    if res == 0 {
-                        return c.eventLoop.makeSucceededFuture(output)
-                    } else {
-                        return c.eventLoop.makeFailedFuture(Error.errorExitCode)
-                    }
-                } catch {
-                    return c.eventLoop.makeFailedFuture(error)
-                }
-            }
+            nodesManager.install("ls", req: req)
         }
         
         r.put("nodes", ":node_id") { req -> EventLoopFuture<Response> in

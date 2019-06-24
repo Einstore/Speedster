@@ -53,12 +53,4 @@ class BuildManager {
         }
     }
     
-//    func build(_ tuple: ScheduledManager.Tuple) -> EventLoopFuture<Void> {
-//        if let location = tuple.scheduled.github?.location {
-//            return build(location)
-//        } else {
-//            return build(tuple.job)
-//        }
-//    }
-    
 }

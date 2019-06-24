@@ -12,6 +12,7 @@ public class Executioner {
     
     public enum Error: Swift.Error {
         case missingJob
+        case nonZeroExit
     }
     
     /// Connector
@@ -126,16 +127,37 @@ public class Executioner {
                 self.eventLoop.execute {
                     finished()
                 }
+                try self.executor.close()
             } catch {
                 self.eventLoop.execute {
                     failed(error)
                 }
+                try? self.executor.close()
             }
         }
     }
     
-    @discardableResult public func run(bash: String) throws -> Int {
-        return try executor.run(bash)
+    public func run(bash: String, finished: @escaping (() -> ()), failed: @escaping FailedClosure) {
+        DispatchQueue.global(qos: .background).async {
+            do {
+                let res = try self.executor.run(bash)
+                guard res == 0 else {
+                    self.eventLoop.execute {
+                        failed(Error.nonZeroExit)
+                    }
+                    return
+                }
+                self.eventLoop.execute {
+                    finished()
+                }
+                try self.executor.close()
+            } catch {
+                self.eventLoop.execute {
+                    failed(error)
+                }
+                try? self.executor.close()
+            }
+        }
     }
     
     deinit {

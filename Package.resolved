@@ -128,6 +128,15 @@
         }
       },
       {
+        "package": "redis",
+        "repositoryURL": "https://github.com/vapor/redis.git",
+        "state": {
+          "branch": null,
+          "revision": "c08ccbb34532ec3fae42f7d918e05ff2213736b6",
+          "version": "4.0.0-alpha.1"
+        }
+      },
+      {
         "package": "redis-kit",
         "repositoryURL": "https://github.com/vapor/redis-kit.git",
         "state": {

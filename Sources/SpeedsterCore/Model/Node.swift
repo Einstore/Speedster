@@ -58,11 +58,11 @@ public struct Node: Content {
 
 extension Node {
     
-    public func run(bash command: String, on eventLoop: EventLoop, output: ((String) -> ())? = nil) throws -> Int {
+    public func run(bash command: String, on eventLoop: EventLoop, output: @escaping ((String) -> ()), finished: @escaping (() -> ()), failed: @escaping Executioner.FailedClosure) {
         let ex = Executioner(node: self, on: eventLoop, output: { out, id in
-            output?(out)
+            output(out)
         })
-        return try ex.run(bash: command)
+        ex.run(bash: command, finished: finished, failed: failed)
     }
     
 }

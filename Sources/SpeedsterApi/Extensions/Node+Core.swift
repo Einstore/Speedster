@@ -13,7 +13,9 @@ extension Row where Model == SpeedsterApi.Node {
     
     func asCore() throws -> SpeedsterCore.Node {
         let pass: String?
-        if let p = self.password { pass = try Secrets.decrypt(p) }
+        if let p = self.password {
+            pass = try Secrets.decrypt(p)
+        }
         else { pass = nil }
         
         let key: String?

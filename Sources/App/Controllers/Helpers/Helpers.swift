@@ -197,6 +197,28 @@ extension Root.Job {
     
 }
 
+extension Root.Pipeline {
+    
+    static func pipelines() -> [Root.Pipeline] {
+        return [
+            Root.Pipeline(
+                triggers: [
+                    Trigger(name: "master", action: .commit, jobs: ["Step 1"]),
+                    Trigger(name: "development", action: .message("test please"), jobs: ["Step 1"]),
+                    Trigger(
+                        name: "master",
+                        action: .message("build please"),
+                        jobs: ["Step 1"]
+                    )
+                ],
+                jobs: [
+                    "Step 1"
+                ]
+            )
+        ]
+    }
+    
+}
 
 extension Root {
     
@@ -212,15 +234,7 @@ extension Root {
                 cloneGit: "git@github.com:vapor/postgres-nio.git"
             ),
             jobs: [w1, w2, w3, w4],
-            pipelines: [
-                Trigger(name: "master", action: .commit, jobs: ["Step 1"]),
-                Trigger(name: "development", action: .message("test please"), jobs: ["Step 1"]),
-                Trigger(
-                    name: "master",
-                    action: .message("build please"),
-                    jobs: ["Step 1"]
-                )
-            ]
+            pipelines: Pipeline.pipelines()
         )
     }
     
@@ -250,15 +264,7 @@ extension Root {
                     ]
                 )
             ],
-            pipelines: [
-                Trigger(name: "master", action: .commit, jobs: ["Small job"]),
-                Trigger(name: "development", action: .message("test please"), jobs: ["Small job"]),
-                Trigger(
-                    name: "master",
-                    action: .message("build please"),
-                    jobs: ["Small job"]
-                )
-            ]
+            pipelines: Pipeline.pipelines()
         )
     }
     
@@ -274,17 +280,7 @@ extension Root {
                 cloneGit: "git@github.com:vapor/postgres-nio.git"
             ),
             jobs: [w1, w2, w3, w4],
-            pipelines: [
-                Trigger(name: "master", action: .commit, jobs: ["Small job"]),
-                Trigger(name: "development", action: .message("test please"), jobs: ["Small job"]),
-                Trigger(
-                    name: "master",
-                    action: .message("build please"),
-                    jobs: [
-                        "Small job"
-                    ]
-                )
-            ]
+            pipelines: Pipeline.pipelines()
         )
     }
     
@@ -302,17 +298,7 @@ extension Root {
                 cloneGit: "git@github.com:vapor/postgres-nio.git"
             ),
             jobs: [w1, w2, w3, w4, w5],
-            pipelines: [
-                Trigger(name: "master", action: .commit, jobs: ["Small job"]),
-                Trigger(name: "development", action: .message("test please"), jobs: ["Small job"]),
-                Trigger(
-                    name: "master",
-                    action: .message("build please"),
-                    jobs: [
-                        "Fail job"
-                    ]
-                )
-            ]
+            pipelines: Pipeline.pipelines()
         )
     }
     

@@ -152,68 +152,6 @@ public struct Root: Content {
         
     }
     
-    public struct Trigger: Codable {
-        
-        public enum Action: Codable {
-            
-            public enum Error: Swift.Error {
-                case decoding(String)
-            }
-            
-            case commit
-            
-            case message(String)
-            
-            enum CodingKeys: String, CodingKey {
-                case commit
-                case message
-            }
-            
-            public init(from decoder: Decoder) throws {
-                let values = try decoder.container(keyedBy: CodingKeys.self)
-                if let _ = try? values.decode(String.self, forKey: .commit) {
-                    self = .commit
-                    return
-                }
-                if let value = try? values.decode(String.self, forKey: .message) {
-                    self = .message(value)
-                    return
-                }
-                throw Error.decoding("Error decoding Action: \(dump(values))")
-            }
-            
-            public func encode(to encoder: Encoder) throws {
-                var container = encoder.container(keyedBy: CodingKeys.self)
-                switch self {
-                case .commit:
-                    try container.encode("commit", forKey: .commit)
-                case .message(let value):
-                    try container.encode(value, forKey: .message)
-                }
-            }
-            
-        }
-        
-        public let name: String
-        
-        public let action: Action
-        
-        public let jobs: [String]
-        
-        enum CodingKeys: String, CodingKey {
-            case name = "branch"
-            case action
-            case jobs = "jobs"
-        }
-        
-        public init(name: String, action: Action, jobs: [String]) {
-            self.name = name
-            self.action = action
-            self.jobs = jobs
-        }
-        
-    }
-    
     public struct Dependency: Codable {
         
         public let image: String
@@ -280,8 +218,83 @@ public struct Root: Content {
     /// Docker dependencies
     public let dockerDependendencies: [Dependency]?
     
+    public struct Pipeline: Codable {
+        
+        public struct Trigger: Codable {
+            
+            public enum Action: Codable {
+                
+                public enum Error: Swift.Error {
+                    case decoding(String)
+                }
+                
+                case commit
+                
+                case message(String)
+                
+                enum CodingKeys: String, CodingKey {
+                    case commit
+                    case message
+                }
+                
+                public init(from decoder: Decoder) throws {
+                    let values = try decoder.container(keyedBy: CodingKeys.self)
+                    if let _ = try? values.decode(String.self, forKey: .commit) {
+                        self = .commit
+                        return
+                    }
+                    if let value = try? values.decode(String.self, forKey: .message) {
+                        self = .message(value)
+                        return
+                    }
+                    throw Error.decoding("Error decoding Action: \(dump(values))")
+                }
+                
+                public func encode(to encoder: Encoder) throws {
+                    var container = encoder.container(keyedBy: CodingKeys.self)
+                    switch self {
+                    case .commit:
+                        try container.encode("commit", forKey: .commit)
+                    case .message(let value):
+                        try container.encode(value, forKey: .message)
+                    }
+                }
+                
+            }
+            
+            public let name: String
+            
+            public let action: Action
+            
+            public let jobs: [String]
+            
+            enum CodingKeys: String, CodingKey {
+                case name = "branch"
+                case action
+                case jobs = "jobs"
+            }
+            
+            public init(name: String, action: Action, jobs: [String]) {
+                self.name = name
+                self.action = action
+                self.jobs = jobs
+            }
+            
+        }
+        
+        public let triggers: [Trigger]
+        
+        public let jobs: [String]
+        
+        public init(triggers: [Trigger], jobs: [String]) {
+            self.triggers = triggers
+            self.jobs = jobs
+        }
+        
+    }
+    
     /// Branch management
-    public let pipelines: [Trigger]
+    public let pipelines: [Pipeline]
     
     enum CodingKeys: String, CodingKey {
         case name
@@ -303,7 +316,7 @@ public struct Root: Content {
         jobs: [Job],
         environment: Env? = nil,
         dockerDependendencies: [Dependency]? = nil,
-        pipelines: [Trigger]
+        pipelines: [Pipeline]
         ) {
         self.name = name
         self.identifier = identifier

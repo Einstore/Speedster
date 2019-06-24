@@ -176,11 +176,12 @@ extension Root.Job {
         )
     }
     
-    static func jobSmall(_ customName: String = "Small", dependsOn: String? = nil) -> Root.Job {
+    static func jobSmall(_ customName: String = "Small", dependsOn: String? = nil, env: Bool = false) -> Root.Job {
         return Root.Job(
             name: "\(customName) job",
             nodeLabels: "linux",
             dependsOn: dependsOn,
+            environment: (env ? Root.Env.basic() : nil),
             preBuild: [
                 Phase.phaseEcho("Starting \(customName) workflow"),
             ],
@@ -221,6 +222,22 @@ extension Root.Pipeline {
     
 }
 
+extension Root.Env {
+    
+    static func basic() -> Root.Env {
+        return Root.Env(
+            image: "vhd:link",
+            memory: "4Gib",
+            storage: "10Gib",
+            variables: [
+                "VAR1": "value 1",
+                "VAR2": "value 2"
+            ]
+        )
+    }
+    
+}
+
 extension Root {
     
     static func rootDependentFailing() -> Root {
@@ -241,17 +258,15 @@ extension Root {
     
     static func rootSmall() -> Root {
         let w1 = Job.jobSmall()
+        var w2 = Job.jobSmall("Linux", env: true)
         
         return Root(
             name: "Small root",
             gitHub: Root.GitHub(
                 cloneGit: "git@github.com:vapor/postgres-nio.git"
             ),
-            jobs: [w1],
-            environment: Root.Env(
-                start: "github:rafiki270/docker-environment:master",
-                finish: "github:rafiki270/docker-environment:master"
-            ),
+            jobs: [w1, w2],
+            environment: Root.Env.basic(),
             dockerDependendencies: [
                 Dependency(
                     image: "postgres:11",

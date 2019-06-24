@@ -73,7 +73,7 @@ extension SpeedsterCore.Root {
     }
     
     func update(jobChildren job: Row<SpeedsterApi.Root>, info: SpeedsterFileInfo, github: Github, on db: Database) -> EventLoopFuture<Void> {
-        return SpeedsterApi.Job.query(on: db).filter(\SpeedsterApi.Job.jobId == job.id).delete().flatMap {
+        return SpeedsterApi.Job.query(on: db).filter(\SpeedsterApi.Job.rootId == job.id).delete().flatMap {
             return Phase.query(on: db).filter(\Phase.rootId == job.id).delete().flatMap {
                 var futures: [EventLoopFuture<Void>] = []
                 for w in self.jobs {
@@ -100,16 +100,16 @@ extension SpeedsterCore.Root {
     fileprivate func updateJob(_ info: SpeedsterFileInfo, on db: Database) -> EventLoopFuture<Row<Root>> {
         return Root
             .query(on: db)
-            .join(\GitHubJob.rootId, to: \Root.id)
-            .filter(\GitHubJob.organization == info.org)
-            .filter(\GitHubJob.repo == info.repo)
+            .join(\GitHubRoot.rootId, to: \Root.id)
+            .filter(\GitHubRoot.organization == info.org)
+            .filter(\GitHubRoot.repo == info.repo)
             .first().flatMap { job in
                 guard let job = job else {
                     let job = Root.row()
                     job.update(from: self)
                     job.disabled = info.disabled ? 1 : 0
                     return job.save(on: db).flatMap { _ in
-                        let githubJob = GitHubJob.row()
+                        let githubJob = GitHubRoot.row()
                         githubJob.repo = info.repo
                         githubJob.organization = info.org
                         githubJob.rootId = job.id

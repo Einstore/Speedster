@@ -64,7 +64,7 @@ extension Phase {
     
     static func row(from phase: SpeedsterCore.Root.Job.Phase, workflow: Row<Job>, order: Int, stage: Phase.Stage) -> Row<Phase> {
         let row = Phase.row()
-        row.rootId = workflow.jobId
+        row.rootId = workflow.rootId
         row.jobId = workflow.id
         row.name = phase.name
         row.order = order

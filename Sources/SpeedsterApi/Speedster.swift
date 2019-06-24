@@ -21,7 +21,7 @@ public class Speedster {
     static let controllers: [Controller.Type] = [
         NodesController.self,
         GithubController.self,
-        JobsController.self,
+        RootController.self,
         ScheduledController.self
     ]
     
@@ -68,7 +68,7 @@ public class Speedster {
         migrations.add(Node.autoMigration(), to: dbIdentifier)
         migrations.add(Run.autoMigration(), to: dbIdentifier)
         migrations.add(Root.autoMigration(), to: dbIdentifier)
-        migrations.add(GitHubJob.autoMigration(), to: dbIdentifier)
+        migrations.add(GitHubRoot.autoMigration(), to: dbIdentifier)
         migrations.add(Job.autoMigration(), to: dbIdentifier)
         migrations.add(Phase.autoMigration(), to: dbIdentifier)
         migrations.add(Organization.autoMigration(), to: dbIdentifier)

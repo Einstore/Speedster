@@ -26,7 +26,12 @@ public struct Root: Content {
             public let description: String?
             
             /// Initializer
-            public init(identifier: String? = nil, name: String? = nil, command: String, description: String? = nil) {
+            public init(
+                identifier: String? = nil,
+                name: String? = nil,
+                command: String,
+                description: String? = nil
+                ) {
                 self.identifier = identifier
                 self.name = name
                 self.command = command
@@ -44,9 +49,6 @@ public struct Root: Content {
         /// Depends on workflow (name)
         public let dependsOn: String?
         
-        /// Scripts to manage workspace specific environment
-        public let environment: Env?
-        
         /// Pre-build phases
         public let preBuild: [Phase]
         
@@ -61,6 +63,9 @@ public struct Root: Content {
         
         /// Phase description, informative only
         public let always: [Phase]?
+        
+        /// Environment for the current job only
+        public let environment: Env?
         
         /// Docker dependencies
         public let dockerDependendencies: [Dependency]?
@@ -181,42 +186,24 @@ public struct Root: Content {
     
     public struct Env: Codable {
         
-        public let start: String
-        public let finish: String
+        public let image: String
+        public let memory: String
+        public let storage: String
         public let variables: [String: String]?
         
         public init(
-            start: String,
-            finish: String,
+            image: String,
+            memory: String,
+            storage: String,
             variables: [String: String]? = nil
             ) {
-            self.start = start
-            self.finish = finish
+            self.image = image
+            self.memory = memory
+            self.storage = storage
             self.variables = variables
         }
         
     }
-    
-    /// Job name
-    public let name: String
-    
-    /// Job identifier
-    public let identifier: String?
-    
-    /// Node labels
-    public let nodeLabels: String?
-    
-    /// GitHub info & settings
-    public let gitHub: GitHub?
-    
-    /// Workflows
-    public let jobs: [Job]
-    
-    /// Scripts to manage environment
-    public let environment: Env?
-    
-    /// Docker dependencies
-    public let dockerDependendencies: [Dependency]?
     
     public struct Pipeline: Codable {
         
@@ -239,7 +226,7 @@ public struct Root: Content {
                 
                 public init(from decoder: Decoder) throws {
                     let values = try decoder.container(keyedBy: CodingKeys.self)
-                    // TODO: This can never work, you have to decode by some code within :)!!!!!!!!!!!!!!!!!!!!!!
+                    // TODO: This can never work, you have to decode by some code within the content :)!!!!!!!!!!!!!!!!!!!!!!
                     if let _ = try? values.decode(String.self, forKey: .commit) {
                         self = .commit
                         return
@@ -291,6 +278,27 @@ public struct Root: Content {
         }
         
     }
+    
+    /// Job name
+    public let name: String
+    
+    /// Job identifier
+    public let identifier: String?
+    
+    /// Node labels
+    public let nodeLabels: String?
+    
+    /// GitHub info & settings
+    public let gitHub: GitHub?
+    
+    /// Workflows
+    public let jobs: [Job]
+    
+    /// Scripts to manage environment
+    public let environment: Env?
+    
+    /// Docker dependencies
+    public let dockerDependendencies: [Dependency]?
     
     /// Branch management
     public let pipelines: [Pipeline]

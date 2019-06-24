@@ -16,7 +16,7 @@ public struct Job: Model {
     public let id = Field<Speedster.DbIdType?>("id")
     
     /// Job ID
-    public let jobId = Field<Speedster.DbIdType?>("job_id")
+    public let rootId = Field<Speedster.DbIdType?>("root_id")
     
     /// Name
     public let name = Field<String>("name")
@@ -34,16 +34,16 @@ public struct Job: Model {
     public let timeoutOnInactivity = Field<Int>("timeout_inactivity")
     
     /// Script to start workspace specific environment
-    public let environment = Field<SpeedsterCore.Root.Env?>("environment")
+    public let environment = Field<SpeedsterCore.Root.Env?>("environment", dataType: .json)
     
     /// Perform on workflow fail (before always)
-    public let fail = Field<[SpeedsterCore.Root.Job.Phase]?>("fail")
+    public let fail = Field<[SpeedsterCore.Root.Job.Phase]?>("fail", dataType: .json)
     
     /// Perform on workflow success (before always)
-    public let success = Field<[SpeedsterCore.Root.Job.Phase]?>("success")
+    public let success = Field<[SpeedsterCore.Root.Job.Phase]?>("success", dataType: .json)
     
     /// Always perform action wherever workflow succeeds of fails (always last to run)
-    public let always = Field<[SpeedsterCore.Root.Job.Phase]?>("always")
+    public let always = Field<[SpeedsterCore.Root.Job.Phase]?>("always", dataType: .json)
     
 }
 
@@ -52,7 +52,7 @@ extension Job {
     
     static func row(from workflow: SpeedsterCore.Root.Job, job: Row<Root>) -> Row<Job> {
         let row = Job.row()
-        row.jobId = job.id
+        row.rootId = job.id
         row.name = workflow.name
         row.nodeLabels = workflow.nodeLabels
         row.dependsOn = workflow.dependsOn

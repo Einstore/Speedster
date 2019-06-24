@@ -1,5 +1,5 @@
 //
-//  JobsController.swift
+//  RootController.swift
 //  
 //
 //  Created by Ondrej Rafaj on 16/06/2019.
@@ -11,7 +11,7 @@ import Yams
 import GitHubKit
 
 
-final class JobsController: Controller {
+final class RootController: Controller {
     
     let db: Database
     
@@ -46,7 +46,7 @@ final class JobsController: Controller {
         }
         
         r.get("jobs") { req -> EventLoopFuture<Response> in
-            return GitHubJob.query(on: self.db).all().flatMap { githubJobs in
+            return GitHubRoot.query(on: self.db).all().flatMap { githubJobs in
                 return Root.query(on: self.db)
                     .sort(\Root.name, .ascending)
                     .all().map { jobs in

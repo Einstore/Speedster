@@ -69,6 +69,9 @@ public struct Root: Model {
     
     /// Automatically managed should there be any content
     public let dockerDependendencies = Field<[SpeedsterCore.Root.Dependency]?>("docker_dependendencies")
+    
+    /// Pipelines (trigger workflows)
+    public let pipelines = Field<[SpeedsterCore.Root.Pipeline]?>("pipelines")
 
 }
 

@@ -40,7 +40,7 @@ extension Row where Model == SpeedsterApi.Root {
     
     func relatedData(on db: Database) -> EventLoopFuture<(jobs: [Row<Job>], phases: [Row<Phase>])> {
         return Job.query(on: db)
-            .filter(\Job.jobId == self.id)
+            .filter(\Job.rootId == self.id)
             .all().flatMap { jobs in
                 return Phase.query(on: db)
                     .filter(\Phase.rootId == self.id)

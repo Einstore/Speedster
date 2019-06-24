@@ -1,5 +1,5 @@
 //
-//  GitHubJob.swift
+//  GitHubRoot.swift
 //  
 //
 //  Created by Ondrej Rafaj on 16/06/2019.
@@ -9,10 +9,10 @@ import Fluent
 
 
 /// Executable job, has phases and runs
-public struct GitHubJob: Model {
+public struct GitHubRoot: Model {
     
-    public static let shared = GitHubJob()
-    public static let entity = "githubjobs"
+    public static let shared = GitHubRoot()
+    public static let entity = "githubroots"
     
     public let id = Field<Speedster.DbIdType?>("id")
     

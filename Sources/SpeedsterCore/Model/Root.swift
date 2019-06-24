@@ -239,6 +239,7 @@ public struct Root: Content {
                 
                 public init(from decoder: Decoder) throws {
                     let values = try decoder.container(keyedBy: CodingKeys.self)
+                    // TODO: This can never work, you have to decode by some code within :)!!!!!!!!!!!!!!!!!!!!!!
                     if let _ = try? values.decode(String.self, forKey: .commit) {
                         self = .commit
                         return
@@ -262,26 +263,24 @@ public struct Root: Content {
                 
             }
             
-            public let name: String
+            public let branch: String
             
             public let action: Action
             
-            public let jobs: [String]
-            
             enum CodingKeys: String, CodingKey {
-                case name = "branch"
+                case branch
                 case action
-                case jobs = "jobs"
             }
             
-            public init(name: String, action: Action, jobs: [String]) {
-                self.name = name
+            public init(branch: String, action: Action) {
+                self.branch = branch
                 self.action = action
-                self.jobs = jobs
             }
             
         }
         
+        /// Triggers for jobs within this pipeline
+        ///     - Any successful trigger will trigger given jobs
         public let triggers: [Trigger]
         
         public let jobs: [String]

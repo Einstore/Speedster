@@ -203,16 +203,17 @@ extension Root.Pipeline {
         return [
             Root.Pipeline(
                 triggers: [
-                    Trigger(name: "master", action: .commit, jobs: ["Step 1"]),
-                    Trigger(name: "development", action: .message("test please"), jobs: ["Step 1"]),
+                    Trigger(branch: "master", action: .commit),
+                    Trigger(branch: "development", action: .message("test please")),
                     Trigger(
-                        name: "master",
-                        action: .message("build please"),
-                        jobs: ["Step 1"]
+                        branch: "master",
+                        action: .message("build please")
                     )
                 ],
                 jobs: [
-                    "Step 1"
+                    "Step 1",
+                    "Step 2",
+                    "Step 3"
                 ]
             )
         ]

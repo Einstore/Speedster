@@ -41,9 +41,9 @@ final class ScheduledController: Controller {
                             }
                             
                             func schedule(for commit: Commit) -> EventLoopFuture<Row<Scheduled>> {
-                                let gh = SpeedsterCore.Job.GitHub(
+                                let gh = SpeedsterCore.Root.GitHub(
                                     cloneGit: nil,
-                                    location: SpeedsterCore.Job.GitHub.Location(
+                                    location: SpeedsterCore.Root.GitHub.Location(
                                         organization: githubJob.organization,
                                         repo: githubJob.repo,
                                         commit: commit.sha

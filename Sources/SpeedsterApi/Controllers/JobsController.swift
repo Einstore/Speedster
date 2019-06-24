@@ -28,7 +28,7 @@ final class JobsController: Controller {
         }
         
         r.post("jobs", "add") { req -> EventLoopFuture<Response> in
-            let post = try req.content.decode(SpeedsterCore.Job.self, using: YAMLDecoder())
+            let post = try req.content.decode(SpeedsterCore.Root.self, using: YAMLDecoder())
             let github = try c.make(Github.self)
             return post.save(on: self.db).flatMap { job in
                 let info = SpeedsterFileInfo(
@@ -57,11 +57,11 @@ final class JobsController: Controller {
             }
         }
         
-        r.post("jobs", "validate") { req -> SpeedsterCore.Job in
+        r.post("jobs", "validate") { req -> SpeedsterCore.Root in
             guard let yaml = req.body.string else {
                 throw HTTPError.notFound
             }
-            let job = try YAMLDecoder().decode(SpeedsterCore.Job.self, from: yaml)
+            let job = try YAMLDecoder().decode(SpeedsterCore.Root.self, from: yaml)
             return job
         }
     }

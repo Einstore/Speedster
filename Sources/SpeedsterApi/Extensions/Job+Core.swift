@@ -13,7 +13,7 @@ import GitHubKit
 
 extension Row where Model == Root {
     
-    func update(from job: SpeedsterCore.Job) {
+    func update(from job: SpeedsterCore.Root) {
         self.name = job.name
         self.nodeLabels = job.nodeLabels
         self.gitHub = job.gitHub
@@ -26,12 +26,12 @@ extension Row where Model == Root {
 }
 
 
-extension SpeedsterCore.Job {
+extension SpeedsterCore.Root {
     
-    fileprivate func update(phases dbWorkflow: Row<SpeedsterApi.Job>, coreWorkflow: SpeedsterCore.Job.Workflow, info: SpeedsterFileInfo, github: Github, on db: Database) -> EventLoopFuture<Void> {
+    fileprivate func update(phases dbWorkflow: Row<SpeedsterApi.Job>, coreWorkflow: SpeedsterCore.Root.Job, info: SpeedsterFileInfo, github: Github, on db: Database) -> EventLoopFuture<Void> {
         var futures: [EventLoopFuture<Void>] = []
         
-        func addTo(futures phases: [Workflow.Phase], stage: SpeedsterApi.Phase.Stage) {
+        func addTo(futures phases: [Job.Phase], stage: SpeedsterApi.Phase.Stage) {
             var x = phases.count
             for p in phases {
                 let phase = SpeedsterApi.Phase.row(
@@ -76,7 +76,7 @@ extension SpeedsterCore.Job {
         return SpeedsterApi.Job.query(on: db).filter(\SpeedsterApi.Job.jobId == job.id).delete().flatMap {
             return Phase.query(on: db).filter(\Phase.rootId == job.id).delete().flatMap {
                 var futures: [EventLoopFuture<Void>] = []
-                for w in self.workflows {
+                for w in self.jobs {
                     let workflow = SpeedsterApi.Job.row(from: w, job: job)
                     let future = workflow.save(on: db).flatMap { _ in
                         return self.update(phases: workflow, coreWorkflow: w, info: info, github: github, on: db)

@@ -26,16 +26,16 @@ class BuildManager {
         fatalError()
     }
     
-    func build(_ location: SpeedsterCore.Job.GitHub.Location) -> EventLoopFuture<Void> {
+    func build(_ location: SpeedsterCore.Root.GitHub.Location) -> EventLoopFuture<Void> {
         let githubManager = GithubManager(
             github: github,
             container: container,
             on: db
         )
-        return githubManager.speedster(for: location).flatMap { job in
+        return githubManager.speedster(for: location).flatMap { root in
             let promise = self.db.eventLoop.makePromise(of: Void.self)
             let ex = Executioner(
-                job: job,
+                root: root,
                 node: SpeedsterCore.Node(
                     name: "Ubuntu Test",
                     host: "157.230.106.39",

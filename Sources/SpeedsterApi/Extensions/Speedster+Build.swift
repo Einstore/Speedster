@@ -13,7 +13,7 @@ extension Speedster {
     
     public static func build(job: Row<SpeedsterApi.Root>, node: Row<SpeedsterApi.Node>, db: Database) throws -> EventLoopFuture<Void> {
         return job.relatedData(on: db).flatMap { relatedData in
-            return job.coreJob(from: relatedData.workflows, phases: relatedData.phases, on: db.eventLoop).flatMap { coreJob in
+            return job.coreJob(from: relatedData.jobs, phases: relatedData.phases, on: db.eventLoop).flatMap { coreJob in
                 let run = Run.row()
                 run.jobId = job.id
                 run.started = Date()
@@ -26,7 +26,7 @@ extension Speedster {
                     }
                     do {
                         let executioner = try Executioner(
-                            job: coreJob,
+                            root: coreJob,
                             node: node.asCore(),
                             on: db.eventLoop,
                             output: output

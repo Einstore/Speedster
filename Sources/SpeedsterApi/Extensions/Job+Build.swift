@@ -11,7 +11,7 @@ import Fluent
 
 extension Row where Model == SpeedsterApi.Root {
     
-    func schedule(_ github: SpeedsterCore.Job.GitHub? = nil, on db: Database) -> EventLoopFuture<Row<Scheduled>> {
+    func schedule(_ github: SpeedsterCore.Root.GitHub? = nil, on db: Database) -> EventLoopFuture<Row<Scheduled>> {
         let scheduled = Scheduled.row()
         scheduled.jobId = self.id
         scheduled.requested = Date()
@@ -21,16 +21,16 @@ extension Row where Model == SpeedsterApi.Root {
         }
     }
     
-    func scheduledResponse(_ github: SpeedsterCore.Job.GitHub? = nil, on db: Database) -> EventLoopFuture<Row<Scheduled>> {
+    func scheduledResponse(_ github: SpeedsterCore.Root.GitHub? = nil, on db: Database) -> EventLoopFuture<Row<Scheduled>> {
         return schedule(github, on: db)
     }
     
-    func coreJob(from workflows: [Row<Job>], phases: [Row<Phase>], on eventLoop: EventLoop) -> EventLoopFuture<SpeedsterCore.Job> {
-        let job = SpeedsterCore.Job(
+    func coreJob(from jobs: [Row<Job>], phases: [Row<Phase>], on eventLoop: EventLoop) -> EventLoopFuture<SpeedsterCore.Root> {
+        let job = SpeedsterCore.Root(
             name: self.name,
             nodeLabels: self.nodeLabels,
             gitHub: self.gitHub,
-            workflows: workflows.assembleAsCore(phases),
+            jobs: jobs.assembleAsCore(phases),
             environment: self.environment,
             dockerDependendencies: self.dockerDependendencies,
             pipelines: []
@@ -38,22 +38,22 @@ extension Row where Model == SpeedsterApi.Root {
         return eventLoop.makeSucceededFuture(job)
     }
     
-    func relatedData(on db: Database) -> EventLoopFuture<(workflows: [Row<Job>], phases: [Row<Phase>])> {
+    func relatedData(on db: Database) -> EventLoopFuture<(jobs: [Row<Job>], phases: [Row<Phase>])> {
         return Job.query(on: db)
             .filter(\Job.jobId == self.id)
-            .all().flatMap { workflows in
+            .all().flatMap { jobs in
                 return Phase.query(on: db)
                     .filter(\Phase.rootId == self.id)
                     .sort(\Phase.order, .descending)
                     .all().map { phases in
-                        return (workflows: workflows, phases: phases)
+                        return (jobs: jobs, phases: phases)
                 }
         }
     }
     
-    func coreJob(on db: Database) -> EventLoopFuture<SpeedsterCore.Job> {
+    func coreJob(on db: Database) -> EventLoopFuture<SpeedsterCore.Root> {
         return relatedData(on: db).flatMap { data in
-            return self.coreJob(from: data.workflows, phases: data.phases, on: db.eventLoop)
+            return self.coreJob(from: data.jobs, phases: data.phases, on: db.eventLoop)
         }
     }
     

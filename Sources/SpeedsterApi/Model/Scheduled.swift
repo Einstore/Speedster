@@ -20,7 +20,7 @@ public struct Scheduled: Model {
     public struct Short: Content {
         
         public let id: Speedster.DbIdType?
-        public let github: SpeedsterCore.Job.GitHub?
+        public let github: SpeedsterCore.Root.GitHub?
         public let requested: Date
         
         public init(_ row: Row<Scheduled>) {
@@ -53,7 +53,7 @@ public struct Scheduled: Model {
     public let jobId = Field<Speedster.DbIdType?>("job_id")
     
     /// Github info
-    public let github = Field<SpeedsterCore.Job.GitHub?>("github")
+    public let github = Field<SpeedsterCore.Root.GitHub?>("github")
     
     /// Date requested execution
     public let requested = Field<Date>("requested")

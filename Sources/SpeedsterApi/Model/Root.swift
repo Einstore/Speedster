@@ -15,7 +15,7 @@ public struct Root: Model {
         
         public let id: Speedster.DbIdType?
         public let name: String
-        public let gitHub: SpeedsterCore.Job.GitHub?
+        public let gitHub: SpeedsterCore.Root.GitHub?
         public let nodeLabels: [String]?
         public let disabled: Bool
         public let managed: Bool?
@@ -53,7 +53,7 @@ public struct Root: Model {
     public let name = Field<String>("name")
     
     /// GitHub info & settings
-    public let gitHub = Field<SpeedsterCore.Job.GitHub?>("github")
+    public let gitHub = Field<SpeedsterCore.Root.GitHub?>("github")
 
     /// Disable job; if a Speedster.yml is deleted from an automatically managed repo, Job will get disabled
     public let disabled = Field<Int>("disabled")
@@ -62,13 +62,13 @@ public struct Root: Model {
     public let nodeLabels = Field<String?>("node_labels")
     
     /// Script to start environment
-    public let environment = Field<SpeedsterCore.Job.Env?>("environment")
+    public let environment = Field<SpeedsterCore.Root.Env?>("environment")
     
     /// Automatically managed should there be any content
-    public let speedsterFile = Field<SpeedsterCore.Job?>("speedster_file")
+    public let speedsterFile = Field<SpeedsterCore.Root?>("speedster_file")
     
     /// Automatically managed should there be any content
-    public let dockerDependendencies = Field<[SpeedsterCore.Job.Dependency]?>("docker_dependendencies")
+    public let dockerDependendencies = Field<[SpeedsterCore.Root.Dependency]?>("docker_dependendencies")
 
 }
 

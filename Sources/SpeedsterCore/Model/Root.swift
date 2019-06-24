@@ -1,5 +1,5 @@
 //
-//  Job.swift
+//  Root.swift
 //  
 //
 //  Created by Ondrej Rafaj on 09/06/2019.
@@ -8,15 +8,15 @@
 import Vapor
 
 
-public struct Job: Content {
+public struct Root: Content {
     
-    public struct Workflow: Content {
+    public struct Job: Content {
         
         public struct Phase: Content {
             
             public let identifier: String?
             
-            /// Name of the job
+            /// Name of the phase
             public let name: String?
             
             /// Command to be executed
@@ -152,7 +152,7 @@ public struct Job: Content {
         
     }
     
-    public struct Branch: Codable {
+    public struct Trigger: Codable {
         
         public enum Action: Codable {
             
@@ -198,18 +198,18 @@ public struct Job: Content {
         
         public let action: Action
         
-        public let workflows: [Workflow]?
+        public let jobs: [String]
         
         enum CodingKeys: String, CodingKey {
             case name = "branch"
             case action
-            case workflows = "jobs"
+            case jobs = "jobs"
         }
         
-        public init(name: String, action: Action, workflows: [Workflow]? = nil) {
+        public init(name: String, action: Action, jobs: [String]) {
             self.name = name
             self.action = action
-            self.workflows = workflows
+            self.jobs = jobs
         }
         
     }
@@ -272,7 +272,7 @@ public struct Job: Content {
     public let gitHub: GitHub?
     
     /// Workflows
-    public let workflows: [Workflow]
+    public let jobs: [Job]
     
     /// Scripts to manage environment
     public let environment: Env?
@@ -281,14 +281,14 @@ public struct Job: Content {
     public let dockerDependendencies: [Dependency]?
     
     /// Branch management
-    public let pipelines: [Branch]
+    public let pipelines: [Trigger]
     
     enum CodingKeys: String, CodingKey {
         case name
         case identifier
         case nodeLabels = "node_labels"
         case gitHub = "github"
-        case workflows = "jobs"
+        case jobs = "jobs"
         case environment = "environment"
         case dockerDependendencies = "docker_dependencies"
         case pipelines
@@ -300,16 +300,16 @@ public struct Job: Content {
         identifier: String? = nil,
         nodeLabels: String? = nil,
         gitHub: GitHub? = nil,
-        workflows: [Workflow],
+        jobs: [Job],
         environment: Env? = nil,
         dockerDependendencies: [Dependency]? = nil,
-        pipelines: [Branch]
+        pipelines: [Trigger]
         ) {
         self.name = name
         self.identifier = identifier
         self.nodeLabels = nodeLabels
         self.gitHub = gitHub
-        self.workflows = workflows
+        self.jobs = jobs
         self.environment = environment
         self.dockerDependendencies = dockerDependendencies
         self.pipelines = pipelines
@@ -318,7 +318,7 @@ public struct Job: Content {
 }
 
 
-extension Job {
+extension Root {
     
     public var workspaceName: String {
         return name + "-" + (identifier ?? "direct")

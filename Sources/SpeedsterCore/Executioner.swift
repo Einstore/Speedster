@@ -18,7 +18,7 @@ public class Executioner {
     private(set) var executor: Executor
     
     /// Job to be executed
-    let job: Job?
+    let root: Root?
     
     let eventLoop: EventLoop
     
@@ -27,9 +27,9 @@ public class Executioner {
     var processed: [String] = []
     
     /// Initializer
-    public init(job: Job? = nil, node: Node, on eventLoop: EventLoop, output: ExecutorOutput? = nil) {
+    public init(root: Root? = nil, node: Node, on eventLoop: EventLoop, output: ExecutorOutput? = nil) {
         self.eventLoop = eventLoop
-        self.job = job
+        self.root = root
         self.output = output
         
         if node.host == "localhost" {
@@ -48,8 +48,8 @@ public class Executioner {
     
     public  typealias FailedClosure = ((Swift.Error) -> ())
     
-    private func run(workflow: Job.Workflow, failed: @escaping FailedClosure) throws {
-        guard let job = self.job else {
+    private func run(workflow: Root.Job, failed: @escaping FailedClosure) throws {
+        guard let job = self.root else {
             throw Error.missingJob
         }
         //let address = Unmanaged.passUnretained().toOpaque()
@@ -68,7 +68,7 @@ public class Executioner {
             for phase in workflow.always ?? [] {
                 try self.executor.run(phase, identifier: job.workspaceName)
             }
-            for workflow in job.workflows.filter({ $0.dependsOn == workflow.name }) {
+            for workflow in job.jobs.filter({ $0.dependsOn == workflow.name }) {
                 let identifier = try MD5.hash(.string("\(workflow)"))
                 if !processed.contains(identifier.string()) {
                     try self.run(workflow: workflow, failed: failed)
@@ -93,7 +93,7 @@ public class Executioner {
     
     /// Execute job
     public func run(finished: @escaping (() -> ()), failed: @escaping FailedClosure) {
-        guard let job = self.job else {
+        guard let job = self.root else {
             self.eventLoop.execute {
                 failed(Error.missingJob)
             }
@@ -101,7 +101,7 @@ public class Executioner {
         }
         DispatchQueue.global(qos: .background).async {
             do {
-                for workflow in job.workflows.filter({ $0.dependsOn == nil || $0.dependsOn?.isEmpty == true }) {
+                for workflow in job.jobs.filter({ $0.dependsOn == nil || $0.dependsOn?.isEmpty == true }) {
                     do {
                         try self.run(workflow: workflow, failed: failed)
                         if let success = workflow.success {

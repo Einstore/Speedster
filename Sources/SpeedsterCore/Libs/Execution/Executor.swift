@@ -16,7 +16,7 @@ protocol Executor {
     var output: ExecutorOutput? { get set }
     
     init(_ node: Node, on eventLoop: EventLoop)
-    func run(_ phase: Job.Workflow.Phase, identifier: String) throws
+    func run(_ phase: Root.Job.Phase, identifier: String) throws
     func run(_ bash: String) throws -> Int
     func close() throws
     

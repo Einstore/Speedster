@@ -32,6 +32,6 @@ public struct Run: Model {
     public let output = Field<String>("output")
     
     /// Copy of the  Speedster file
-    public let speedster = Field<SpeedsterCore.Job>("speedster")
+    public let speedster = Field<SpeedsterCore.Root>("speedster")
     
 }

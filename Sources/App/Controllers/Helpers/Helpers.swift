@@ -8,10 +8,10 @@
 import SpeedsterCore
 
 
-extension Job.Workflow.Phase {
+extension Root.Job.Phase {
     
-    static func phaseCount(_ num: Int = 10) -> Job.Workflow.Phase {
-        return Job.Workflow.Phase(
+    static func phaseCount(_ num: Int = 10) -> Root.Job.Phase {
+        return Root.Job.Phase(
             name: "Count phase",
             command: """
                 for ((i=1;i<=\(num);i++));
@@ -25,46 +25,46 @@ extension Job.Workflow.Phase {
         )
     }
     
-    static func phasePwd() -> Job.Workflow.Phase {
-        return Job.Workflow.Phase(
+    static func phasePwd() -> Root.Job.Phase {
+        return Root.Job.Phase(
             name: "Phase PWD",
             command: "pwd",
             description: "Phase PWD description"
         )
     }
     
-    static func phaseLs() -> Job.Workflow.Phase {
-        return Job.Workflow.Phase(
+    static func phaseLs() -> Root.Job.Phase {
+        return Root.Job.Phase(
             name: "Phase ls -a",
             command: "ls -a",
             description: "Phase ls -a description"
         )
     }
     
-    static func phaseAptGet() -> Job.Workflow.Phase {
-        return Job.Workflow.Phase(
+    static func phaseAptGet() -> Root.Job.Phase {
+        return Root.Job.Phase(
             name: "Phase apt-get",
             command: "apt-get update",
             description: "Phase apt-get update description"
         )
     }
     
-    static func phaseEcho(_ message: String = "Speedster message") -> Job.Workflow.Phase {
-        return Job.Workflow.Phase(
+    static func phaseEcho(_ message: String = "Speedster message") -> Root.Job.Phase {
+        return Root.Job.Phase(
             command: "echo '\(message)'"
         )
     }
     
-    static func phaseCustom(_ command: String) -> Job.Workflow.Phase {
-        return Job.Workflow.Phase(
+    static func phaseCustom(_ command: String) -> Root.Job.Phase {
+        return Root.Job.Phase(
             name: "Phase \(command)",
             command: command,
             description: "Phase \(command) description"
         )
     }
     
-    static func phaseFail() -> Job.Workflow.Phase {
-        return Job.Workflow.Phase(
+    static func phaseFail() -> Root.Job.Phase {
+        return Root.Job.Phase(
             name: "Phase FAIL",
             command: "format C:/",
             description: "Phase FAIL description"
@@ -74,10 +74,10 @@ extension Job.Workflow.Phase {
 }
 
 
-extension Job.Workflow {
+extension Root.Job {
     
-    static func workflowTimeout(dependsOn: String? = nil) -> Job.Workflow {
-        return Job.Workflow(
+    static func jobTimeout(dependsOn: String? = nil) -> Root.Job {
+        return Root.Job(
             name: "Timeout workflow",
             nodeLabels: "linux,mac",
             dependsOn: dependsOn,
@@ -95,8 +95,8 @@ extension Job.Workflow {
         )
     }
     
-    static func workflowFailPreBuild(dependsOn: String? = nil) -> Job.Workflow {
-        return Job.Workflow(
+    static func jobFailPreBuild(dependsOn: String? = nil) -> Root.Job {
+        return Root.Job(
             name: "Fail pre-build workflow",
             nodeLabels: "linux,mac",
             dependsOn: dependsOn,
@@ -115,8 +115,8 @@ extension Job.Workflow {
         )
     }
     
-    static func workflowFailBuild(dependsOn: String? = nil) -> Job.Workflow {
-        return Job.Workflow(
+    static func jobFailBuild(dependsOn: String? = nil) -> Root.Job {
+        return Root.Job(
             name: "Fail build workflow",
             nodeLabels: "linux,mac",
             dependsOn: dependsOn,
@@ -135,8 +135,8 @@ extension Job.Workflow {
         )
     }
     
-    static func workflowFailPostBuild(dependsOn: String? = nil) -> Job.Workflow {
-        return Job.Workflow(
+    static func jobFailPostBuild(dependsOn: String? = nil) -> Root.Job {
+        return Root.Job(
             name: "Fail post-build workflow",
             nodeLabels: "linux,mac",
             dependsOn: dependsOn,
@@ -154,8 +154,8 @@ extension Job.Workflow {
         )
     }
     
-    static func workflowFull(_ customName: String = "Full", dependsOn: String? = nil) -> Job.Workflow {
-        return Job.Workflow(
+    static func jobFull(_ customName: String = "Full", dependsOn: String? = nil) -> Root.Job {
+        return Root.Job(
             name: "\(customName) workflow",
             nodeLabels: "linux",
             dependsOn: dependsOn,
@@ -176,9 +176,9 @@ extension Job.Workflow {
         )
     }
     
-    static func workflowSmall(_ customName: String = "Small", dependsOn: String? = nil) -> Job.Workflow {
-        return Job.Workflow(
-            name: "\(customName) workflow",
+    static func jobSmall(_ customName: String = "Small", dependsOn: String? = nil) -> Root.Job {
+        return Root.Job(
+            name: "\(customName) job",
             nodeLabels: "linux",
             dependsOn: dependsOn,
             preBuild: [
@@ -198,44 +198,42 @@ extension Job.Workflow {
 }
 
 
-extension Job {
+extension Root {
     
-    static func jobDependentFailing() -> Job {
-        let w1 = Workflow.workflowFull("Step 1")
-        let w2 = Workflow.workflowFull("Step 2", dependsOn: w1.name)
-        let w3 = Workflow.workflowFailBuild(dependsOn: w2.name)
-        let w4 = Workflow.workflowFull("Step 4", dependsOn: w3.name)
+    static func rootDependentFailing() -> Root {
+        let w1 = Job.jobFull("Step 1")
+        let w2 = Job.jobFull("Step 2", dependsOn: w1.name)
+        let w3 = Job.jobFailBuild(dependsOn: w2.name)
+        let w4 = Job.jobFull("Step 4", dependsOn: w3.name)
         
-        return Job(
-            name: "Dependant job failing",
-            gitHub: Job.GitHub(
+        return Root(
+            name: "Dependant root failing",
+            gitHub: Root.GitHub(
                 cloneGit: "git@github.com:vapor/postgres-nio.git"
             ),
-            workflows: [w1, w2, w3, w4],
+            jobs: [w1, w2, w3, w4],
             pipelines: [
-                Branch(name: "master", action: .commit),
-                Branch(name: "development", action: .message("test please")),
-                Branch(
+                Trigger(name: "master", action: .commit, jobs: ["Step 1"]),
+                Trigger(name: "development", action: .message("test please"), jobs: ["Step 1"]),
+                Trigger(
                     name: "master",
                     action: .message("build please"),
-                    workflows: [
-                        Workflow.workflowFull("Build")
-                    ]
+                    jobs: ["Step 1"]
                 )
             ]
         )
     }
     
-    static func jobSmall() -> Job {
-        let w1 = Workflow.workflowSmall()
+    static func rootSmall() -> Root {
+        let w1 = Job.jobSmall()
         
-        return Job(
-            name: "Small job",
-            gitHub: Job.GitHub(
+        return Root(
+            name: "Small root",
+            gitHub: Root.GitHub(
                 cloneGit: "git@github.com:vapor/postgres-nio.git"
             ),
-            workflows: [w1],
-            environment: Job.Env(
+            jobs: [w1],
+            environment: Root.Env(
                 start: "github:rafiki270/docker-environment:master",
                 finish: "github:rafiki270/docker-environment:master"
             ),
@@ -253,67 +251,65 @@ extension Job {
                 )
             ],
             pipelines: [
-                Branch(name: "master", action: .commit),
-                Branch(name: "development", action: .message("test please")),
-                Branch(
+                Trigger(name: "master", action: .commit, jobs: ["Small job"]),
+                Trigger(name: "development", action: .message("test please"), jobs: ["Small job"]),
+                Trigger(
                     name: "master",
                     action: .message("build please"),
-                    workflows: [
-                        Workflow.workflowFull("Build")
-                    ]
+                    jobs: ["Small job"]
                 )
             ]
         )
     }
     
-    static func jobDependentSucceeding() -> Job {
-        let w1 = Workflow.workflowFull("Step 1")
-        let w2 = Workflow.workflowFull("Step 2", dependsOn: w1.name)
-        let w3 = Workflow.workflowFull("Step 3", dependsOn: w2.name)
-        let w4 = Workflow.workflowFull("Step 4", dependsOn: w3.name)
+    static func rootDependentSucceeding() -> Root {
+        let w1 = Job.jobFull("Step 1")
+        let w2 = Job.jobFull("Step 2", dependsOn: w1.name)
+        let w3 = Job.jobFull("Step 3", dependsOn: w2.name)
+        let w4 = Job.jobFull("Step 4", dependsOn: w3.name)
         
-        return Job(
+        return Root(
             name: "Dependant job succeeding",
-            gitHub: Job.GitHub(
+            gitHub: Root.GitHub(
                 cloneGit: "git@github.com:vapor/postgres-nio.git"
             ),
-            workflows: [w1, w2, w3, w4],
+            jobs: [w1, w2, w3, w4],
             pipelines: [
-                Branch(name: "master", action: .commit),
-                Branch(name: "development", action: .message("test please")),
-                Branch(
+                Trigger(name: "master", action: .commit, jobs: ["Small job"]),
+                Trigger(name: "development", action: .message("test please"), jobs: ["Small job"]),
+                Trigger(
                     name: "master",
                     action: .message("build please"),
-                    workflows: [
-                        Workflow.workflowFull("Build")
+                    jobs: [
+                        "Small job"
                     ]
                 )
             ]
         )
     }
     
-    static func jobAll() -> Job {
-        let w1 = Workflow.workflowFailBuild()
-        let w2 = Workflow.workflowFailPreBuild()
-        let w3 = Workflow.workflowFailPostBuild()
-        let w4 = Workflow.workflowFull()
-        let w5 = Workflow.workflowTimeout()
+    static func rootAll() -> Root {
+        let w1 = Job.jobFailBuild()
+        let w2 = Job.jobFailPreBuild()
+        let w3 = Job.jobFailPostBuild()
+        let w4 = Job.jobFull()
+        let w5 = Job.jobTimeout()
         
-        return Job(
+        return Root(
             name: "All workflows",
             nodeLabels: "linux",
-            gitHub: Job.GitHub(
+            gitHub: Root.GitHub(
                 cloneGit: "git@github.com:vapor/postgres-nio.git"
             ),
-            workflows: [w1, w2, w3, w4, w5],
+            jobs: [w1, w2, w3, w4, w5],
             pipelines: [
-                Branch(name: "master", action: .commit),
-                Branch(name: "development", action: .message("test please")),
-                Branch(
+                Trigger(name: "master", action: .commit, jobs: ["Small job"]),
+                Trigger(name: "development", action: .message("test please"), jobs: ["Small job"]),
+                Trigger(
                     name: "master",
                     action: .message("build please"),
-                    workflows: [
-                        Workflow.workflowFull("Build")
+                    jobs: [
+                        "Fail job"
                     ]
                 )
             ]

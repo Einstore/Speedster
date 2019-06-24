@@ -26,7 +26,7 @@ class LocalExecutor: Executor {
         self.node = node
     }
     
-    func run(_ phase: Job.Workflow.Phase, identifier: String) throws {
+    func run(_ phase: Root.Job.Phase, identifier: String) throws {
         let workdir = node.dir.finished(with: "/").appending(identifier)
         try FileManager.default.createDirectory(atPath: workdir, withIntermediateDirectories: true, attributes: nil)
         

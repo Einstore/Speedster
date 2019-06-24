@@ -14,24 +14,24 @@ final class SpeedsterController {
     
     func routes(_ r: Routes, _ c: Container) throws {
         r.get("example") { req -> Response in
-            return try Response.make.yaml(Job.jobAll())
+            return try Response.make.yaml(Root.rootAll())
         }
         
         r.get("example", "fail") { req -> Response in
-            return try Response.make.yaml(Job.jobDependentFailing())
+            return try Response.make.yaml(Root.rootDependentFailing())
         }
         
         r.get("example", "small") { req -> Response in
-            return try Response.make.yaml(Job.jobSmall())
+            return try Response.make.yaml(Root.rootSmall())
         }
         
         r.get("example", "success") { req -> Response in
-            return try Response.make.yaml(Job.jobDependentSucceeding())
+            return try Response.make.yaml(Root.rootDependentSucceeding())
         }
         
         r.get("local") { req -> String in
             let e = Executioner(
-                job: Job.jobDependentFailing(),
+                root: Root.rootDependentFailing(),
                 node: Node(
                     name: "Localhost",
                     host: "localhost",
@@ -51,7 +51,7 @@ final class SpeedsterController {
         
         r.webSocket("remote") { (req, webSocket) in
             let e = Executioner(
-                job: Job.jobAll(),
+                root: Root.rootAll(),
                 node: Node(
                     name: "Ubuntu Test",
                     host: "157.230.106.39",

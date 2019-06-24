@@ -12,7 +12,7 @@ import GitHubKit
 
 extension Array where Element == Row<Phase> {
     
-    func filterAsCore(_ stage: Phase.Stage) -> [SpeedsterCore.Job.Workflow.Phase] {
+    func filterAsCore(_ stage: Phase.Stage) -> [SpeedsterCore.Root.Job.Phase] {
         return filter({ $0.stage == stage }).map({ $0.asCorePhase() })
     }
     
@@ -20,7 +20,7 @@ extension Array where Element == Row<Phase> {
 
 extension Array where Element == Row<Job> {
     
-    func assembleAsCore(_ phases: [Row<Phase>]) -> [SpeedsterCore.Job.Workflow] {
+    func assembleAsCore(_ phases: [Row<Phase>]) -> [SpeedsterCore.Root.Job] {
         return map({ $0.asCoreWorkflow(phases: phases) })
     }
     
@@ -29,8 +29,8 @@ extension Array where Element == Row<Job> {
 
 extension Row where Model == Job {
     
-    func asCoreWorkflow(phases: [Row<Phase>]) -> SpeedsterCore.Job.Workflow {
-        return SpeedsterCore.Job.Workflow(
+    func asCoreWorkflow(phases: [Row<Phase>]) -> SpeedsterCore.Root.Job {
+        return SpeedsterCore.Root.Job(
             name: self.name,
             nodeLabels: self.nodeLabels,
             preBuild: phases.filterAsCore(.pre),
@@ -48,8 +48,8 @@ extension Row where Model == Job {
 
 extension Row where Model == Phase {
     
-    func asCorePhase() -> SpeedsterCore.Job.Workflow.Phase {
-        return SpeedsterCore.Job.Workflow.Phase(
+    func asCorePhase() -> SpeedsterCore.Root.Job.Phase {
+        return SpeedsterCore.Root.Job.Phase(
             identifier: self.id?.uuidString,
             name: self.name,
             command: self.command,

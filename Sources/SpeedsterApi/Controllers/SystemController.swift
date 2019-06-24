@@ -18,8 +18,8 @@ final class SystemController: Controller {
     }
     
     func routes(_ r: Routes, _ c: Container) throws {
-        r.post("jobs", "validate") { req -> SpeedsterCore.Job in
-            let job = try req.content.decode(SpeedsterCore.Job.self)
+        r.post("jobs", "validate") { req -> SpeedsterCore.Root in
+            let job = try req.content.decode(SpeedsterCore.Root.self)
             return job
         }
     }

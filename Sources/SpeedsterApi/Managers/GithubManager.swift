@@ -143,7 +143,7 @@ class GithubManager {
                 continue
             }
             var fileInfo = file.asInfo()
-            let decodedJob: SpeedsterCore.Job?
+            let decodedJob: SpeedsterCore.Root?
             if let repo = repos.first(where: { $0.name == file.repo && $0.owner.login == file.org }), repo.archived == true {
                 fileInfo.disabled = true
                 decodedJob = nil
@@ -191,7 +191,7 @@ class GithubManager {
         }
     }
     
-    func blob(_ fileName: String, for location: SpeedsterCore.Job.GitHub.Location) -> EventLoopFuture<GitBlob> {
+    func blob(_ fileName: String, for location: SpeedsterCore.Root.GitHub.Location) -> EventLoopFuture<GitBlob> {
         guard let commit = location.commit else {
             return self.db.eventLoop.makeFailedFuture(GenericError.decodingError)
         }
@@ -236,7 +236,7 @@ class GithubManager {
         }
     }
     
-    func file(_ fileName: String, for location: SpeedsterCore.Job.GitHub.Location) -> EventLoopFuture<Data> {
+    func file(_ fileName: String, for location: SpeedsterCore.Root.GitHub.Location) -> EventLoopFuture<Data> {
         return blob(fileName, for: location).flatMap { blob in
             guard let data = Data(base64Encoded: blob.content, options: [.ignoreUnknownCharacters]) else {
                 return self.db.eventLoop.makeFailedFuture(GenericError.decodingError)
@@ -245,13 +245,13 @@ class GithubManager {
         }
     }
     
-    func speedster(for location: SpeedsterCore.Job.GitHub.Location) -> EventLoopFuture<SpeedsterCore.Job> {
+    func speedster(for location: SpeedsterCore.Root.GitHub.Location) -> EventLoopFuture<SpeedsterCore.Root> {
         return blob("Speedster.yml", for: location).flatMap { blob in
             do {
                 guard
                     let data = Data(base64Encoded: blob.content, options: [.ignoreUnknownCharacters]),
                     let string = String(data: data, encoding: .utf8),
-                    let job: SpeedsterCore.Job = try YAMLDecoder().decode(from: string)
+                    let job: SpeedsterCore.Root = try YAMLDecoder().decode(from: string)
                     else {
                         return self.db.eventLoop.makeFailedFuture(GenericError.decodingError)
                 }
@@ -351,11 +351,11 @@ extension GithubManager.SpeedsterFileData {
         )
     }
     
-    func decodeCoreJob() throws -> SpeedsterCore.Job {
+    func decodeCoreJob() throws -> SpeedsterCore.Root {
         guard let file = file, let string = String(data: file, encoding: .utf8) else {
             throw GithubManager.Error.invalidSpeedsterFile
         }
-        let data = try YAMLDecoder().decode(SpeedsterCore.Job.self, from: string)
+        let data = try YAMLDecoder().decode(SpeedsterCore.Root.self, from: string)
         return data
     }
     

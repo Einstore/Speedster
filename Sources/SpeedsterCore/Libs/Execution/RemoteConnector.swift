@@ -49,7 +49,7 @@ class RemoteExecutor: Executor {
         }
     }
     
-    func run(_ phase: Job.Workflow.Phase, identifier: String) throws {
+    func run(_ phase: Root.Job.Phase, identifier: String) throws {
         if let err = sshError {
             throw err
         }

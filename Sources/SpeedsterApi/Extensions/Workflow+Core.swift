@@ -18,7 +18,7 @@ extension Array where Element == Row<Phase> {
     
 }
 
-extension Array where Element == Row<Workflow> {
+extension Array where Element == Row<Job> {
     
     func assembleAsCore(_ phases: [Row<Phase>]) -> [SpeedsterCore.Job.Workflow] {
         return map({ $0.asCoreWorkflow(phases: phases) })
@@ -27,7 +27,7 @@ extension Array where Element == Row<Workflow> {
 }
 
 
-extension Row where Model == Workflow {
+extension Row where Model == Job {
     
     func asCoreWorkflow(phases: [Row<Phase>]) -> SpeedsterCore.Job.Workflow {
         return SpeedsterCore.Job.Workflow(

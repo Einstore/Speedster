@@ -34,7 +34,7 @@ final class ScheduledController: Controller {
                 .filter(\Root.id == id)
                 .firstUnwrapped().flatMap { job in
                     return GitHubJob.query(on: self.db)
-                        .filter(\GitHubJob.jobId == job.id)
+                        .filter(\GitHubJob.rootId == job.id)
                         .first().flatMap { githubJob in
                             guard let githubJob = githubJob else {
                                 return job.scheduledResponse(nil, on: self.db).encodeResponse(status: .created, for: req)

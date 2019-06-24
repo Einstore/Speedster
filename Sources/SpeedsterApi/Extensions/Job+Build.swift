@@ -25,7 +25,7 @@ extension Row where Model == SpeedsterApi.Root {
         return schedule(github, on: db)
     }
     
-    func coreJob(from workflows: [Row<Workflow>], phases: [Row<Phase>], on eventLoop: EventLoop) -> EventLoopFuture<SpeedsterCore.Job> {
+    func coreJob(from workflows: [Row<Job>], phases: [Row<Phase>], on eventLoop: EventLoop) -> EventLoopFuture<SpeedsterCore.Job> {
         let job = SpeedsterCore.Job(
             name: self.name,
             nodeLabels: self.nodeLabels,
@@ -38,12 +38,12 @@ extension Row where Model == SpeedsterApi.Root {
         return eventLoop.makeSucceededFuture(job)
     }
     
-    func relatedData(on db: Database) -> EventLoopFuture<(workflows: [Row<Workflow>], phases: [Row<Phase>])> {
-        return Workflow.query(on: db)
-            .filter(\Workflow.jobId == self.id)
+    func relatedData(on db: Database) -> EventLoopFuture<(workflows: [Row<Job>], phases: [Row<Phase>])> {
+        return Job.query(on: db)
+            .filter(\Job.jobId == self.id)
             .all().flatMap { workflows in
                 return Phase.query(on: db)
-                    .filter(\Phase.jobId == self.id)
+                    .filter(\Phase.rootId == self.id)
                     .sort(\Phase.order, .descending)
                     .all().map { phases in
                         return (workflows: workflows, phases: phases)

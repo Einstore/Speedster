@@ -28,7 +28,7 @@ extension Row where Model == Root {
 
 extension SpeedsterCore.Job {
     
-    fileprivate func update(phases dbWorkflow: Row<SpeedsterApi.Workflow>, coreWorkflow: SpeedsterCore.Job.Workflow, info: SpeedsterFileInfo, github: Github, on db: Database) -> EventLoopFuture<Void> {
+    fileprivate func update(phases dbWorkflow: Row<SpeedsterApi.Job>, coreWorkflow: SpeedsterCore.Job.Workflow, info: SpeedsterFileInfo, github: Github, on db: Database) -> EventLoopFuture<Void> {
         var futures: [EventLoopFuture<Void>] = []
         
         func addTo(futures phases: [Workflow.Phase], stage: SpeedsterApi.Phase.Stage) {
@@ -73,11 +73,11 @@ extension SpeedsterCore.Job {
     }
     
     func update(jobChildren job: Row<SpeedsterApi.Root>, info: SpeedsterFileInfo, github: Github, on db: Database) -> EventLoopFuture<Void> {
-        return SpeedsterApi.Workflow.query(on: db).filter(\SpeedsterApi.Workflow.jobId == job.id).delete().flatMap {
-            return Phase.query(on: db).filter(\Phase.jobId == job.id).delete().flatMap {
+        return SpeedsterApi.Job.query(on: db).filter(\SpeedsterApi.Job.jobId == job.id).delete().flatMap {
+            return Phase.query(on: db).filter(\Phase.rootId == job.id).delete().flatMap {
                 var futures: [EventLoopFuture<Void>] = []
                 for w in self.workflows {
-                    let workflow = SpeedsterApi.Workflow.row(from: w, job: job)
+                    let workflow = SpeedsterApi.Job.row(from: w, job: job)
                     let future = workflow.save(on: db).flatMap { _ in
                         return self.update(phases: workflow, coreWorkflow: w, info: info, github: github, on: db)
                     }
@@ -100,7 +100,7 @@ extension SpeedsterCore.Job {
     fileprivate func updateJob(_ info: SpeedsterFileInfo, on db: Database) -> EventLoopFuture<Row<Root>> {
         return Root
             .query(on: db)
-            .join(\GitHubJob.jobId, to: \Root.id)
+            .join(\GitHubJob.rootId, to: \Root.id)
             .filter(\GitHubJob.organization == info.org)
             .filter(\GitHubJob.repo == info.repo)
             .first().flatMap { job in
@@ -112,7 +112,7 @@ extension SpeedsterCore.Job {
                         let githubJob = GitHubJob.row()
                         githubJob.repo = info.repo
                         githubJob.organization = info.org
-                        githubJob.jobId = job.id
+                        githubJob.rootId = job.id
                         return githubJob.save(on: db).map { _ in
                             return job
                         }

@@ -1,5 +1,5 @@
 //
-//  Workflow.swift
+//  Job.swift
 //  
 //
 //  Created by Ondrej Rafaj on 12/06/2019.
@@ -8,11 +8,10 @@
 import Fluent
 
 
-/// Single run of a phase in a job
-public struct Workflow: Model {
+public struct Job: Model {
     
-    public static let shared = Workflow()
-    public static let entity = "workflows"
+    public static let shared = Job()
+    public static let entity = "jobs"
     
     public let id = Field<Speedster.DbIdType?>("id")
     
@@ -49,10 +48,10 @@ public struct Workflow: Model {
 }
 
 
-extension Workflow {
+extension Job {
     
-    static func row(from workflow: SpeedsterCore.Job.Workflow, job: Row<Root>) -> Row<Workflow> {
-        let row = Workflow.row()
+    static func row(from workflow: SpeedsterCore.Job.Workflow, job: Row<Root>) -> Row<Job> {
+        let row = Job.row()
         row.jobId = job.id
         row.name = workflow.name
         row.nodeLabels = workflow.nodeLabels

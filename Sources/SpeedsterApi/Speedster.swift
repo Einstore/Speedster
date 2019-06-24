@@ -69,7 +69,7 @@ public class Speedster {
         migrations.add(Run.autoMigration(), to: dbIdentifier)
         migrations.add(Root.autoMigration(), to: dbIdentifier)
         migrations.add(GitHubJob.autoMigration(), to: dbIdentifier)
-        migrations.add(Workflow.autoMigration(), to: dbIdentifier)
+        migrations.add(Job.autoMigration(), to: dbIdentifier)
         migrations.add(Phase.autoMigration(), to: dbIdentifier)
         migrations.add(Organization.autoMigration(), to: dbIdentifier)
         migrations.add(Scheduled.autoMigration(), to: dbIdentifier)

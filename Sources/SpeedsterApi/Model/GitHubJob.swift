@@ -16,7 +16,7 @@ public struct GitHubJob: Model {
     
     public let id = Field<Speedster.DbIdType?>("id")
     
-    public let jobId = Field<Speedster.DbIdType?>("job_id")
+    public let rootId = Field<Speedster.DbIdType?>("root_id")
     
     public let organization = Field<String>("organization")
     

@@ -1,5 +1,5 @@
 //
-//  Job.swift
+//  Root.swift
 //  
 //
 //  Created by Ondrej Rafaj on 07/06/2019.
@@ -45,7 +45,7 @@ public struct Root: Model {
     }
     
     public static let shared = Root()
-    public static let entity = "jobs"
+    public static let entity = "roots"
     
     public let id = Field<Speedster.DbIdType?>("id")
     

@@ -117,11 +117,11 @@ class GithubManager {
         var futures: [EventLoopFuture<Void>] = []
         for org in orgs {
             let future: EventLoopFuture<Void> = Root.query(on: self.db)
-                .join(\GitHubJob.jobId, to: \Root.id)
+                .join(\GitHubJob.rootId, to: \Root.id)
                 .filter(\GitHubJob.organization == org.name)
                 .count().flatMap { totalJobs in
                     return Root.query(on: self.db)
-                        .join(\GitHubJob.jobId, to: \Root.id)
+                        .join(\GitHubJob.rootId, to: \Root.id)
                         .filter(\GitHubJob.organization == org.name)
                         .filter(\Root.disabled == 0)
                         .count().flatMap { activeJobs in
@@ -293,7 +293,7 @@ class GithubManager {
         organization.activeJobs = 0
         return organization.save(on: db).flatMap { _ in
             return Root.query(on: self.db)
-                .join(\GitHubJob.jobId, to: \Root.id)
+                .join(\GitHubJob.rootId, to: \Root.id)
                 .filter(\GitHubJob.organization == organization.name)
                 .set(["disabled": .custom(true)])
                 .update()

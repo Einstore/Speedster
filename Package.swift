@@ -75,9 +75,9 @@ let package = Package(
             name: "Run",
             dependencies: ["App"]
         ),
-          .testTarget(
-            name: "AppTests",
-            dependencies: ["App"]
+        .testTarget(
+            name: "SpeedsterApiTests",
+            dependencies: ["SpeedsterApi"]
         )
     ]
 )

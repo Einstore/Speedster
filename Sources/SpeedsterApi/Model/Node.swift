@@ -103,10 +103,10 @@ public struct Node: Model {
     public let labels = Field<String?>("labels")
     
     /// Login password (if auth is 2) or an optional passphrase (if auth is 3)
-    public let password = Field<[UInt8]?>("password", dataType: .data)
+    public let password = Field<String?>("password")
     
     /// Public key certificate
-    public let publicKey = Field<[UInt8]?>("public_key", dataType: .data)
+    public let publicKey = Field<String?>("public_key")
     
     /// Authentication
     ///
@@ -159,12 +159,12 @@ extension Row: Displayable where Model == Node {
         self.auth = nodeData.auth
         self.executors = nodeData.executors
         if let password = nodeData.password {
-            self.password = try? Secrets.encrypt(password)
+            self.password = try? Secrets.encrypt(asBase64: password)
         } else {
             self.password = nil
         }
         if let publicKey = nodeData.publicKey {
-            self.publicKey = try? Secrets.encrypt(publicKey)
+            self.publicKey = try? Secrets.encrypt(asBase64: publicKey)
         } else {
             self.publicKey = nil
         }

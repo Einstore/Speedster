@@ -87,8 +87,8 @@
         "repositoryURL": "https://github.com/vapor/jobs.git",
         "state": {
           "branch": null,
-          "revision": "bb41a64d2d8a5d324f7f8e435668980bba553ce8",
-          "version": "1.0.0-alpha.2"
+          "revision": "4d1be7c04800a31790995afb3d5dd364b0277dcb",
+          "version": "1.0.0-alpha.2.1"
         }
       },
       {
@@ -276,8 +276,8 @@
         "repositoryURL": "https://github.com/vapor/vapor.git",
         "state": {
           "branch": null,
-          "revision": "139f6327604adc5645bcb74caa4e8129bac38798",
-          "version": "4.0.0-alpha.1.4"
+          "revision": "e415cbcacc14a5f8d02e3b6e1aea36f86064b98e",
+          "version": "4.0.0-alpha.1.5"
         }
       },
       {

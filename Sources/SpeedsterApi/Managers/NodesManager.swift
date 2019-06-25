@@ -64,18 +64,22 @@ class NodesManager {
     func install(_ command: String, req: Request) -> EventLoopFuture<String> {
         let id = req.parameters.get("node_id", as: Speedster.DbIdType.self)
         return Node.find(failing: id, on: self.db).flatMap { node in
-            let promise = req.eventLoop.makePromise(of: String.self)
             guard let coreNode = try? node.asCore() else {
                 return req.eventLoop.makeFailedFuture(GenericError.decodingError)
             }
+            let promise = req.eventLoop.makePromise(of: String.self)
             var output = ""
             coreNode.run(bash: command, on: req.eventLoop, output: { out in
                 print(out)
                 output += out
             }, finished: {
-                promise.succeed(output)
+                req.eventLoop.execute {
+                    promise.succeed(output)
+                }
             }, failed: { error in
-                promise.fail(error)
+                req.eventLoop.execute {
+                    promise.fail(error)
+                }
             })
             return promise.futureResult
         }

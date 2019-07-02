@@ -44,7 +44,7 @@ public struct Root: Content {
         public let name: String
         
         /// Node labels
-        public let nodeLabels: String?
+        public let nodeLabels: [String]?
         
         /// Depends on workflow (name)
         public let dependsOn: String?
@@ -94,7 +94,7 @@ public struct Root: Content {
         /// Initializer
         public init(
             name: String,
-            nodeLabels: String? = nil,
+            nodeLabels: [String]? = nil,
             dependsOn: String? = nil,
             environment: Env? = nil,
             preBuild: [Phase],
@@ -157,6 +157,7 @@ public struct Root: Content {
         
     }
     
+    /// Docker dependency environments
     public struct Dependency: Codable {
         
         public let image: String
@@ -184,6 +185,7 @@ public struct Root: Content {
         
     }
     
+    /// Environment requirements
     public struct Env: Codable {
         
         public let image: String
@@ -270,6 +272,7 @@ public struct Root: Content {
         ///     - Any successful trigger will trigger given jobs
         public let triggers: [Trigger]
         
+        /// Jobs allowed within the pipeline
         public let jobs: [String]
         
         public init(triggers: [Trigger], jobs: [String]) {
@@ -286,7 +289,7 @@ public struct Root: Content {
     public let identifier: String?
     
     /// Node labels
-    public let nodeLabels: String?
+    public let nodeLabels: [String]?
     
     /// GitHub info & settings
     public let gitHub: GitHub?
@@ -318,7 +321,7 @@ public struct Root: Content {
     public init(
         name: String,
         identifier: String? = nil,
-        nodeLabels: String? = nil,
+        nodeLabels: [String]? = nil,
         gitHub: GitHub? = nil,
         jobs: [Job],
         environment: Env? = nil,

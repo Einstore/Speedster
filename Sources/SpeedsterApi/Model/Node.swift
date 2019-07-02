@@ -9,7 +9,7 @@ import Fluent
 import SpeedsterCore
 
 
-// Node is a single worker machine to which Speedster connects via SSH
+// Machine is a single worker machine to which Speedster connects via SSH
 public struct Node: Model {
     
     public struct Post: Codable {
@@ -18,10 +18,10 @@ public struct Node: Model {
         let host: String
         let port: Int?
         let user: String?
-        let labels: String?
+        let labels: [String]?
         let password: String?
         let publicKey: String?
-        let auth: SpeedsterCore.Node.Auth
+        let auth: SpeedsterCore.Machine.Auth
         let executors: Int
         
         enum CodingKeys: String, CodingKey {
@@ -45,10 +45,10 @@ public struct Node: Model {
         public let host: String
         public let port: Int?
         public let user: String?
-        public let labels: String?
+        public let labels: [String]?
         public let password: Bool
         public let publicKey: Bool
-        public let auth: SpeedsterCore.Node.Auth
+        public let auth: SpeedsterCore.Machine.Auth
         public let executors: Int
         public let running: Int
         
@@ -72,7 +72,7 @@ public struct Node: Model {
             self.host = row.host
             self.port = row.port
             self.user = row.user ?? (row.auth == .password ? "root" : nil)
-            self.labels = row.labels
+            self.labels = row.labels?.array()
             self.password = (row.password?.count ?? 0) > 0
             self.publicKey = (row.publicKey?.count ?? 0) > 0
             self.auth = row.auth
@@ -103,10 +103,10 @@ public struct Node: Model {
     public let labels = Field<String?>("labels")
     
     /// Login password (if auth is 2) or an optional passphrase (if auth is 3)
-    public let password = Field<String?>("password")
+    public let password = Field<Data?>("password", dataType: .data)
     
     /// Public key certificate
-    public let publicKey = Field<String?>("public_key")
+    public let publicKey = Field<Data?>("public_key", dataType: .data)
     
     /// Authentication
     ///
@@ -117,7 +117,7 @@ public struct Node: Model {
     ///         case privateKey = "pk"
     ///     }
     ///
-    public let auth = Field<SpeedsterCore.Node.Auth>("auth", dataType: .string)
+    public let auth = Field<SpeedsterCore.Machine.Auth>("auth", dataType: .string)
     
     /// Max node runners
     public let executors = Field<Int>("executors")
@@ -155,16 +155,16 @@ extension Row: Displayable where Model == Node {
         self.host = nodeData.host
         self.port = nodeData.port ?? 22
         self.user = nodeData.user
-        self.labels = nodeData.labels
+        self.labels = nodeData.labels?.joined(separator: ",")
         self.auth = nodeData.auth
         self.executors = nodeData.executors
         if let password = nodeData.password {
-            self.password = try? Secrets.encrypt(asBase64: password)
+            self.password = try? Secrets.encrypt(asData: password)
         } else {
             self.password = nil
         }
         if let publicKey = nodeData.publicKey {
-            self.publicKey = try? Secrets.encrypt(asBase64: publicKey)
+            self.publicKey = try? Secrets.encrypt(asData: publicKey)
         } else {
             self.publicKey = nil
         }

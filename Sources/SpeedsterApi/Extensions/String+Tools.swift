@@ -8,6 +8,15 @@
 import Foundation
 
 
+extension String {
+    
+    func array() -> [String] {
+        return split(separator: ",").map({ String($0).trimmingCharacters(in: .whitespacesAndNewlines) })
+    }
+    
+}
+
+
 extension Data {
     
     func asString() -> String {

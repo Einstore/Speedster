@@ -15,13 +15,13 @@ class LocalExecutor: Executor {
         case fail(String)
     }
     
-    let node: Node
+    let node: Machine
     
     let eventLoop: EventLoop
     
     var output: ExecutorOutput?
     
-    required init(_ node: Node, on eventLoop: EventLoop) {
+    required init(_ node: Machine, on eventLoop: EventLoop) {
         self.eventLoop = eventLoop
         self.node = node
     }

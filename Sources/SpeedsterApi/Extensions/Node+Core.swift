@@ -11,23 +11,18 @@ import SpeedsterCore
 
 extension Row where Model == SpeedsterApi.Node {
     
-    func asCore() throws -> SpeedsterCore.Node {
+    func asCore() throws -> SpeedsterCore.Machine {
         let pass: String?
         if let p = self.password {
-            do {
-                pass = try Secrets.decrypt(fromBase64: p)
-            } catch {
-                print(error)
-                pass = nil
-            }
+            do { pass = try Secrets.decrypt(p) } catch { pass = nil }
         }
         else { pass = nil }
         
         let key: String?
-        if let k = self.publicKey { key = try Secrets.decrypt(fromBase64: k) }
+        if let k = self.publicKey { key = try Secrets.decrypt(k) }
         else { key = nil }
         
-        return SpeedsterCore.Node(
+        return SpeedsterCore.Machine(
             name: self.name,
             host: self.host,
             port: self.port,

@@ -32,7 +32,7 @@ final class SpeedsterController {
         r.get("local") { req -> String in
             let e = Executioner(
                 root: Root.rootDependentFailing(),
-                node: Node(
+                machine: Machine(
                     name: "Localhost",
                     host: "localhost",
                     port: 0,
@@ -52,7 +52,7 @@ final class SpeedsterController {
         r.webSocket("remote") { (req, webSocket) in
             let e = Executioner(
                 root: Root.rootAll(),
-                node: Node(
+                machine: Machine(
                     name: "Ubuntu Test",
                     host: "157.230.106.39",
                     port: 22,

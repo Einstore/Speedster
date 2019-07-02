@@ -56,6 +56,9 @@ public struct Scheduled: Model {
     /// Job ID
     public let jobId = Field<Speedster.DbIdType?>("job_id")
     
+    /// Run ID (only available after job finishes)
+    public let runId = Field<Speedster.DbIdType?>("run_id")
+    
     /// Commit info
     public let commit = Field<String>("commit")
     

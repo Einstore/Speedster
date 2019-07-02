@@ -24,11 +24,6 @@ final class GithubController: Controller {
     
     func routes(_ r: Routes, _ c: Container) throws {
         let github = try c.make(Github.self)
-        let githubManager = GithubManager(
-            github: github,
-            container: c,
-            on: self.db
-        )
         
         r.get("github", "api", "organizations") { req -> EventLoopFuture<[GitHubKit.Organization]> in
             return try GitHubKit.Organization.query(on: github).get()
@@ -59,45 +54,6 @@ final class GithubController: Controller {
                     return c.eventLoop.makeFailedFuture(HTTPError.missingParamaters)
             }
             return try GitHubKit.Webhook.query(on: github).get(org: org, repo: repo)
-        }
-        
-        r.post("github", ":githubjob_id", "webhooks", "reset") { req -> EventLoopFuture<Response> in
-            let id = req.parameters.get("githubjob_id", as: Speedster.DbIdType.self)
-            return GitHubJob.query(on: self.db)
-                .filter(\GitHubJob.id == id)
-                .firstUnwrapped().flatMap { job in
-                    let infos = [
-                        SpeedsterFileInfo(
-                            job: job.id,
-                            org: job.org,
-                            repo: job.repo,
-                            speedster: true,
-                            invalid: false,
-                            disabled: false
-                        )
-                    ]
-                    return githubManager.reset(webhooks: infos).map { // Setup webhooks
-                        return Response.make.noContent()
-                    }
-            }
-        }
-        
-        r.post("github", "reload") { req -> EventLoopFuture<Response> in
-            return try GitHubKit.Organization.query(on: github).get().flatMap() { githubOrgs in // Get available organizations from Github
-                return githubManager.update(organizations: githubOrgs).flatMap { dbOrgs in // Update organizations
-                    return githubOrgs.repos(on: c).flatMap { repos in // Get repos
-                        return githubManager.fileData(repos).flatMap { files in // Get Speedster.yml from repos
-                            return githubManager.process(files: files, repos: repos).flatMap { infos in // Process all Speedster.yml files
-                                return githubManager.update(orgStats: dbOrgs).flatMap { _ in // Update all affected organizations with the latest repo stats
-                                    return githubManager.setup(webhooks: infos).map { // Setup webhooks
-                                        return infos.asDisplayResponse()
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
     

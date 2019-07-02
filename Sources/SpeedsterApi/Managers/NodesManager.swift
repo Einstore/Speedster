@@ -20,10 +20,13 @@ class NodesManager {
         self.db = db
     }
     
+    // MARK: Node distribution
+    
     func next(_ labels: [String]? = nil) -> EventLoopFuture<Row<Node>?> {
         let q = Node.query(on: db)
             .filter(\Node.running == 0)
         if let labels = labels {
+            #warning("Needs to search for any of the given labels in the string")
             q.filter(\Node.labels, in: labels)
         }
         return q.first().flatMap { node in
@@ -36,6 +39,8 @@ class NodesManager {
             }
         }
     }
+    
+    // MARK: Node helpers
     
     func install(_ command: String, req: Request, webSocket: WebSocket) {
         webSocket.send("Starting install")

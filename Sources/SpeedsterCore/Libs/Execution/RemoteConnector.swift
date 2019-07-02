@@ -18,7 +18,7 @@ class RemoteExecutor: Executor {
         case notSupported
     }
     
-    let node: Node
+    let node: Machine
     
     let eventLoop: EventLoop
     
@@ -27,7 +27,7 @@ class RemoteExecutor: Executor {
     
     var output: ExecutorOutput?
     
-    required init(_ node: Node, on eventLoop: EventLoop) {
+    required init(_ node: Machine, on eventLoop: EventLoop) {
         self.eventLoop = eventLoop
         self.node = node
         

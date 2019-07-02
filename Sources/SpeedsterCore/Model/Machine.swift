@@ -1,5 +1,5 @@
 //
-//  Node.swift
+//  Machine.swift
 //  
 //
 //  Created by Ondrej Rafaj on 09/06/2019.
@@ -8,7 +8,7 @@
 import Vapor
 
 
-public struct Node: Content {
+public struct Machine: Content {
     
     public enum Auth: String, Codable {
         case none = "na"
@@ -56,10 +56,10 @@ public struct Node: Content {
 }
 
 
-extension Node {
+extension Machine {
     
     public func run(bash command: String, on eventLoop: EventLoop, output: @escaping ((String) -> ()), finished: @escaping (() -> ()), failed: @escaping Executioner.FailedClosure) {
-        let ex = Executioner(node: self, on: eventLoop, output: { out, id in
+        let ex = Executioner(machine: self, on: eventLoop, output: { out, id in
             output(out)
         })
         ex.run(bash: command, finished: finished, failed: failed)

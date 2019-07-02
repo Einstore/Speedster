@@ -40,6 +40,11 @@ public class Secrets {
         return out
     }
     
+    public static func encrypt(asData string: String) throws -> Data {
+        let out = try encrypt(string)
+        return Data(out)
+    }
+    
     public static func encrypt(asBase64 string: String) throws -> String {
         let encrypted = try encrypt(string)
         let base64 = Data(encrypted).base64EncodedString()
@@ -53,6 +58,11 @@ public class Secrets {
         
         let out = try AES256GCM.decrypt(.bytes(ciphertext), key: .bytes(secret), iv: .bytes(nonce), tag: .bytes(tag))
         return String(bytes: out.bytes(), encoding: .utf8)
+    }
+    
+    public static func decrypt(_ data: Data) throws -> String? {
+        let data = Array(data)
+        return try decrypt(data)
     }
     
     public static func decrypt(fromBase64 base64: String) throws -> String? {

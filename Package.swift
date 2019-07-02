@@ -8,6 +8,7 @@ let package = Package(
     ],
     products: [
         .executable(name: "random-generator", targets: ["RandomGenerator"]),
+        .executable(name: "speedster-hello", targets: ["SpeedsterHello"]),
         .library(name: "SpeedsterCore", targets: ["SpeedsterCore"]),
         .library(name: "SpeedsterApi", targets: ["SpeedsterApi"])
     ],
@@ -30,6 +31,12 @@ let package = Package(
             name: "RandomGenerator",
             dependencies: [
                 "CryptoKit"
+            ]
+        ),
+        .target(
+            name: "SpeedsterHello",
+            dependencies: [
+                "Vapor"
             ]
         ),
         .target(
@@ -56,6 +63,12 @@ let package = Package(
             ]
         ),
         .target(
+            name: "VMWareFusionKit",
+            dependencies: [
+                "Vapor"
+            ]
+        ),
+          .target(
             name: "SpeedsterApi",
             dependencies: [
                 "Fluent",
@@ -68,7 +81,8 @@ let package = Package(
                 "Yams",
                 "Jobs",
                 "Redis",
-                "JobsRedisDriver"
+                "JobsRedisDriver",
+                "VMWareFusionKit"
             ]
         ),
         .target(

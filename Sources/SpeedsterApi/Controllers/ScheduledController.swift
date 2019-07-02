@@ -42,7 +42,10 @@ final class ScheduledController: Controller {
         }
         
         r.get("jobs", "scheduled") { req -> EventLoopFuture<[Row<Scheduled>]> in
-            return Scheduled.query(on: self.db).all()
+            return Scheduled.query(on: self.db)
+//                .filter(\Scheduled.runId != nil)
+                .sort(\Scheduled.requested, .ascending)
+                .all()
         }
         
         r.get("scheduled", ":scheduled_id") { req -> EventLoopFuture<Row<Scheduled>> in
@@ -53,26 +56,16 @@ final class ScheduledController: Controller {
         r.post("scheduled", ":scheduled_id", "run") { req -> EventLoopFuture<Response> in
             let id = req.parameters.get("scheduled_id", as: Speedster.DbIdType.self)
             let github = try c.make(Github.self)
-            return scheduleManager.scheduled(id).flatMap { scheduledJob in
-                return GitHubJob.find(failing: scheduledJob.jobId, on: self.db).flatMap { githubJob in
-                    let buildManager = BuildManager(github: github, container: c, on: self.db)
-                    let loc = GitLocation(
-                        org: githubJob.org,
-                        repo: githubJob.repo,
-                        commit: scheduledJob.commit
-                    )
-                    return buildManager.build(loc).flatMap { _ in
-                        return Scheduled.delete(failing: id, on: self.db).map {
-                            return Response.make.noContent()
-                        }
-                        }.flatMapError { error -> EventLoopFuture<Response> in
-                            // TODO: Write error into a log etc!!!!!!!!!!
-                            return Scheduled.delete(failing: id, on: self.db).map {
-                                return Response.make.noContent()
-                            }
-                    }
-                }
+            let buildManager = try BuildManager(
+                github: github,
+                container: c,
+                scheduleManager: scheduleManager,
+                on: self.db
+            )
+            return buildManager.build(scheduled: id).map { _ in
+                return Response.make.noContent()
             }
         }
     }
+    
 }

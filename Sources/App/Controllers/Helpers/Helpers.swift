@@ -79,7 +79,7 @@ extension Root.Job {
     static func jobTimeout(dependsOn: String? = nil) -> Root.Job {
         return Root.Job(
             name: "Timeout workflow",
-            nodeLabels: "linux,mac",
+            nodeLabels: ["linux", "mac"],
             dependsOn: dependsOn,
             preBuild: [
                 Phase.phaseEcho("Starting count to 10")
@@ -98,7 +98,7 @@ extension Root.Job {
     static func jobFailPreBuild(dependsOn: String? = nil) -> Root.Job {
         return Root.Job(
             name: "Fail pre-build workflow",
-            nodeLabels: "linux,mac",
+            nodeLabels: ["linux", "mac"],
             dependsOn: dependsOn,
             preBuild: [
                 Phase.phaseEcho("Starting fail"),
@@ -118,7 +118,7 @@ extension Root.Job {
     static func jobFailBuild(dependsOn: String? = nil) -> Root.Job {
         return Root.Job(
             name: "Fail build workflow",
-            nodeLabels: "linux,mac",
+            nodeLabels: ["linux", "mac"],
             dependsOn: dependsOn,
             preBuild: [
                 Phase.phaseEcho("Starting fail")
@@ -138,7 +138,7 @@ extension Root.Job {
     static func jobFailPostBuild(dependsOn: String? = nil) -> Root.Job {
         return Root.Job(
             name: "Fail post-build workflow",
-            nodeLabels: "linux,mac",
+            nodeLabels: ["linux", "mac"],
             dependsOn: dependsOn,
             preBuild: [
                 Phase.phaseEcho("Starting fail"),
@@ -157,7 +157,7 @@ extension Root.Job {
     static func jobFull(_ customName: String = "Full", dependsOn: String? = nil) -> Root.Job {
         return Root.Job(
             name: "\(customName) workflow",
-            nodeLabels: "linux",
+            nodeLabels: ["linux", "mac"],
             dependsOn: dependsOn,
             preBuild: [
                 Phase.phaseEcho("Starting \(customName) workflow"),
@@ -179,7 +179,7 @@ extension Root.Job {
     static func jobSmall(_ customName: String = "Small", dependsOn: String? = nil, env: Bool = false) -> Root.Job {
         return Root.Job(
             name: "\(customName) job",
-            nodeLabels: "linux",
+            nodeLabels: ["linux"],
             dependsOn: dependsOn,
             environment: (env ? Root.Env.basic() : nil),
             preBuild: [
@@ -309,7 +309,7 @@ extension Root {
         
         return Root(
             name: "All workflows",
-            nodeLabels: "linux",
+            nodeLabels: ["linux"],
             gitHub: Root.GitHub(
                 cloneGit: "git@github.com:vapor/postgres-nio.git"
             ),

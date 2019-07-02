@@ -28,19 +28,19 @@ public class Executioner {
     var processed: [String] = []
     
     /// Initializer
-    public init(root: Root? = nil, node: Node, on eventLoop: EventLoop, output: ExecutorOutput? = nil) {
+    public init(root: Root? = nil, machine: Machine, on eventLoop: EventLoop, output: ExecutorOutput? = nil) {
         self.eventLoop = eventLoop
         self.root = root
         self.output = output
         
-        if node.host == "localhost" {
-            executor = LocalExecutor(node, on: eventLoop)
+        if machine.host == "localhost" {
+            executor = LocalExecutor(machine, on: eventLoop)
         } else {
-            executor = RemoteExecutor(node, on: eventLoop)
+            executor = RemoteExecutor(machine, on: eventLoop)
         }
         
         executor.output = { out, identifier in
-            let out = "[\(node.host)] \(out)"
+            let out = "[\(machine.host)] \(out)"
             eventLoop.execute {
                 self.output?(out, identifier)
             }
@@ -53,7 +53,6 @@ public class Executioner {
         guard let job = self.root else {
             throw Error.missingJob
         }
-        //let address = Unmanaged.passUnretained().toOpaque()
         let identifier = try MD5.hash(.string("\(workflow)"))
         processed.append("\(identifier.string())")
         do {

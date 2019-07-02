@@ -10,7 +10,7 @@ import Fluent
 import SpeedsterCore
 import GitHubKit
 import Jobs
-import RedisKit
+import Redis
 import JobsRedisDriver
 
 
@@ -21,7 +21,7 @@ public class Speedster {
     static let controllers: [Controller.Type] = [
         NodesController.self,
         GithubController.self,
-        RootController.self,
+        JobsController.self,
         ScheduledController.self
     ]
     
@@ -38,6 +38,9 @@ public class Speedster {
             return try Github(config, eventLoop: container.eventLoop)
         }
         
+        // Redis
+        s.provider(RedisProvider())
+        
         // Jobs
         s.provider(JobsProvider())
 
@@ -49,18 +52,7 @@ public class Speedster {
         }
         
         s.register(JobsDriver.self) { c in
-            let source = RedisConnectionSource(
-                config: RedisConfiguration(
-                    hostname: "127.0.0.1",
-                    port: 6380,
-                    password: nil,
-                    database: 0,
-                    logger: nil
-                ),
-                eventLoop: c.eventLoop
-            )
-            let pool = ConnectionPool<RedisConnectionSource>(source: source)
-            return JobsRedisDriver(client: pool)
+            return try JobsRedisDriver(client: c.make())
         }
     }
     

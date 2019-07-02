@@ -24,6 +24,10 @@ import Vapor
 
 extension EventLoopFuture {
     
+    public func completeQuietly() {
+        whenComplete { _ in }
+    }
+    
     public func void() -> EventLoopFuture<Void> {
         return map { _ in Void() }
     }

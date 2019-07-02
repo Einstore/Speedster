@@ -1,6 +1,6 @@
 import Fluent
 import Vapor
-import SpeedsterApi
+import SpeedsterCore
 
 
 /// Called before your application initializes.

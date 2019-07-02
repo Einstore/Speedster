@@ -6,7 +6,6 @@
 //
 
 import Fluent
-import SpeedsterCore
 
 
 // Machine is a single worker machine to which Speedster connects via SSH
@@ -21,7 +20,7 @@ public struct Node: Model {
         let labels: [String]?
         let password: String?
         let publicKey: String?
-        let auth: SpeedsterCore.Machine.Auth
+        let auth: Machine.Auth
         let executors: Int
         
         enum CodingKeys: String, CodingKey {
@@ -48,7 +47,7 @@ public struct Node: Model {
         public let labels: [String]?
         public let password: Bool
         public let publicKey: Bool
-        public let auth: SpeedsterCore.Machine.Auth
+        public let auth: Machine.Auth
         public let executors: Int
         public let running: Int
         
@@ -117,7 +116,7 @@ public struct Node: Model {
     ///         case privateKey = "pk"
     ///     }
     ///
-    public let auth = Field<SpeedsterCore.Machine.Auth>("auth", dataType: .string)
+    public let auth = Field<Machine.Auth>("auth", dataType: .string)
     
     /// Max node runners
     public let executors = Field<Int>("executors")

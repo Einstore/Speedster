@@ -6,7 +6,6 @@
 //
 
 import Fluent
-import SpeedsterCore
 import Yams
 import GitHubKit
 
@@ -38,11 +37,11 @@ final class JobsController: Controller {
             return GitHubJob.query(on: self.db).all()
         }
         
-        r.post("jobs", "validate") { req -> SpeedsterCore.Root in
+        r.post("jobs", "validate") { req -> Root in
             guard let yaml = req.body.string else {
                 throw HTTPError.notFound
             }
-            let job = try YAMLDecoder().decode(SpeedsterCore.Root.self, from: yaml)
+            let job = try YAMLDecoder().decode(Root.self, from: yaml)
             return job
         }
         

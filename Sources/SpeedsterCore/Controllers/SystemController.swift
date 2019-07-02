@@ -6,7 +6,6 @@
 //
 
 import Fluent
-import SpeedsterCore
 
 
 final class SystemController: Controller {
@@ -18,8 +17,8 @@ final class SystemController: Controller {
     }
     
     func routes(_ r: Routes, _ c: Container) throws {
-        r.post("jobs", "validate") { req -> SpeedsterCore.Root in
-            let job = try req.content.decode(SpeedsterCore.Root.self)
+        r.post("jobs", "validate") { req -> Root in
+            let job = try req.content.decode(Root.self)
             return job
         }
     }

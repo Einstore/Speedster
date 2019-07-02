@@ -6,7 +6,6 @@
 //
 
 import Fluent
-import SpeedsterCore
 
 
 public struct GitReference: Codable {

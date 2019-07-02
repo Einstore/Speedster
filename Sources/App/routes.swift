@@ -1,6 +1,6 @@
 import Fluent
 import Vapor
-import SpeedsterApi
+import SpeedsterCore
 
 /// Register your application's routes here.
 public func routes(_ r: Routes, _ c: Container) throws {

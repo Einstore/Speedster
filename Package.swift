@@ -9,8 +9,7 @@ let package = Package(
     products: [
         .executable(name: "random-generator", targets: ["RandomGenerator"]),
         .executable(name: "speedster-hello", targets: ["SpeedsterHello"]),
-        .library(name: "SpeedsterCore", targets: ["SpeedsterCore"]),
-        .library(name: "SpeedsterApi", targets: ["SpeedsterApi"])
+        .library(name: "SpeedsterCore", targets: ["SpeedsterCore"])
     ],
     dependencies: [
         .package(url: "https://github.com/vapor/vapor.git", from: "4.0.0-alpha.1.2"),
@@ -45,15 +44,7 @@ let package = Package(
                 "Fluent",
                 "FluentPostgresDriver",
                 "Vapor",
-                "SpeedsterApi"
-            ]
-        ),
-        .target(
-            name: "SpeedsterCore",
-            dependencies: [
-                "Vapor",
-                "Shout",
-                "SwiftShell"
+                "SpeedsterCore"
             ]
         ),
         .target(
@@ -69,12 +60,11 @@ let package = Package(
             ]
         ),
           .target(
-            name: "SpeedsterApi",
+            name: "SpeedsterCore",
             dependencies: [
                 "Fluent",
                 "FluentPostgresDriver",
                 "FluentSQLiteDriver",
-                "SpeedsterCore",
                 "Vapor",
                 "GitHubKit",
                 "CryptoKit",
@@ -82,7 +72,9 @@ let package = Package(
                 "Jobs",
                 "Redis",
                 "JobsRedisDriver",
-                "VMWareFusionKit"
+                "VMWareFusionKit",
+                "Shout",
+                "SwiftShell"
             ]
         ),
         .target(
@@ -90,8 +82,8 @@ let package = Package(
             dependencies: ["App"]
         ),
         .testTarget(
-            name: "SpeedsterApiTests",
-            dependencies: ["SpeedsterApi"]
+            name: "SpeedsterCoreTests",
+            dependencies: ["SpeedsterCore"]
         )
     ]
 )

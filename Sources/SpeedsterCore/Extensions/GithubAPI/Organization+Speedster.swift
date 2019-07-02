@@ -54,15 +54,15 @@ extension Array where Element == GitHubKit.Organization {
         }
     }
     
-    func exists(_ org: Row<SpeedsterApi.Organization>) -> Bool {
+    func exists(_ org: Row<Organization>) -> Bool {
         return filter({ $0.login == org.name }).count > 0
     }
     
-    func first(_ org: Row<SpeedsterApi.Organization>) -> GitHubKit.Organization? {
+    func first(_ org: Row<Organization>) -> GitHubKit.Organization? {
         return filter({ $0.login == org.name }).first
     }
     
-    mutating func remove(_ org: Row<SpeedsterApi.Organization>) {
+    mutating func remove(_ org: Row<Organization>) {
         removeAll(where: { $0.login == org.name })
     }
     

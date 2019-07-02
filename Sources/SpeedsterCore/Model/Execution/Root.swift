@@ -188,13 +188,55 @@ public struct Root: Content {
     /// Environment requirements
     public struct Env: Codable {
         
-        public let image: String
+        /// Image for environment
+        public enum Image: Codable {
+            
+            public enum Error: Swift.Error {
+                case invalidImage
+            }
+            
+            /// Docker image (ex. einstore/einstore:latest)
+            case docker(image: String)
+            
+            /// VMWare image (name of the image, has to be installed on a node selected)
+            case VMWare(name: String)
+            
+            public func serialize() -> String {
+                switch self {
+                case .docker(image: let image):
+                    return "docker;\(image)"
+                case .VMWare(name: let name):
+                    return "vmw;\(name)"
+                }
+            }
+            
+            public init(from decoder: Decoder) throws {
+                let container = try decoder.singleValueContainer()
+                let string = try container.decode(String.self)
+                switch true {
+                case string.contains("vmw;"):
+                    self = .VMWare(name: string.replacingOccurrences(of: "vmw;", with: ""))
+                case string.contains("docker;"):
+                    self = .VMWare(name: string.replacingOccurrences(of: "docker;", with: ""))
+                default:
+                    throw Error.invalidImage
+                }
+            }
+            
+            public func encode(to encoder: Encoder) throws {
+                var container = encoder.singleValueContainer()
+                try container.encode(serialize())
+            }
+            
+        }
+        
+        public let image: Image
         public let memory: String
         public let storage: String
         public let variables: [String: String]?
         
         public init(
-            image: String,
+            image: Image,
             memory: String,
             storage: String,
             variables: [String: String]? = nil

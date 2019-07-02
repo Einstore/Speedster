@@ -7,7 +7,6 @@
 
 import Vapor
 import Fluent
-import SpeedsterCore
 import GitHubKit
 import Jobs
 import Redis

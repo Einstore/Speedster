@@ -6,12 +6,11 @@
 //
 
 import Fluent
-import SpeedsterCore
 
 
-extension Row where Model == SpeedsterApi.Node {
+extension Row where Model == Node {
     
-    func asCore() throws -> SpeedsterCore.Machine {
+    func asCore() throws -> Machine {
         let pass: String?
         if let p = self.password {
             do { pass = try Secrets.decrypt(p) } catch { pass = nil }
@@ -22,7 +21,7 @@ extension Row where Model == SpeedsterApi.Node {
         if let k = self.publicKey { key = try Secrets.decrypt(k) }
         else { key = nil }
         
-        return SpeedsterCore.Machine(
+        return Machine(
             name: self.name,
             host: self.host,
             port: self.port,

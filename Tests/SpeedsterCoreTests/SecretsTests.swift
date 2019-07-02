@@ -5,7 +5,7 @@
 //  Created by Ondrej Rafaj on 25/06/2019.
 //
 
-import SpeedsterApi
+import SpeedsterCore
 import XCTest
 import CryptoKit
 

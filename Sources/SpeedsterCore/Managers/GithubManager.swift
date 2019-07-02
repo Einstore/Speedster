@@ -247,13 +247,13 @@ class GithubManager {
         }
     }
     
-    func speedster(for location: GitLocation) -> EventLoopFuture<SpeedsterCore.Root> {
+    func speedster(for location: GitLocation) -> EventLoopFuture<Root> {
         return blob("Speedster.yml", for: location).flatMap { blob in
             do {
                 guard
                     let data = Data(base64Encoded: blob.content, options: [.ignoreUnknownCharacters]),
                     let string = String(data: data, encoding: .utf8),
-                    let job: SpeedsterCore.Root = try YAMLDecoder().decode(from: string)
+                    let job: Root = try YAMLDecoder().decode(from: string)
                     else {
                         return self.db.eventLoop.makeFailedFuture(GenericError.decodingError)
                 }
@@ -354,11 +354,11 @@ extension GithubManager.SpeedsterFileData {
         )
     }
     
-    func decodeCoreJob() throws -> SpeedsterCore.Root {
+    func decodeCoreJob() throws -> Root {
         guard let file = file, let string = String(data: file, encoding: .utf8) else {
             throw GithubManager.Error.invalidSpeedsterFile
         }
-        let data = try YAMLDecoder().decode(SpeedsterCore.Root.self, from: string)
+        let data = try YAMLDecoder().decode(Root.self, from: string)
         return data
     }
     

@@ -9,7 +9,7 @@ import Vapor
 import SwiftShell
 
 
-class LocalExecutor: Executor {
+class LocalConnector: Connector {
     
 //    enum Error: Swift.Error {
 //        case fail(String)
@@ -19,7 +19,7 @@ class LocalExecutor: Executor {
 //    
 //    let eventLoop: EventLoop
 //    
-//    var output: ExecutorOutput?
+    var output: ConnectorOutput?
 //    
 //    required init(_ conn: Root.Env.Connection, on eventLoop: EventLoop) {
 //        self.eventLoop = eventLoop

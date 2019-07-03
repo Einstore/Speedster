@@ -13,6 +13,7 @@ class ChecksManager {
     enum Error: Swift.Error, Equatable {
         case dependentJobDoesNotExist(String)
         case dependentJobNotListed(String)
+        case duplicateJobName(String)
     }
     
     @discardableResult static func check(jobDependencies root: Root) throws -> Bool {
@@ -33,6 +34,7 @@ class ChecksManager {
             return []
         }
         
+        // Check if all (even dependant) jobs are listed in pipeline if they are required
         for pipeline in root.pipelines ?? [] {
             for pipelineJob in pipeline.jobs {
                 let job = try dep(for: pipelineJob)
@@ -44,6 +46,8 @@ class ChecksManager {
                 }
             }
         }
+        
+        // Check if dependant job names exist
         for job in root.jobs {
             let dependencies = try deps(job: job)
             for dependency in dependencies {
@@ -52,6 +56,13 @@ class ChecksManager {
                 }
             }
         }
+        
+        // Check duplicate job names
+        let crossReference = Dictionary(grouping: root.jobs, by: { $0.name })
+        try crossReference.forEach({
+            if $0.value.count > 1 { throw Error.duplicateJobName($0.key) }
+        })
+        
         return true
     }
     

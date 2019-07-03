@@ -9,7 +9,7 @@ import Vapor
 import Shout
 
 
-class RemoteExecutor: Executor {
+class RemoteConnector: Connector {
     
 //    enum Error: Swift.Error {
 //        case missingUsername
@@ -24,9 +24,9 @@ class RemoteExecutor: Executor {
 //    
 //    var ssh: SSH?
 //    var sshError: Swift.Error?
-//    
-//    var output: ExecutorOutput?
-//    
+    
+    var output: ConnectorOutput?
+    
 //    required init(_ conn: Root.Env.Connection, on eventLoop: EventLoop) {
 //        self.eventLoop = eventLoop
 //        self.conn = conn

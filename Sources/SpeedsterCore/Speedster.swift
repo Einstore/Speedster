@@ -42,25 +42,24 @@ public class Speedster {
         
         // Jobs
         s.provider(JobsProvider())
-
         s.extend(JobsConfiguration.self) { configuration, container in
             configuration.refreshInterval = .seconds(1)
             
             let job = try ExecutorJob(container)
             configuration.add(job)
         }
-        
         s.register(JobsDriver.self) { c in
             return try JobsRedisDriver(client: c.make())
         }
     }
     
     public static func configure(migrations: inout Migrations, dbIdentifier: DatabaseID) throws {
-        migrations.add(Node.autoMigration(), to: dbIdentifier)
-        migrations.add(Run.autoMigration(), to: dbIdentifier)
-        migrations.add(GitHubJob.autoMigration(), to: dbIdentifier)
         migrations.add(Organization.autoMigration(), to: dbIdentifier)
+        migrations.add(Node.autoMigration(), to: dbIdentifier)
+        migrations.add(GitHubJob.autoMigration(), to: dbIdentifier)
         migrations.add(Scheduled.autoMigration(), to: dbIdentifier)
+        migrations.add(Execution.autoMigration(), to: dbIdentifier)
+        migrations.add(Run.autoMigration(), to: dbIdentifier)
         
         migrations.add(Setup(), to: dbIdentifier)
     }

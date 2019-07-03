@@ -8,13 +8,13 @@
 import Foundation
 
 
-public typealias ExecutorOutput = ((_ output: String, _ identifier: String?) -> ())
+public typealias ConnectorOutput = ((_ output: String, _ jobName: String) -> ())
 
 
-protocol Executor {
+protocol Connector {
     
-//    var output: ExecutorOutput? { get set }
-//    
+    var output: ConnectorOutput? { get set }
+
 //    init(_ node: Root.Env.Connection, on eventLoop: EventLoop)
 //    func run(_ phase: Root.Job.Phase, identifier: String) throws
 //    func run(_ bash: String) throws -> Int

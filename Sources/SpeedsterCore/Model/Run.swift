@@ -22,6 +22,9 @@ public struct Run: Model {
     /// Job ID
     public let githubjobId = Field<Speedster.DbIdType?>("githubjob_id")
     
+    /// Execution ID
+    public let executionId = Field<Speedster.DbIdType?>("execution_id")
+    
     /// Date started execution
     public let started = Field<Date?>("started")
     

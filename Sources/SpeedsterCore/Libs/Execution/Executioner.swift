@@ -8,33 +8,126 @@
 import Fluent
 
 
-public class Executioner {
+class Executioner {
     
-    public enum Error: Swift.Error, Equatable {
-        case missingJob
-        case nonZeroExit
-        case unableToStartEnvironment
+    enum UpdateData {
+        case started(job: Root.Job)
+        case output(text: String, job: Root.Job)
+        case finished(exit: Int, job: Root.Job)
+        case environment(error: Error, job: Root.Job)
+        case error(_ error: Error, job: Root.Job)
     }
     
+    typealias Update = ((UpdateData) -> ())
+    
     /// Job to be executed
-    let root: Root?
+    let root: Root
     
     let eventLoop: EventLoop
     
-    var output: ExecutorOutput?
+    var update: Update
     
     var processed: [String] = []
     
+    // MARK: Public interface
+    
     /// Initializer
-    public init(root: Root? = nil, node: Row<Node>, on eventLoop: EventLoop, output: ExecutorOutput? = nil) {
+    init(root: Root, node: Row<Node>, on eventLoop: EventLoop, update: @escaping Update) {
         self.eventLoop = eventLoop
         self.root = root
-        self.output = output
+        self.update = update
     }
     
-    public  typealias FailedClosure = ((Swift.Error) -> ())
+     typealias FailedClosure = ((Swift.Error) -> ())
     
-    private func run(job: Root.Job, executor: Executor, failed: @escaping FailedClosure) throws {
+    /// Execute job
+    func run(finished: @escaping (() -> ()), failed: @escaping FailedClosure) {
+        for job in root.jobs.filter({ $0.dependsOn == nil || $0.dependsOn?.isEmpty == true }) {
+            // Launch virtual machine
+            let envManager = EnvironmentManager(on: self.eventLoop)
+            guard let env = job.environment ?? root.environment else {
+                fatalError("Missing environment, this should have been checked before the run has started")
+            }
+            envManager.launch(environment: env).whenComplete { result in
+                let connection: Root.Env.Connection
+                switch result {
+                case .success(let conn):
+                    connection = conn
+                case .failure(let error):
+                    self.make(update: .environment(error: error, job: job))
+                    return
+                }
+                DispatchQueue.global(qos: .background).async {
+                    
+                    fatalError()
+                    
+                    
+//                    var executor = RemoteExecutor(connection, on: eventLoop)
+//                    
+//                    executor.output = { out, identifier in
+//                        let out = "[\(connection.host)] \(out)"
+//                        eventLoop.execute {
+//                            self.output?(out, identifier)
+//                        }
+//                    }
+//                    do {
+//                        try self.run(job: job, failed: failed)
+//                        if let success = job.success {
+//                            for p in success {
+//                                try executor.run(p, identifier: root.workspaceName)
+//                            }
+//                        }
+//                        if let always = job.always {
+//                            for p in always {
+//                                try executor.run(p, identifier: root.workspaceName)
+//                            }
+//                        }
+//                    } catch {
+//                        if let fail = job.fail {
+//                            for p in fail {
+//                                try? executor.run(p, identifier: root.workspaceName)
+//                            }
+//                        }
+//                        //throw error
+//                    }
+                }
+            }
+        }
+    }
+    
+    func run(bash: String, finished: @escaping (() -> ()), failed: @escaping FailedClosure) {
+        fatalError()
+//        DispatchQueue.global(qos: .background).async {
+//            do {
+//                let res = try executor.run(bash)
+//                guard res == 0 else {
+//                    self.eventLoop.execute {
+//                        failed(Error.nonZeroExit)
+//                    }
+//                    return
+//                }
+//                self.eventLoop.execute {
+//                    finished()
+//                }
+//                try executor.close()
+//            } catch {
+//                self.eventLoop.execute {
+//                    failed(error)
+//                }
+//                try? executor.close()
+//            }
+//        }
+    }
+    
+    // MARK: Private interface
+    
+    private func make(update data: UpdateData) {
+        eventLoop.execute {
+            self.update(data)
+        }
+    }
+    
+    private func run(job: Root.Job, executor: Connector, failed: @escaping FailedClosure) throws {
 //        guard let root = self.root else {
 //            throw Error.missingJob
 //        }
@@ -72,95 +165,6 @@ public class Executioner {
 //            }
 //            eventLoop.execute {
 //                failed(error)
-//            }
-//        }
-    }
-    
-    struct JobResult {
-        let exitCode: Int
-        let error: Swift.Error?
-    }
-    
-    var results: [String: JobResult] = [:]
-    
-    /// Execute job
-    public func run(finished: @escaping (() -> ()), failed: @escaping FailedClosure) {
-//        guard let root = self.root else {
-//            eventLoop.execute {
-//                failed(Error.missingJob)
-//            }
-//            return
-//        }
-//        for job in root.jobs.filter({ $0.dependsOn == nil || $0.dependsOn?.isEmpty == true }) {
-//            // Launch virtual machine
-//            let envManager = EnvironmentManager(on: self.eventLoop)
-//            guard let env = job.environment ?? root.environment else {
-//                fatalError("Missing environment, this should have been checked before the run has started")
-//            }
-//            envManager.launch(environment: env).whenComplete { result in
-//                // Handle if environment doesn't start
-//                let connection: Root.Env.Connection
-//                switch result {
-//                case .success(let conn):
-//                    connection = conn
-//                case .failure(let error):
-//                    self.results[job.name] = JobResult(exitCode: -1, error: error)
-//                    return
-//                }
-//                DispatchQueue.global(qos: .background).async {
-//                    var executor = RemoteExecutor(connection, on: eventLoop)
-//                    
-//                    executor.output = { out, identifier in
-//                        let out = "[\(connection.host)] \(out)"
-//                        eventLoop.execute {
-//                            self.output?(out, identifier)
-//                        }
-//                    }
-//                    do {
-//                        try self.run(job: job, failed: failed)
-//                        if let success = job.success {
-//                            for p in success {
-//                                try executor.run(p, identifier: root.workspaceName)
-//                            }
-//                        }
-//                        if let always = job.always {
-//                            for p in always {
-//                                try executor.run(p, identifier: root.workspaceName)
-//                            }
-//                        }
-//                    } catch {
-//                        if let fail = job.fail {
-//                            for p in fail {
-//                                try? executor.run(p, identifier: root.workspaceName)
-//                            }
-//                        }
-//                        //throw error
-//                    }
-//                }
-//            }
-//        }
-    }
-    
-    public func run(bash: String, finished: @escaping (() -> ()), failed: @escaping FailedClosure) {
-        fatalError()
-//        DispatchQueue.global(qos: .background).async {
-//            do {
-//                let res = try executor.run(bash)
-//                guard res == 0 else {
-//                    self.eventLoop.execute {
-//                        failed(Error.nonZeroExit)
-//                    }
-//                    return
-//                }
-//                self.eventLoop.execute {
-//                    finished()
-//                }
-//                try executor.close()
-//            } catch {
-//                self.eventLoop.execute {
-//                    failed(error)
-//                }
-//                try? executor.close()
 //            }
 //        }
     }

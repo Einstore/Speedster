@@ -13,8 +13,13 @@ import Redis
 class BuildManager {
     
     enum Error: Swift.Error {
+        case missingScheduledId
         case noAvailableNode
-        case cannotCreateMachine
+    }
+    
+    struct RunWrapper {
+        let run: Row<Run>
+        var exit: Int = -1
     }
     
     private let db: Database
@@ -24,10 +29,11 @@ class BuildManager {
     
     private let redis: RedisClient
     
-    private var scheduledId: Speedster.DbIdType?
+    private var scheduledId: Speedster.DbIdType
     
+    private var githubJob: Row<GitHubJob>!
     private var execution: Row<Execution>!
-    private var runs: [String: Row<Run>] = [:]
+    private var runs: [String: RunWrapper] = [:]
     
     
     // MARK: Public interface
@@ -42,8 +48,12 @@ class BuildManager {
         self.github = github
         self.container = container
         self.scheduleManager = scheduleManager
-        self.scheduledId = scheduledId
         self.db = database
+        
+        guard let scheduledId = scheduledId else {
+            throw Error.missingScheduledId
+        }
+        self.scheduledId = scheduledId
         
         redis = try container.make(RedisClient.self)
     }
@@ -51,8 +61,10 @@ class BuildManager {
     func build() -> EventLoopFuture<Void> {
         return self.root().flatMap { root in
             return self.node(root).flatMap { node in
-                return logging().flatMap {
-                    return self.build(node)
+                return self.logging(node: node).flatMap { _ in
+                    return self.build(root, on: node)
+                }.always { result in
+                    self.finishLogging().completeQuietly()
                 }
             }
         }
@@ -60,16 +72,23 @@ class BuildManager {
     
     // MARK: Private interface
     
-    private func logging() -> EventLoopFuture<Void> {
-//        Prepare:
-//        private var execution: Row<Execution>!
-//        private var runs: [String: Row<Run>] = [:]
-        fatalError()
+    private func identifier(for jobName: String) -> String {
+        return "\(scheduledId.uuidString)-\(execution.id!.uuidString)-\(jobName)".lowercased().safeText
+    }
+    
+    private func logging(node: Row<Node>) -> EventLoopFuture<Void> {
+        execution = Execution.row()
+        execution.scheduledId = scheduledId
+        execution.githubjobId = githubJob.id
+        execution.nodeId = node.id
+        execution.started = Date()
+        return execution.save(on: db)
     }
     
     private func root() -> EventLoopFuture<Root> {
         return scheduleManager.scheduled(scheduledId).flatMap { scheduledJob in
             return GitHubJob.find(failing: scheduledJob.jobId, on: self.db).flatMap { githubJob in
+                self.githubJob = githubJob
                 let location = GitLocation(
                     org: githubJob.org,
                     repo: githubJob.repo,
@@ -94,9 +113,9 @@ class BuildManager {
         }
     }
     
+    /// Get the next available node
     private func node(_ root: Root) -> EventLoopFuture<Row<Node>> {
         let nodesManager = NodesManager(db)
-        // Get the next available node
         return nodesManager.next(root.nodeLabels).flatMap { node in
             guard let node = node else {
                 return self.container.eventLoop.makeFailedFuture(Error.noAvailableNode)
@@ -105,47 +124,82 @@ class BuildManager {
         }
     }
     
-    private func build(_ node: Row<Node>) -> EventLoopFuture<Void> {
-        return self.close()
-    }
-                
-//                let promise = self.container.eventLoop.makePromise(of: Void.self)
-//                let ex = Executioner(
-//                    root: root,
-//                    node: node,
-//                    on: self.container.eventLoop) { (output, identifier) in
-//                        self.output += (output + "\n")
-//                        print(output)
-//                        self.redis.append((output + "\n"), to: self.key).completeQuietly()
-//                }
-//                ex.run(finished: {
-//                    self.run.result = 0
-//                    promise.succeed(Void())
-//                }) { error in
-//                    promise.fail(error)
-//                }
-//                return promise.futureResult
-    
-    // MARK: Closing
-    
-    private func waitForNewNode() {
-        // If no node is available
+    private func guaranteed(run job: Root.Job) -> Row<Run> {
+        guard let wrapper = runs[job.name] else {
+            let run = Run.row()
+            run.scheduledId = scheduledId
+            run.githubjobId = githubJob.id
+            run.executionId = execution.id
+            run.started = Date()
+            run.jobName = job.name
+            run.job = job
+            runs[job.name] = RunWrapper(run: run)
+            return run
+        }
+        return wrapper.run
     }
     
-    private func close() -> EventLoopFuture<Void> {
-        fatalError()
-//        run.output = output
-//        run.finished = Date()
-//        run.result = result
-//        return run.save(on: db).flatMap { _ in
-//            return self.redis.delete([self.key]).flatMap { _ in
-//                self.scheduledJob.runId = self.run.id
-//                return self.scheduledJob.update(on: self.db).flatMap {
-//                    self.node.running -= 1
-//                    return self.node.update(on: self.db)
-//                }
-//            }
-//        }
+    private func build(_ root: Root, on node: Row<Node>) -> EventLoopFuture<Void> {
+        let promise = self.container.eventLoop.makePromise(of: Void.self)
+        let ex = Executioner(
+            root: root,
+            node: node,
+            on: self.container.eventLoop
+        ) { update in
+            switch update {
+            case .started(job: let job):
+                print("Started: \(job.name)")
+                let run = self.guaranteed(run: job)
+                run.save(on: self.db).completeQuietly()
+            case .output(text: let text, job: let job):
+                print(text)
+                self.redis.append((text + "\n"), to: self.identifier(for: job.name)).completeQuietly()
+            case .environment(error: let error, job: let job):
+                print(error)
+                let env = job.environment?.image.serialize() ?? root.environment?.image.serialize() ?? "n/a"
+                let msg = error.localizedDescription + "\n" + "Error launching environment (\(env))"
+                self.redis.append((msg), to: self.identifier(for: job.name)).completeQuietly()
+                self.guaranteed(run: job).result = -2
+            case .error(let error, job: let job):
+                print(error)
+                let msg = "Job error: " + error.localizedDescription + "\n"
+                self.redis.append((msg), to: self.identifier(for: job.name)).completeQuietly()
+                self.guaranteed(run: job).result = -3
+            case .finished(let exit, let job):
+                self.guaranteed(run: job).result = exit
+            }
+        }
+        ex.run(finished: {
+            self.finish().completeQuietly()
+            promise.succeed(Void())
+        }) { error in
+            self.finish().completeQuietly()
+            promise.fail(error)
+        }
+        return promise.futureResult
     }
+    
+    private func finishLogging() -> EventLoopFuture<Void> {
+        execution.finished = Date()
+        return execution.save(on: db).flatMap {
+            var futures: [EventLoopFuture<Void>] = []
+            self.runs.forEach { wrapper in
+                let identifier = self.identifier(for: wrapper.key)
+                let future: EventLoopFuture<Void> = self.redis.get(identifier).flatMap { output in
+                    wrapper.value.run.result = wrapper.value.exit
+                    wrapper.value.run.output = output
+                    wrapper.value.run.finished = Date()
+                    return wrapper.value.run.save(on: self.db)
+                }
+                futures.append(future)
+            }
+            return futures.flatten(on: self.container.eventLoop)
+        }
+    }
+    
+    private func finish() -> EventLoopFuture<Void> {
+        return finishLogging()
+    }
+    
     
 }

@@ -188,6 +188,22 @@ public struct Root: Content {
     /// Environment requirements
     public struct Env: Codable {
         
+        /// Connection details for environment
+        public struct Connection: Codable {
+            
+            public enum Auth: String, Codable {
+                case none = "na"
+                case me = "me"
+                case password = "ps"
+                case privateKey = "pk"
+            }
+            
+            public let host: String
+            public let port: Int
+            public let auth: Auth
+            
+        }
+        
         /// Image for environment
         public enum Image: Codable {
             
@@ -206,7 +222,7 @@ public struct Root: Content {
                 case .docker(image: let image):
                     return "docker;\(image)"
                 case .VMWare(name: let name):
-                    return "vmw;\(name)"
+                    return "vmrest;\(name)"
                 }
             }
             
@@ -346,7 +362,7 @@ public struct Root: Content {
     public let dockerDependendencies: [Dependency]?
     
     /// Branch management
-    public let pipelines: [Pipeline]
+    public let pipelines: [Pipeline]?
     
     enum CodingKeys: String, CodingKey {
         case name
@@ -368,7 +384,7 @@ public struct Root: Content {
         jobs: [Job],
         environment: Env? = nil,
         dockerDependendencies: [Dependency]? = nil,
-        pipelines: [Pipeline]
+        pipelines: [Pipeline]? = nil
         ) {
         self.name = name
         self.identifier = identifier

@@ -13,11 +13,11 @@ public typealias ExecutorOutput = ((_ output: String, _ identifier: String?) -> 
 
 protocol Executor {
     
-    var output: ExecutorOutput? { get set }
-    
-    init(_ node: Machine, on eventLoop: EventLoop)
-    func run(_ phase: Root.Job.Phase, identifier: String) throws
-    func run(_ bash: String) throws -> Int
-    func close() throws
+//    var output: ExecutorOutput? { get set }
+//    
+//    init(_ node: Root.Env.Connection, on eventLoop: EventLoop)
+//    func run(_ phase: Root.Job.Phase, identifier: String) throws
+//    func run(_ bash: String) throws -> Int
+//    func close() throws
     
 }

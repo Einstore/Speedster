@@ -59,9 +59,10 @@ final class ScheduledController: Controller {
                 github: github,
                 container: c,
                 scheduleManager: scheduleManager,
+                scheduledId: id,
                 on: self.db
             )
-            return buildManager.build(scheduled: id).map { _ in
+            return buildManager.build().map { _ in
                 return Response.make.noContent()
             }
         }

@@ -19,7 +19,7 @@ extension Row where Model == GitHubJob {
         return scheduled.save(on: db).flatMap { _ in
             let run = Run.row()
             run.scheduledId = scheduled.id
-            run.jobId = self.id
+            run.githubjobId = self.id
             return run.save(on: db).map { _ in
                 return scheduled
             }

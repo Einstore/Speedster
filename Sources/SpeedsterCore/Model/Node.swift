@@ -20,7 +20,7 @@ public struct Node: Model {
         let labels: [String]?
         let password: String?
         let publicKey: String?
-        let auth: Machine.Auth
+        let auth: Root.Env.Connection.Auth
         let executors: Int
         
         enum CodingKeys: String, CodingKey {
@@ -47,7 +47,7 @@ public struct Node: Model {
         public let labels: [String]?
         public let password: Bool
         public let publicKey: Bool
-        public let auth: Machine.Auth
+        public let auth: Root.Env.Connection.Auth
         public let executors: Int
         public let running: Int
         
@@ -116,7 +116,7 @@ public struct Node: Model {
     ///         case privateKey = "pk"
     ///     }
     ///
-    public let auth = Field<Machine.Auth>("auth", dataType: .string)
+    public let auth = Field<Root.Env.Connection.Auth>("auth", dataType: .string)
     
     /// Max node runners
     public let executors = Field<Int>("executors")

@@ -12,9 +12,9 @@ let package = Package(
         .library(name: "SpeedsterCore", targets: ["SpeedsterCore"])
     ],
     dependencies: [
-        .package(url: "https://github.com/vapor/vapor.git", from: "4.0.0-alpha.1.2"),
+        .package(url: "https://github.com/vapor/vapor.git", from: "4.0.0-alpha.1.5"),
         .package(url: "https://github.com/vapor/fluent.git", from: "4.0.0-alpha.1.1"),
-        .package(url: "https://github.com/vapor/fluent-postgres-driver.git", from: "2.0.0-alpha.1"),
+        .package(url: "https://github.com/vapor/fluent-postgres-driver.git", from: "2.0.0-alpha.1.2"),
         .package(url: "https://github.com/vapor/fluent-sqlite-driver.git", from: "4.0.0-alpha.1"),
         .package(url: "https://github.com/vapor/crypto-kit.git", from: "4.0.0-alpha.1"),
         .package(url: "https://github.com/vapor/jobs.git", from: "1.0.0-alpha.1.1"),

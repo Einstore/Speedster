@@ -6,6 +6,7 @@
 //
 
 import Fluent
+import GitHubKit
 
 
 public struct GitReference: Codable {
@@ -63,6 +64,9 @@ public struct Scheduled: Model {
     
     /// Date requested execution
     public let requested = Field<Date>("requested")
+    
+    /// Github trigger data
+    public let trigger = Field<[String: String]?>("trigger", dataType: .json)
     
 }
 

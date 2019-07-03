@@ -43,51 +43,53 @@ class NodesManager {
     // MARK: Node helpers
     
     func install(_ command: String, req: Request, webSocket: WebSocket) {
-        webSocket.send("Starting install")
-        let id = req.parameters.get("node_id", as: Speedster.DbIdType.self)
-        Node.find(failing: id, on: self.db).whenSuccess { node in
-            guard let coreNode = try? node.asCore() else {
-                webSocket.send("Invalid node data\n")
-                webSocket.close(code: .unexpectedServerError, promise: nil)
-                return
-            }
-            webSocket.send("Using \(coreNode.name)")
-            coreNode.run(bash: command, on: req.eventLoop, output: { out in
-                print(out)
-                webSocket.send(out)
-            }, finished: {
-                webSocket.send("Success\n")
-                webSocket.close(code: .normalClosure, promise: nil)
-            }, failed: { error in
-                webSocket.send("Error: \(error)\n")
-                webSocket.send("Failure\n")
-                webSocket.close(code: .unexpectedServerError, promise: nil)
-            })
-        }
+        fatalError()
+//        webSocket.send("Starting install")
+//        let id = req.parameters.get("node_id", as: Speedster.DbIdType.self)
+//        Node.find(failing: id, on: self.db).whenSuccess { node in
+//            guard let coreNode = try? node.asCore() else {
+//                webSocket.send("Invalid node data\n")
+//                webSocket.close(code: .unexpectedServerError, promise: nil)
+//                return
+//            }
+//            webSocket.send("Using \(coreNode.name)")
+//            coreNode.run(bash: command, on: req.eventLoop, output: { out in
+//                print(out)
+//                webSocket.send(out)
+//            }, finished: {
+//                webSocket.send("Success\n")
+//                webSocket.close(code: .normalClosure, promise: nil)
+//            }, failed: { error in
+//                webSocket.send("Error: \(error)\n")
+//                webSocket.send("Failure\n")
+//                webSocket.close(code: .unexpectedServerError, promise: nil)
+//            })
+//        }
     }
     
     func install(_ command: String, req: Request) -> EventLoopFuture<String> {
-        let id = req.parameters.get("node_id", as: Speedster.DbIdType.self)
-        return Node.find(failing: id, on: self.db).flatMap { node in
-            guard let coreNode = try? node.asCore() else {
-                return req.eventLoop.makeFailedFuture(GenericError.decodingError)
-            }
-            let promise = req.eventLoop.makePromise(of: String.self)
-            var output = ""
-            coreNode.run(bash: command, on: req.eventLoop, output: { out in
-                print(out)
-                output += out
-            }, finished: {
-                req.eventLoop.execute {
-                    promise.succeed(output)
-                }
-            }, failed: { error in
-                req.eventLoop.execute {
-                    promise.fail(error)
-                }
-            })
-            return promise.futureResult
-        }
+        fatalError()
+//        let id = req.parameters.get("node_id", as: Speedster.DbIdType.self)
+//        return Node.find(failing: id, on: self.db).flatMap { node in
+//            guard let coreNode = try? node.asCore() else {
+//                return req.eventLoop.makeFailedFuture(GenericError.decodingError)
+//            }
+//            let promise = req.eventLoop.makePromise(of: String.self)
+//            var output = ""
+//            coreNode.run(bash: command, on: req.eventLoop, output: { out in
+//                print(out)
+//                output += out
+//            }, finished: {
+//                req.eventLoop.execute {
+//                    promise.succeed(output)
+//                }
+//            }, failed: { error in
+//                req.eventLoop.execute {
+//                    promise.fail(error)
+//                }
+//            })
+//            return promise.futureResult
+//        }
     }
     
 }

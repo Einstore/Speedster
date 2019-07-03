@@ -41,8 +41,9 @@ final class JobsController: Controller {
             guard let yaml = req.body.string else {
                 throw HTTPError.notFound
             }
-            let job = try YAMLDecoder().decode(Root.self, from: yaml)
-            return job
+            let root = try YAMLDecoder().decode(Root.self, from: yaml)
+            try ChecksManager.check(jobDependencies: root)
+            return root
         }
         
         r.post("jobs", "reload") { req -> EventLoopFuture<Response> in

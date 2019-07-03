@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  BuildManager.swift
 //  
 //
 //  Created by Ondrej Rafaj on 22/06/2019.
@@ -13,7 +13,6 @@ import Redis
 class BuildManager {
     
     enum Error: Swift.Error {
-        case missingRunId
         case noAvailableNode
         case cannotCreateMachine
     }
@@ -27,12 +26,8 @@ class BuildManager {
     
     private var scheduledId: Speedster.DbIdType?
     
-    private var scheduledJob: Row<Scheduled>!
-    private var run: Row<Run>!
-    private var node: Row<Node>!
-    
-    private var output: String = ""
-    private var result: Int = -1
+    private var execution: Row<Execution>!
+    private var runs: [String: Row<Run>] = [:]
     
     
     // MARK: Public interface
@@ -41,132 +36,116 @@ class BuildManager {
         github: Github,
         container: Container,
         scheduleManager: ScheduledManager,
+        scheduledId: Speedster.DbIdType?,
         on database: Database
         ) throws {
         self.github = github
         self.container = container
         self.scheduleManager = scheduleManager
+        self.scheduledId = scheduledId
         self.db = database
         
         redis = try container.make(RedisClient.self)
     }
     
-    func build(scheduled id: Speedster.DbIdType?) -> EventLoopFuture<Void> {
-        scheduledId = id
-        return Run.query(on: self.db).filter(\Run.scheduledId == id).firstUnwrapped().flatMap { run in
-            guard run.started == nil else {
-                let newRun = Run.row()
-                newRun.jobId = run.jobId
-                newRun.scheduledId = run.scheduledId
-                return newRun.save(on: self.db).flatMap { _ in
-                    return self.run(newRun)
+    func build() -> EventLoopFuture<Void> {
+        return self.root().flatMap { root in
+            return self.node(root).flatMap { node in
+                return logging().flatMap {
+                    return self.build(node)
                 }
             }
-            return self.run(run)
         }
     }
     
     // MARK: Private interface
     
-    private var key: String {
-        return run.id!.uuidString
+    private func logging() -> EventLoopFuture<Void> {
+//        Prepare:
+//        private var execution: Row<Execution>!
+//        private var runs: [String: Row<Run>] = [:]
+        fatalError()
     }
     
-    private func run(_ run: Row<Run>) -> EventLoopFuture<Void> {
-        self.run = run
-        self.run.started = Date()
-        return self.run.save(on: self.db).flatMap { _ in
-            return self.buildData(self.scheduledId).flatMap { buildData in
-                return self.build(buildData.location)
-            }
-        }.always { result in
-            switch result {
-            case .failure(let error):
-                if let error = error as? Error, error == Error.noAvailableNode {
-                    self.redis.delete([self.key]).flatMap { _ in
-                        return self.run.delete(on: self.db)
-                    }.completeQuietly()
-                } else {
-                    self.close().completeQuietly()
-                }
-            default:
-                self.close().completeQuietly()
-            }
-        }
-    }
-    
-    private func waitForNewNode() {
-        
-    }
-    
-    private func buildData(_ id: Speedster.DbIdType?) -> EventLoopFuture<(scheduled: Row<Scheduled>, job: Row<GitHubJob>, location: GitLocation)> {
-        return scheduleManager.scheduled(id).flatMap { scheduledJob in
-            self.scheduledJob = scheduledJob
-            return GitHubJob.find(failing: scheduledJob.jobId, on: self.db).map { githubJob in
-                let loc = GitLocation(
+    private func root() -> EventLoopFuture<Root> {
+        return scheduleManager.scheduled(scheduledId).flatMap { scheduledJob in
+            return GitHubJob.find(failing: scheduledJob.jobId, on: self.db).flatMap { githubJob in
+                let location = GitLocation(
                     org: githubJob.org,
                     repo: githubJob.repo,
                     commit: scheduledJob.commit
                 )
-                return (scheduled: scheduledJob, job: githubJob, location: loc)
+                
+                let githubManager = GithubManager(
+                    github: self.github,
+                    container: self.container,
+                    on: self.db
+                )
+                return githubManager.speedster(for: location).flatMap { root in
+                    do {
+                        try ChecksManager.check(jobDependencies: root) // Check dependencies are set correctly
+                        try EnvironmentManager.check(environments: root) // Check environments are set correctly
+                    } catch {
+                        return self.container.eventLoop.makeFailedFuture(error)
+                    }
+                    return self.container.eventLoop.makeSucceededFuture(root)
+                }
             }
         }
     }
     
-    private func build(_ location: GitLocation) -> EventLoopFuture<Void> {
-        let githubManager = GithubManager(
-            github: github,
-            container: container,
-            on: db
-        )
+    private func node(_ root: Root) -> EventLoopFuture<Row<Node>> {
         let nodesManager = NodesManager(db)
-        return githubManager.speedster(for: location).flatMap { root in
-            return nodesManager.next(root.nodeLabels).flatMap { node in
-                guard let node = node else {
-                    return self.container.eventLoop.makeFailedFuture(Error.noAvailableNode)
-                }
-                self.node = node
-                self.run.speedster = root
-                self.run.nodeId = node.id
-                return self.run.save(on: self.db).flatMap { _ in
-                    guard let machine = try? self.node.asCore() else {
-                        return self.container.eventLoop.makeFailedFuture(Error.cannotCreateMachine)
-                    }
-                    let promise = self.container.eventLoop.makePromise(of: Void.self)
-                    let ex = Executioner(
-                        root: root,
-                        // TODO: Get the next executor through a queue!!!!!!!!!!!!!
-                        machine: machine,
-                        on: self.container.eventLoop) { (output, identifier) in
-                            self.output += (output + "\n")
-                            print(output)
-                            self.redis.append((output + "\n"), to: self.key).completeQuietly()
-                    }
-                    ex.run(finished: {
-                        self.run.result = 0
-                        promise.succeed(Void())
-                    }) { error in
-                        promise.fail(error)
-                    }
-                    return promise.futureResult
-                }
+        // Get the next available node
+        return nodesManager.next(root.nodeLabels).flatMap { node in
+            guard let node = node else {
+                return self.container.eventLoop.makeFailedFuture(Error.noAvailableNode)
             }
+            return self.container.eventLoop.makeSucceededFuture(node)
         }
+    }
+    
+    private func build(_ node: Row<Node>) -> EventLoopFuture<Void> {
+        return self.close()
+    }
+                
+//                let promise = self.container.eventLoop.makePromise(of: Void.self)
+//                let ex = Executioner(
+//                    root: root,
+//                    node: node,
+//                    on: self.container.eventLoop) { (output, identifier) in
+//                        self.output += (output + "\n")
+//                        print(output)
+//                        self.redis.append((output + "\n"), to: self.key).completeQuietly()
+//                }
+//                ex.run(finished: {
+//                    self.run.result = 0
+//                    promise.succeed(Void())
+//                }) { error in
+//                    promise.fail(error)
+//                }
+//                return promise.futureResult
+    
+    // MARK: Closing
+    
+    private func waitForNewNode() {
+        // If no node is available
     }
     
     private func close() -> EventLoopFuture<Void> {
-        run.output = output
-        run.finished = Date()
-        run.result = result
-        return run.save(on: db).flatMap { _ in
-            return self.redis.delete([self.key]).flatMap { _ in
-                self.scheduledJob.runId = self.run.id
-                return self.scheduledJob.update(on: self.db).flatMap {
-                    self.node.running -= 1
-                    return self.node.update(on: self.db)
-                }
-            }
-        }
+        fatalError()
+//        run.output = output
+//        run.finished = Date()
+//        run.result = result
+//        return run.save(on: db).flatMap { _ in
+//            return self.redis.delete([self.key]).flatMap { _ in
+//                self.scheduledJob.runId = self.run.id
+//                return self.scheduledJob.update(on: self.db).flatMap {
+//                    self.node.running -= 1
+//                    return self.node.update(on: self.db)
+//                }
+//            }
+//        }
     }
     
 }

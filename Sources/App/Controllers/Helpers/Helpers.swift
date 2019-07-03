@@ -200,7 +200,7 @@ extension Root.Job {
 
 extension Root.Pipeline {
     
-    static func pipelines() -> [Root.Pipeline] {
+    static func pipelines(jobs: [String] = ["Step 1", "Step 2", "Step 3"]) -> [Root.Pipeline] {
         return [
             Root.Pipeline(
                 triggers: [
@@ -211,11 +211,7 @@ extension Root.Pipeline {
                         action: .message("build please")
                     )
                 ],
-                jobs: [
-                    "Step 1",
-                    "Step 2",
-                    "Step 3"
-                ]
+                jobs: jobs
             )
         ]
     }
@@ -258,7 +254,7 @@ extension Root {
     
     static func rootSmall() -> Root {
         let w1 = Job.jobSmall()
-        let w2 = Job.jobSmall("Linux", env: true)
+        let w2 = Job.jobSmall("Linux", dependsOn: w1.name, env: true)
         
         return Root(
             name: "Small root",
@@ -280,7 +276,7 @@ extension Root {
                     ]
                 )
             ],
-            pipelines: Pipeline.pipelines()
+            pipelines: Pipeline.pipelines(jobs: [w1.name, w2.name])
         )
     }
     

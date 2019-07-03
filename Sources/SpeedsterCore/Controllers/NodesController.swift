@@ -47,7 +47,7 @@ final class NodesController: Controller {
         }
         
         r.post("nodes", ":node_id", "install-docker") { req -> EventLoopFuture<String> in
-            nodesManager.install("ls", req: req)
+            nodesManager.install(Scripts.installDockerUbuntu, req: req)
         }
         
         r.put("nodes", ":node_id") { req -> EventLoopFuture<Response> in

@@ -29,62 +29,62 @@ final class SpeedsterController {
             return try Response.make.yaml(Root.rootDependentSucceeding())
         }
         
-        r.get("local") { req -> String in
-            let e = Executioner(
-                root: Root.rootDependentFailing(),
-                machine: Machine(
-                    name: "Localhost",
-                    host: "localhost",
-                    port: 0,
-                    user: nil,
-                    password: nil,
-                    publicKey: nil,
-                    auth: .none
-                ),
-                on: req.eventLoop
-            ) { out, identifier in
-
-            }
-
-            return ":)"
-        }
-        
-        r.webSocket("remote") { (req, webSocket) in
-            let e = Executioner(
-                root: Root.rootAll(),
-                machine: Machine(
-                    name: "Ubuntu Test",
-                    host: "157.230.106.39",
-                    port: 22,
-                    user: "root",
-                    password: "exploited",
-                    publicKey: nil,
-                    auth: .password
-                ),
-                on: req.eventLoop
-            ) { out, identifier in
-                webSocket.send("\(out)\n")
-            }
-            
-            webSocket.onError { (webSocket, error) in
-                webSocket.send("Error: \(error.localizedDescription)\n")
-                close()
-            }
-            
-            func close() {
-                do {
-                    try webSocket.close().wait()
-                } catch {
-                    webSocket.send("Error: Unable to close socket - \(error.localizedDescription)\n")
-                }
-            }
-            e.run(finished: {
-                close()
-            }) { error in
-                webSocket.send("Error: \(error.localizedDescription)\n")
-                close()
-            }
-        }
+//        r.get("local") { req -> String in
+//            let e = Executioner(
+//                root: Root.rootDependentFailing(),
+//                machine: Machine(
+//                    name: "Localhost",
+//                    host: "localhost",
+//                    port: 0,
+//                    user: nil,
+//                    password: nil,
+//                    publicKey: nil,
+//                    auth: .none
+//                ),
+//                on: req.eventLoop
+//            ) { out, identifier in
+//
+//            }
+//
+//            return ":)"
+//        }
+//
+//        r.webSocket("remote") { (req, webSocket) in
+//            let e = Executioner(
+//                root: Root.rootAll(),
+//                machine: Machine(
+//                    name: "Ubuntu Test",
+//                    host: "157.230.106.39",
+//                    port: 22,
+//                    user: "root",
+//                    password: "exploited",
+//                    publicKey: nil,
+//                    auth: .password
+//                ),
+//                on: req.eventLoop
+//            ) { out, identifier in
+//                webSocket.send("\(out)\n")
+//            }
+//
+//            webSocket.onError { (webSocket, error) in
+//                webSocket.send("Error: \(error.localizedDescription)\n")
+//                close()
+//            }
+//
+//            func close() {
+//                do {
+//                    try webSocket.close().wait()
+//                } catch {
+//                    webSocket.send("Error: Unable to close socket - \(error.localizedDescription)\n")
+//                }
+//            }
+//            e.run(finished: {
+//                close()
+//            }) { error in
+//                webSocket.send("Error: \(error.localizedDescription)\n")
+//                close()
+//            }
+//        }
     }
     
 }

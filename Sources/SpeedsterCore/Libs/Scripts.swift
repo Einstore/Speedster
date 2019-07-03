@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  Scripts.swift
 //  
 //
 //  Created by Ondrej Rafaj on 24/06/2019.
@@ -30,9 +30,7 @@ struct Scripts {
     
     static var installDockerUbuntu: String {
         return """
-        sudo apt-get update
-        
-        sudo apt-get install \
+        sudo apt-get update && apt-get install \
             apt-transport-https \
             ca-certificates \
             curl \
@@ -49,9 +47,7 @@ struct Scripts {
             $(lsb_release -cs) \
             stable"
         
-        sudo apt-get update
-        
-        sudo apt-get install docker-ce docker-ce-cli containerd.io -y
+        sudo apt-get update && apt-get install docker-ce docker-ce-cli containerd.io -y
         
         sudo docker run hello-world
         

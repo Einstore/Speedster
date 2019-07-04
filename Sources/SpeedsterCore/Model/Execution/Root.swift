@@ -206,7 +206,7 @@ public struct Root: Content {
                 case .docker(image: let image):
                     return "docker;\(image)"
                 case .VMWare(name: let name):
-                    return "vmrest;\(name)"
+                    return "vmware;\(name)"
                 }
             }
             

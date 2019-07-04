@@ -5,7 +5,7 @@
 //  Created by Ondrej Rafaj on 02/07/2019.
 //
 
-import Vapor
+import Fluent
 
 
 class EnvironmentManager {
@@ -13,15 +13,30 @@ class EnvironmentManager {
     enum Error: Swift.Error {
         case errorInitializing(environment: Root.Env)
         case missingEnvironment(for: String)
+        case unknownError
     }
     
     let eventLoop: EventLoop
     
-    init(on eventLoop: EventLoop) {
+    private var launcher: Launcher?
+    
+    private var bootUpError: Swift.Error?
+    
+    init(_ env: Root.Env, node: Row<Node>, on eventLoop: EventLoop) {
         self.eventLoop = eventLoop
+        
+        do {
+            switch env.image {
+            case .VMWare:
+                launcher = try VMWareLauncher(env, node: node, on: eventLoop)
+            default:
+                fatalError()
+            }
+        } catch {
+            bootUpError = error
+        }
     }
     
-    private var launcher: Launcher!
     
     // MARK: Public interface
     
@@ -33,21 +48,17 @@ class EnvironmentManager {
         }
     }
     
-    func launch(environment env: Root.Env) -> EventLoopFuture<Root.Env.Connection> {
-        do {
-            switch env.image {
-            case .VMWare:
-                launcher = try VMWareLauncher(env, on: eventLoop)
-            default:
-                fatalError()
-            }
-        } catch {
-            return eventLoop.makeFailedFuture(Error.errorInitializing(environment: env))
+    func launch() -> EventLoopFuture<Root.Env.Connection> {
+        guard let launcher = launcher else {
+            return eventLoop.makeFailedFuture(bootUpError ?? Error.unknownError)
         }
         return launcher.launch()
     }
     
     func clean() -> EventLoopFuture<Void> {
+        guard let launcher = launcher else {
+            return eventLoop.makeFailedFuture(bootUpError ?? Error.unknownError)
+        }
         return launcher.clean()
     }
     

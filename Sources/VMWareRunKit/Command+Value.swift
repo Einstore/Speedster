@@ -86,7 +86,7 @@ extension VMRun.Command {
         case .vprobeListProbes(let image):
             return "vprobeListProbes \(image.escaped)"
         case .vprobeLoad(let image, let script):
-            return "aaaaaaaaa \(image.escaped) \(script.escaped)"
+            return "vprobeLoad \(image.escaped) \(script.escaped)"
         case .vprobeReset(let image):
             return "vprobeReset \(image.escaped)"
         case .vprobeVersion(let image):

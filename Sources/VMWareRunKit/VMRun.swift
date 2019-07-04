@@ -235,7 +235,6 @@ public class VMRun {
         self.software = software
     }
     
-    
     /// Send a command
     /// - Parameter command: command
     /// - Parameter output: Output stream (optional)

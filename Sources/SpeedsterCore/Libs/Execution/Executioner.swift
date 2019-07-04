@@ -22,10 +22,10 @@ class Executioner {
     
     /// Job to be executed
     let root: Root
+    let node: Row<Node>
     
     // Pripeline
     let pipeline: Root.Pipeline
-    
     let eventLoop: EventLoop
     
     var update: Update
@@ -46,6 +46,7 @@ class Executioner {
         self.pipeline = pipeline
         self.update = update
         self.eventLoop = eventLoop
+        self.node = node
     }
     
      typealias FailedClosure = ((Swift.Error) -> ())
@@ -54,11 +55,11 @@ class Executioner {
     func run(finished: @escaping (() -> ()), failed: @escaping FailedClosure) {
         for job in root.jobs.filter({ $0.dependsOn == nil || $0.dependsOn?.isEmpty == true }) {
             // Launch virtual machine
-            let envManager = EnvironmentManager(on: self.eventLoop)
             guard let env = job.environment ?? root.environment else {
                 fatalError("Missing environment, this should have been checked before the run has started")
             }
-            envManager.launch(environment: env).whenComplete { result in
+            let envManager = EnvironmentManager(env, node: self.node, on: self.eventLoop)
+            envManager.launch().whenComplete { result in
                 let connection: Root.Env.Connection
                 switch result {
                 case .success(let conn):
@@ -67,6 +68,8 @@ class Executioner {
                     self.make(update: .environment(error: error, job: job))
                     return
                 }
+                print(connection)
+                
                 DispatchQueue.global(qos: .background).async {
                     
                     fatalError()

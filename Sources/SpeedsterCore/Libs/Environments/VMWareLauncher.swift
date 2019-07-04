@@ -5,8 +5,9 @@
 //  Created by Ondrej Rafaj on 03/07/2019.
 //
 
-import Vapor
+import Fluent
 import VMWareRestKit
+import VMWareRunKit
 
 
 class VMWareLauncher: Launcher {
@@ -16,32 +17,47 @@ class VMWareLauncher: Launcher {
     let env: Root.Env
     let image: String
     
-    let client: VMWareRest
+    let vmrest: VMWareRest
+    let vmrun: VMRun
     
     enum Error: Swift.Error {
         case vmrestUnavailable
         case unableToLaunchImage
     }
     
-    required init(_ env: Root.Env, on eventLoop: EventLoop) throws {
+    required init(_ env: Root.Env, node: Row<Node>, on eventLoop: EventLoop) throws {
         self.eventLoop = eventLoop
         self.env = env
-        client = try VMWareRest(
+        vmrest = try VMWareRest(
             VMWareRest.Config(
                 username: "vmrest",
                 password: "!asdfgH0",
-                server: "http://127.0.0.1:8697"
+                server: "http://\(node.host):8697"
             ),
             eventLoop: eventLoop
         )
-        image = env.image.serialize().replacingOccurrences(of: "vmrest;", with: "")
+        vmrun = try VMRun(
+            node.asShellConnection(),
+            for: .fusion,
+            on: eventLoop
+        )
+        image = env.image.serialize().replacingOccurrences(of: "vmware;", with: "")
     }
     
     func launch() -> EventLoopFuture<Root.Env.Connection> {
+        // Check image exists
+        // Check machine is off
+        // Check image has Speedster-clean snapshot
+        // Reset image to Speedster-clean snapshot if only Speedster-run exists
+        // Rename snapshot to Speedster-run
+        // Launch Speedster-run
         fatalError()
     }
     
     func clean() -> EventLoopFuture<Void> {
+        // Power off machine
+        // Reset Speedster-run to Speedster-clean snapshot
+        // Rename snapshot to Speedster-clean
         fatalError()
     }
     

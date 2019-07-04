@@ -10,7 +10,7 @@ let package = Package(
         .executable(name: "random-generator", targets: ["RandomGenerator"]),
         .executable(name: "speedster-hello", targets: ["SpeedsterHello"]),
         .library(name: "SpeedsterCore", targets: ["SpeedsterCore"]),
-        .library(name: "VMRunKit", targets: ["VMRunKit"])
+        .library(name: "VMWareRunKit", targets: ["VMWareRunKit"])
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-nio.git", from: "2.3.0"),
@@ -62,7 +62,7 @@ let package = Package(
             ]
         ),
         .target(
-            name: "VMRunKit",
+            name: "VMWareRunKit",
             dependencies: [
                 "ShellKit"
             ]
@@ -89,6 +89,7 @@ let package = Package(
                 "Redis",
                 "JobsRedisDriver",
                 "VMWareRestKit",
+                "VMWareRunKit",
                 "ShellKit"
             ]
         ),

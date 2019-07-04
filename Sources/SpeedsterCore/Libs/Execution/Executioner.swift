@@ -23,6 +23,9 @@ class Executioner {
     /// Job to be executed
     let root: Root
     
+    // Pripeline
+    let pipeline: Root.Pipeline
+    
     let eventLoop: EventLoop
     
     var update: Update
@@ -32,10 +35,17 @@ class Executioner {
     // MARK: Public interface
     
     /// Initializer
-    init(root: Root, node: Row<Node>, on eventLoop: EventLoop, update: @escaping Update) {
-        self.eventLoop = eventLoop
+    init(
+        root: Root,
+        pipeline: Root.Pipeline,
+        node: Row<Node>,
+        on eventLoop: EventLoop,
+        update: @escaping Update
+        ) {
         self.root = root
+        self.pipeline = pipeline
         self.update = update
+        self.eventLoop = eventLoop
     }
     
      typealias FailedClosure = ((Swift.Error) -> ())
@@ -95,30 +105,6 @@ class Executioner {
         }
     }
     
-    func run(bash: String, finished: @escaping (() -> ()), failed: @escaping FailedClosure) {
-        fatalError()
-//        DispatchQueue.global(qos: .background).async {
-//            do {
-//                let res = try executor.run(bash)
-//                guard res == 0 else {
-//                    self.eventLoop.execute {
-//                        failed(Error.nonZeroExit)
-//                    }
-//                    return
-//                }
-//                self.eventLoop.execute {
-//                    finished()
-//                }
-//                try executor.close()
-//            } catch {
-//                self.eventLoop.execute {
-//                    failed(error)
-//                }
-//                try? executor.close()
-//            }
-//        }
-    }
-    
     // MARK: Private interface
     
     private func make(update data: UpdateData) {
@@ -127,7 +113,7 @@ class Executioner {
         }
     }
     
-    private func run(job: Root.Job, executor: Connector, failed: @escaping FailedClosure) throws {
+//    private func run(job: Root.Job, failed: @escaping FailedClosure) throws {
 //        guard let root = self.root else {
 //            throw Error.missingJob
 //        }
@@ -167,7 +153,7 @@ class Executioner {
 //                failed(error)
 //            }
 //        }
-    }
+//    }
     
     deinit {
         // TODO: This neeeds to be called!!!!!!!!!!!!!!!

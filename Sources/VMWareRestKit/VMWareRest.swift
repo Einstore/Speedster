@@ -1,5 +1,5 @@
 //
-//  Github.swift
+//  VMWareRest.swift
 //  
 //
 //  Created by Ondrej Rafaj on 10/06/2019.
@@ -12,12 +12,12 @@ import NIOHTTPClient
 
 
 /// Server value convertible
-public protocol VMWareFusionServerConvertible {
+public protocol VMWareRestServerConvertible {
     var value: String { get }
 }
 
-/// Main Github service class
-public class VMWareFusion {
+/// Main VMWareRest service class
+public class VMWareRest {
     
     public enum Error: Swift.Error {
         
@@ -30,19 +30,19 @@ public class VMWareFusion {
     /// Main configuration
     public struct Config {
         
-        /// Github username associated with a personal access token
+        /// Username
         public let username: String
         
-        /// Personal access token
-        public let token: String
+        /// Password
+        public let password: String
         
         /// Server URL
-        public let server: VMWareFusionServerConvertible
+        public let server: VMWareRestServerConvertible
         
         /// Initializer
-        public init(username: String, token: String, server: VMWareFusionServerConvertible) {
+        public init(username: String, password: String, server: VMWareRestServerConvertible) {
             self.username = username
-            self.token = token
+            self.password = password
             self.server = server
         }
         
@@ -91,7 +91,7 @@ extension HTTPClient.Response {
 }
 
 
-extension VMWareFusion {
+extension VMWareRest {
     
     fileprivate func req(_ method: HTTPMethod, _ path: String, _ body: HTTPClient.Body? = nil) throws -> HTTPClient.Request {
         let url = config.url(for: path)
@@ -108,7 +108,7 @@ extension VMWareFusion {
         return req
     }
     
-    /// Retrieve data from Github API and turn them into a model
+    /// Retrieve data from vmrest API and turn them into a model
     public func get<C>(path: String) throws -> EventLoopFuture<C> where C: Decodable {
         let r = try req(.GET, path)
         let future = client.execute(request: r)
@@ -164,11 +164,11 @@ extension VMWareFusion {
 }
 
 
-extension VMWareFusion {
+extension VMWareRest {
     
     /// Auth headers for request
     private var headers: HTTPHeaders {
-        let loginString = "\(config.username):\(config.token)"
+        let loginString = "\(config.username):\(config.password)"
         let loginData = loginString.data(using: String.Encoding.utf8)!
         let base64LoginString = loginData.base64EncodedString()
 
@@ -208,7 +208,7 @@ extension VMWareFusion {
 }
 
 
-extension String: VMWareFusionServerConvertible {
+extension String: VMWareRestServerConvertible {
     
     /// Self value of a string
     public var value: String {
@@ -218,7 +218,7 @@ extension String: VMWareFusionServerConvertible {
 }
 
 
-extension VMWareFusion.Config {
+extension VMWareRest.Config {
     
     /// Build URL from a path
     func url(for path: String) -> String {

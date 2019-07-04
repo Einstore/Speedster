@@ -13,9 +13,9 @@ public struct QueryableProperty<QueryableType> {
     /// Queryable element accessor
     public var element: QueryableType?
     
-    let fusion: VMWareFusion
+    let fusion: VMWareRest
     
-    init(_ obj: QueryableType? = nil, fusion: VMWareFusion) {
+    init(_ obj: QueryableType? = nil, fusion: VMWareRest) {
         element = obj
         self.fusion = fusion
     }
@@ -29,7 +29,7 @@ public protocol Queryable {
     associatedtype ObjectType
 
     /// Main static function to access github queries
-    static func query(on fusion: VMWareFusion) -> QueryableProperty<ObjectType>
+    static func query(on fusion: VMWareRest) -> QueryableProperty<ObjectType>
     
 }
 
@@ -37,7 +37,7 @@ public protocol Queryable {
 extension Queryable {
     
     /// Main static function to access github queries
-    public static func query(on fusion: VMWareFusion) -> QueryableProperty<Self> {
+    public static func query(on fusion: VMWareRest) -> QueryableProperty<Self> {
         return QueryableProperty<Self>(fusion: fusion)
     }
     

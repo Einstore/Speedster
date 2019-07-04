@@ -10,7 +10,8 @@ import Vapor
 
 class EnvironmentManager {
     
-    enum Error: Swift.Error, Equatable {
+    enum Error: Swift.Error {
+        case errorInitializing(environment: Root.Env)
         case missingEnvironment(for: String)
     }
     
@@ -33,11 +34,15 @@ class EnvironmentManager {
     }
     
     func launch(environment env: Root.Env) -> EventLoopFuture<Root.Env.Connection> {
-        switch env.image {
-        case .VMWare:
-            launcher = VMWareLauncher(env)
-        default:
-            fatalError()
+        do {
+            switch env.image {
+            case .VMWare:
+                launcher = try VMWareLauncher(env, on: eventLoop)
+            default:
+                fatalError()
+            }
+        } catch {
+            return eventLoop.makeFailedFuture(Error.errorInitializing(environment: env))
         }
         return launcher.launch()
     }

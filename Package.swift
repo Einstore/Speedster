@@ -9,9 +9,11 @@ let package = Package(
     products: [
         .executable(name: "random-generator", targets: ["RandomGenerator"]),
         .executable(name: "speedster-hello", targets: ["SpeedsterHello"]),
-        .library(name: "SpeedsterCore", targets: ["SpeedsterCore"])
+        .library(name: "SpeedsterCore", targets: ["SpeedsterCore"]),
+        .library(name: "VMRunKit", targets: ["VMRunKit"])
     ],
     dependencies: [
+        .package(url: "https://github.com/apple/swift-nio.git", from: "2.3.0"),
         .package(url: "https://github.com/vapor/vapor.git", from: "4.0.0-alpha.1.5"),
         .package(url: "https://github.com/vapor/fluent.git", from: "4.0.0-alpha.1.1"),
         .package(url: "https://github.com/vapor/fluent-postgres-driver.git", from: "2.0.0-alpha.1.2"),
@@ -54,12 +56,26 @@ let package = Package(
             ]
         ),
         .target(
-            name: "VMWareFusionKit",
+            name: "VMWareRestKit",
             dependencies: [
                 "Vapor"
             ]
         ),
-          .target(
+        .target(
+            name: "VMRunKit",
+            dependencies: [
+                "ShellKit"
+            ]
+        ),
+        .target(
+            name: "ShellKit",
+            dependencies: [
+                "Shout",
+                "SwiftShell",
+                "NIO"
+            ]
+        ),
+        .target(
             name: "SpeedsterCore",
             dependencies: [
                 "Fluent",
@@ -72,9 +88,8 @@ let package = Package(
                 "Jobs",
                 "Redis",
                 "JobsRedisDriver",
-                "VMWareFusionKit",
-                "Shout",
-                "SwiftShell"
+                "VMWareRestKit",
+                "ShellKit"
             ]
         ),
         .target(

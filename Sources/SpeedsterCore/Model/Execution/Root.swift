@@ -122,38 +122,22 @@ public struct Root: Content {
 
     }
     
-    /// GitHub info
-    public struct GitHub: Codable {
+    /// Git helpers
+    public struct Git: Codable {
         
-        public struct Location: Codable {
+        /// Reference repo information
+        public struct Reference: Codable {
             
-            public let organization: String
-            public let repo: String
-            public let commit: String?
+            /// Local filesystem path to the repo
+            public let path: String?
             
-            public init(organization: String, repo: String, commit: String? = nil) {
-                self.organization = organization
-                self.repo = repo
-                self.commit = commit
-            }
+            /// Origin link, either in https or SSH (git@repo) format
+            public let origin: String
             
         }
         
-        /// Manage clone on job level
-        public let cloneGit: String?
-        
-        /// Repo
-        public let location: Location?
-        
-        enum CodingKeys: String, CodingKey {
-            case cloneGit = "clone"
-            case location
-        }
-        
-        public init(cloneGit: String? = nil, location: Location? = nil) {
-            self.cloneGit = cloneGit
-            self.location = location
-        }
+        /// Reference repo
+        public let referenceRepo: Reference?
         
     }
     
@@ -326,6 +310,9 @@ public struct Root: Content {
             
         }
         
+        /// Pipeline name
+        public let name: String
+        
         /// Triggers for jobs within this pipeline
         ///     - Any successful trigger will trigger given jobs
         public let triggers: [Trigger]
@@ -333,7 +320,8 @@ public struct Root: Content {
         /// Jobs allowed within the pipeline
         public let jobs: [String]
         
-        public init(triggers: [Trigger], jobs: [String]) {
+        public init(name: String, triggers: [Trigger], jobs: [String]) {
+            self.name = name
             self.triggers = triggers
             self.jobs = jobs
         }
@@ -350,7 +338,7 @@ public struct Root: Content {
     public let nodeLabels: [String]?
     
     /// GitHub info & settings
-    public let gitHub: GitHub?
+    public let gitHub: Git?
     
     /// Workflows
     public let jobs: [Job]
@@ -364,6 +352,9 @@ public struct Root: Content {
     /// Branch management
     public let pipelines: [Pipeline]?
     
+    /// Variables parsed through every build script in a format #{VARIABLE}
+    public let scriptVariables: [String: String]?
+    
     enum CodingKeys: String, CodingKey {
         case name
         case identifier
@@ -373,6 +364,7 @@ public struct Root: Content {
         case environment = "environment"
         case dockerDependendencies = "docker_dependencies"
         case pipelines
+        case scriptVariables = "script_vars"
     }
     
     /// Initializer
@@ -380,11 +372,12 @@ public struct Root: Content {
         name: String,
         identifier: String? = nil,
         nodeLabels: [String]? = nil,
-        gitHub: GitHub? = nil,
+        gitHub: Git? = nil,
         jobs: [Job],
         environment: Env? = nil,
         dockerDependendencies: [Dependency]? = nil,
-        pipelines: [Pipeline]? = nil
+        pipelines: [Pipeline]? = nil,
+        scriptVariables: [String: String]? = nil
         ) {
         self.name = name
         self.identifier = identifier
@@ -394,6 +387,7 @@ public struct Root: Content {
         self.environment = environment
         self.dockerDependendencies = dockerDependendencies
         self.pipelines = pipelines
+        self.scriptVariables = scriptVariables
     }
     
 }
@@ -405,4 +399,15 @@ extension Root {
         return name + "-" + (identifier ?? "direct")
     }
     
+    public func fullPipeline() -> Pipeline {
+        let jobNames = jobs.map({ $0.name })
+        let pipeline = Pipeline(
+            name: "All jobs",
+            triggers: [],
+            jobs: jobNames
+        )
+        return pipeline
+    }
+    
 }
+

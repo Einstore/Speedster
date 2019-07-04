@@ -143,6 +143,7 @@ class BuildManager {
         let promise = self.container.eventLoop.makePromise(of: Void.self)
         let ex = Executioner(
             root: root,
+            pipeline: root.fullPipeline(),
             node: node,
             on: self.container.eventLoop
         ) { update in

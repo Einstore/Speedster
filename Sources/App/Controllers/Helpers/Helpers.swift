@@ -203,6 +203,7 @@ extension Root.Pipeline {
     static func pipelines(jobs: [String] = ["Step 1", "Step 2", "Step 3"]) -> [Root.Pipeline] {
         return [
             Root.Pipeline(
+                name: "Pipeline for \(jobs.joined(separator: ", "))",
                 triggers: [
                     Trigger(branch: "master", action: .commit),
                     Trigger(branch: "development", action: .message("test please")),
@@ -244,9 +245,6 @@ extension Root {
         
         return Root(
             name: "Dependant root failing",
-            gitHub: Root.GitHub(
-                cloneGit: "git@github.com:vapor/postgres-nio.git"
-            ),
             jobs: [w1, w2, w3, w4],
             pipelines: Pipeline.pipelines()
         )
@@ -258,9 +256,6 @@ extension Root {
         
         return Root(
             name: "Small root",
-            gitHub: Root.GitHub(
-                cloneGit: "git@github.com:vapor/postgres-nio.git"
-            ),
             jobs: [w1, w2],
             environment: Root.Env.basic(),
             dockerDependendencies: [
@@ -288,9 +283,6 @@ extension Root {
         
         return Root(
             name: "Dependant job succeeding",
-            gitHub: Root.GitHub(
-                cloneGit: "git@github.com:vapor/postgres-nio.git"
-            ),
             jobs: [w1, w2, w3, w4],
             pipelines: Pipeline.pipelines()
         )
@@ -306,9 +298,6 @@ extension Root {
         return Root(
             name: "All workflows",
             nodeLabels: ["linux"],
-            gitHub: Root.GitHub(
-                cloneGit: "git@github.com:vapor/postgres-nio.git"
-            ),
             jobs: [w1, w2, w3, w4, w5],
             pipelines: Pipeline.pipelines()
         )

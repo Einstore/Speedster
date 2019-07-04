@@ -10,7 +10,6 @@ import Vapor
 
 public protocol Launcher {
     
-    init(_ env: Root.Env)
     func launch() -> EventLoopFuture<Root.Env.Connection>
     func clean() -> EventLoopFuture<Void>
     

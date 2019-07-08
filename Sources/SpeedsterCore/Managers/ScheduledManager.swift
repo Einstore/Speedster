@@ -22,4 +22,20 @@ class ScheduledManager {
             .firstUnwrapped()
     }
     
+    func schedule(id: Speedster.DbIdType?, ref: GitReference?, trigger: Root.Pipeline.Trigger, githubManager: GithubManager) -> EventLoopFuture<Row<Scheduled>> {
+        return GitHubJob.find(failing: id, on: self.db).flatMap { githubJob in
+            return githubManager.getCommitForSchedule(
+                org: githubJob.org,
+                repo: githubJob.repo,
+                ref: ref
+            ).flatMap { commit in
+                return githubJob.schedule(
+                    commit,
+                    trigger: trigger,
+                    on: self.db
+                )
+            }
+        }
+    }
+    
 }

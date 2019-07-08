@@ -56,4 +56,20 @@ public class SSHExecutor: Executor {
         return promise.futureResult
     }
     
+    /// Check if file exists
+    /// - Parameter path: Path to the file
+    public func exists(path: String) -> EventLoopFuture<Bool> {
+        let command = """
+        FILE=\(path)
+        if [ -f "$FILE" ]; then
+            echo "$FILE exists"
+        else
+            echo "$FILE does not exist"
+        fi
+        """
+        return run(bash: command).map { result in
+            return result.contains("\(path) exists")
+        }
+    }
+    
 }

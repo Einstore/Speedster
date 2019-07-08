@@ -132,13 +132,29 @@ public struct Root: Content {
             /// Local filesystem path to the repo
             public let path: String?
             
+            #warning("Origin should be automatically loaded from the repo/job")
             /// Origin link, either in https or SSH (git@repo) format
             public let origin: String
+            
+            /// Initializer
+            public init(path: String? = nil, origin: String) {
+                self.path = path
+                self.origin = origin
+            }
             
         }
         
         /// Reference repo
         public let referenceRepo: Reference?
+        
+        enum CodingKeys: String, CodingKey {
+            case referenceRepo = "reference"
+        }
+        
+        /// Initializer
+        public init(referenceRepo: Reference?) {
+            self.referenceRepo = referenceRepo
+        }
         
     }
     
@@ -273,28 +289,33 @@ public struct Root: Content {
                 }
                 
                 public init(from decoder: Decoder) throws {
-                    let values = try decoder.container(keyedBy: CodingKeys.self)
-                    #warning("This can never work, you have to decode by some code within the content :)")
-                    if let _ = try? values.decode(String.self, forKey: .commit) {
+                    let container = try decoder.singleValueContainer()
+                    let string = try container.decode(String.self)
+                    switch true {
+                    case string == "commit":
                         self = .commit
-                        return
+                    case string == "manual":
+                        self = .manual
+                    case string.prefix(8) == "message:":
+                        self = .message(string.replacingOccurrences(of: "message:", with: ""))
+                    default:
+                        throw Error.decoding("Error decoding Root.Pipeline.Trigger.Action: \(string)")
                     }
-                    if let value = try? values.decode(String.self, forKey: .message) {
-                        self = .message(value)
-                        return
-                    }
-                    throw Error.decoding("Error decoding Action: \(dump(values))")
                 }
                 
                 public func encode(to encoder: Encoder) throws {
-                    var container = encoder.container(keyedBy: CodingKeys.self)
+                    var container = encoder.singleValueContainer()
+                    try container.encode(synthesize())
+                }
+                
+                public func synthesize() -> String {
                     switch self {
                     case .commit:
-                        try container.encode("commit", forKey: .commit)
+                        return "commit"
                     case .manual:
-                        try container.encode("manual", forKey: .commit)
+                        return "manual"
                     case .message(let value):
-                        try container.encode("message:" + value, forKey: .message)
+                        return "message:\(value)"
                     }
                 }
                 
@@ -400,10 +421,6 @@ public struct Root: Content {
 
 
 extension Root {
-    
-    public var workspaceName: String {
-        return name + "-" + (identifier ?? "direct")
-    }
     
     public func fullPipeline() -> Pipeline {
         let jobNames = jobs.map({ $0.name })

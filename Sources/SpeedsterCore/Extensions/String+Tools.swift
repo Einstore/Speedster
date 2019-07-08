@@ -10,7 +10,7 @@ import Foundation
 
 extension String {
     
-    func array() -> [String] {
+    func commaSeparatedArray() -> [String] {
         return split(separator: ",").map({ String($0).trimmingCharacters(in: .whitespacesAndNewlines) })
     }
     

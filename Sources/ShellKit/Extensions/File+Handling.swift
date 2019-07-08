@@ -51,4 +51,11 @@ extension Shell {
         return run(bash: "mkdir \(flags) \(path.quoteEscape)", output: output)
     }
     
+    
+    /// Check if file exists
+    /// - Parameter path: Path to the file
+    public func exists(path: String) ->EventLoopFuture<Bool> {
+        return executor.exists(path: path)
+    }
+    
 }

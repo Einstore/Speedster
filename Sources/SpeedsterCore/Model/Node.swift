@@ -71,7 +71,7 @@ public struct Node: Model {
             self.host = row.host
             self.port = row.port
             self.user = row.user ?? (row.auth == .password ? "root" : nil)
-            self.labels = row.labels?.array()
+            self.labels = row.labels?.commaSeparatedArray()
             self.password = (row.password?.count ?? 0) > 0
             self.publicKey = (row.publicKey?.count ?? 0) > 0
             self.auth = row.auth

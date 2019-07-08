@@ -7,7 +7,6 @@
 
 import SpeedsterCore
 import XCTest
-import CryptoKit
 import Yams
 
 
@@ -17,7 +16,7 @@ final class EncodingTests: XCTestCase {
         let all = Root.rootAll()
         let encoded = try! YAMLEncoder().encode(all)
         _ = try! Root.decode(from: encoded)
-        print("We got here so probs ok :)")
+        print("We got here so probs all's ok :)")
     }
     
     static let allTests = [

@@ -37,7 +37,7 @@ public struct Scheduled: Model {
     public struct Short: Content {
         
         public let id: Speedster.DbIdType?
-        public let commit: String?
+        public let commit: Commit?
         public let requested: Date
         
         public init(_ row: Row<Scheduled>) {
@@ -60,13 +60,13 @@ public struct Scheduled: Model {
     public let runId = Field<Speedster.DbIdType?>("run_id")
     
     /// Commit info
-    public let commit = Field<String>("commit")
+    public let commit = Field<Commit>("commit")
     
     /// Date requested execution
     public let requested = Field<Date>("requested")
     
     /// Github trigger data
-    public let trigger = Field<[String: String]?>("trigger", dataType: .json)
+    public let trigger = Field<Root.Pipeline.Trigger>("trigger")
     
 }
 

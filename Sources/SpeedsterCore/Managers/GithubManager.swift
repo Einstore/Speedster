@@ -66,14 +66,14 @@ class GithubManager {
                             do {
                                 return try Webhook.query(on: self.github).create(org: info.org, repo: info.repo, hook: hook).void()
                             } catch {
-                                return self.container.eventLoop.makeFailedFuture(error)
+                                return error.fail(self.container)
                             }
                         }
                         return self.container.eventLoop.future()
                 }
                 futures.append(future)
             } catch {
-                futures.append(self.db.eventLoop.makeFailedFuture(error))
+                futures.append(error.fail(self.container))
             }
         }
         return futures.flatten(on: self.db.eventLoop)
@@ -93,20 +93,20 @@ class GithubManager {
                             do {
                                 return try Webhook.query(on: self.github).edit(org: info.org, repo: info.repo, id: webhook.id, hook: hook).void()
                             } catch {
-                                return self.container.eventLoop.makeFailedFuture(error)
+                                return error.fail(self.container)
                             }
                         } else {
                             let hook = self.hook(for: url)
                             do {
                                 return try Webhook.query(on: self.github).create(org: info.org, repo: info.repo, hook: hook).void()
                             } catch {
-                                return self.container.eventLoop.makeFailedFuture(error)
+                                return error.fail(self.container)
                             }
                         }
                 }
                 futures.append(future)
             } catch {
-                futures.append(self.db.eventLoop.makeFailedFuture(error))
+                futures.append(error.fail(self.container))
             }
         }
         return futures.flatten(on: self.db.eventLoop)
@@ -187,13 +187,13 @@ class GithubManager {
             case .branch:
                 return try GitHubKit.Branch.query(on: github).get(org: org, repo: repo, branch: ref.value).latestCommit()
             case .tag:
-                fatalError("Tag not supported yet")
-            //                return try GitHubKit.Branch.query(on: github).get(org: org, repo: repo, branch: ref.value).latestCommit()
+                return GenericError.notSupported("Tags are not yet supported as a reference point").fail(container.eventLoop)
+//                return try GitHubKit.Branch.query(on: github).get(org: org, repo: repo, branch: ref.value).latestCommit()
             case .commit:
                 return try GitHubKit.Commit.query(on: github).get(org: org, repo: repo, sha: ref.value)
             }
         } catch {
-            return container.eventLoop.makeFailedFuture(Error.unableToRetrieveGithubData)
+            return Error.unableToRetrieveGithubData.fail(container)
         }
     }
     
@@ -211,7 +211,7 @@ class GithubManager {
                             sha: commit.tree.sha
                             ).flatMap { tree in
                                 guard let objects = tree.objects else {
-                                    return self.db.eventLoop.makeFailedFuture(Error.noFilesFoundInCommitTree)
+                                    return Error.noFilesFoundInCommitTree.fail(self.container)
                                 }
                                 
                                 for object in objects {
@@ -225,24 +225,24 @@ class GithubManager {
                                             sha: object.sha
                                             )
                                     } catch {
-                                        return self.db.eventLoop.makeFailedFuture(error)
+                                        return error.fail(self.container)
                                     }
                                 }
-                                return self.db.eventLoop.makeFailedFuture(Error.missingSpeedsterFile)
+                                return Error.missingSpeedsterFile.fail(self.container)
                         }
                     } catch {
-                        return self.db.eventLoop.makeFailedFuture(error)
+                        return error.fail(self.container)
                     }
             }
         } catch {
-            return db.eventLoop.makeFailedFuture(error)
+            return error.fail(self.container)
         }
     }
     
     func file(_ fileName: String, for location: GitLocation) -> EventLoopFuture<Data> {
         return blob(fileName, for: location).flatMap { blob in
             guard let data = Data(base64Encoded: blob.content, options: [.ignoreUnknownCharacters]) else {
-                return self.db.eventLoop.makeFailedFuture(GenericError.decodingError)
+                return GenericError.decodingError.fail(self.container)
             }
             return self.db.eventLoop.makeSucceededFuture(data)
         }
@@ -253,14 +253,14 @@ class GithubManager {
             do {
                 guard
                     let data = Data(base64Encoded: blob.content, options: [.ignoreUnknownCharacters]),
-                    let string = String(data: data, encoding: .utf8),
-                    let job: Root = try Root.decode(from: string)
+                    let string = String(data: data, encoding: .utf8)
                     else {
-                        return self.db.eventLoop.makeFailedFuture(GenericError.decodingError)
+                        return GenericError.decodingError.fail(self.container)
                 }
+                let job: Root = try Root.decode(from: string)
                 return self.db.eventLoop.makeSucceededFuture(job)
             } catch {
-                return self.db.eventLoop.makeFailedFuture(error)
+                return error.fail(self.container)
             }
         }
     }
@@ -286,7 +286,7 @@ class GithubManager {
                 futures.append(future)
             }
         } catch {
-            return container.eventLoop.makeFailedFuture(error)
+            return error.fail(self.container)
         }
         return futures.flatten(on: container.eventLoop)
     }

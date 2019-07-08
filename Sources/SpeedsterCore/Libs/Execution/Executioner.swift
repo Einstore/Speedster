@@ -61,8 +61,8 @@ class Executioner {
         guard let referenceRepo = root.gitHub?.referenceRepo else {
             return runJobs()
         }
-        let nodeConnection = node.asShellConnection()
         do {
+            let nodeConnection = try node.asShellConnection()
             let ref = try RefRepo(
                 nodeConnection,
                 temp: referenceRepo.path ?? "/tmp/speeedster/",
@@ -88,7 +88,7 @@ class Executioner {
         for job in root.jobs.filter({ $0.dependsOn == nil || $0.dependsOn?.isEmpty == true }) {
             // Launch virtual machine
             guard let env = job.environment ?? root.environment else {
-                fatalError("Missing environment, this should have been checked before the run has started (favourite last words, THIS SHOULD NEVER HAPPEN!)")
+                fatalError("Missing environment, this should have been checked before the run has started (favourite last words ... THIS SHOULD NEVER HAPPEN!)")
             }
             let envManager = EnvironmentManager(env, node: self.node, on: self.eventLoop)
             envManager.launch().whenComplete { result in

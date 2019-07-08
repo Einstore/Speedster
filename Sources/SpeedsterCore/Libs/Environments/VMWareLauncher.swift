@@ -6,7 +6,6 @@
 //
 
 import Fluent
-import VMWareRestKit
 import VMWareRunKit
 
 
@@ -17,7 +16,6 @@ class VMWareLauncher: Launcher {
     let env: Root.Env
     let image: String
     
-    let vmrest: VMWareRest
     let vmrun: VMRun
     
     enum Error: Swift.Error {
@@ -29,14 +27,6 @@ class VMWareLauncher: Launcher {
     required init(_ env: Root.Env, node: Row<Node>, on eventLoop: EventLoop) throws {
         self.eventLoop = eventLoop
         self.env = env
-        vmrest = try VMWareRest(
-            VMWareRest.Config(
-                username: "vmrest",
-                password: "!asdfgH0",
-                server: "http://\(node.host):8697"
-            ),
-            eventLoop: eventLoop
-        )
         vmrun = try VMRun(
             node.asShellConnection(),
             for: .fusion,
@@ -47,24 +37,26 @@ class VMWareLauncher: Launcher {
     
     func launch() -> EventLoopFuture<Root.Env.Connection> {
         do {
-            return try VM.query(on: vmrest).get().flatMap { machines in
-                print(machines)
-                guard let machine = machines.filter({ $0.path?.contains(self.image) ?? false }).first, let path = machine.path else {
-                    return Error.imageDoesNotExist(self.image).fail(self.eventLoop)
-                }
-                var output = ""
-                let outputClosure: ((String) -> ()) = { text in
-                    output += text
-                }
-                return self.vmrun.send(command: .listSnapshots(image: path), output: outputClosure).flatMap { exit in
-                    print(output)
-                    // Find snapshot called Speedster
-                    // Create Speedster snapshot if it desn't exist
-                    // Reset machine to Speedster snapshot
-                    // Launch Speedster
-                    
-                    fatalError()
-                }
+            return vmrun.send(command: .list).flatMap { machinesOutput in
+                print(machinesOutput)
+                fatalError()
+//                let machines = []
+//                guard let machine = machines.filter({ $0.path?.contains(self.image) ?? false }).first, let path = machine.path else {
+//                    return Error.imageDoesNotExist(self.image).fail(self.eventLoop)
+//                }
+//                var output = ""
+//                let outputClosure: ((String) -> ()) = { text in
+//                    output += text
+//                }
+//                return self.vmrun.send(command: .listSnapshots(image: path), output: outputClosure).flatMap { exit in
+//                    print(output)
+//                    // Find snapshot called Speedster
+//                    // Create Speedster snapshot if it desn't exist
+//                    // Reset machine to Speedster snapshot
+//                    // Launch Speedster
+//
+//                    fatalError()
+//                }
             }
         } catch { return error.fail(self.eventLoop) }
     }

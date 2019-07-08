@@ -52,15 +52,15 @@ class BuildManager {
         redis = try container.make(RedisClient.self)
     }
     
-    func build(_ scheduledId: Speedster.DbIdType?, trigger: Root.Pipeline.Trigger) throws -> EventLoopFuture<Void> {
+    func build(_ scheduledId: Speedster.DbIdType?) throws -> EventLoopFuture<Void> {
         guard let scheduledId = scheduledId else {
             throw Error.missingScheduledId
         }
         self.scheduledId = scheduledId
-        return self.root().flatMap { root in
-            return self.node(root).flatMap { node in
+        return self.rootAndtrigger().flatMap { rootAndTrigger in
+            return self.node(rootAndTrigger.root).flatMap { node in
                 return self.logging(node: node).flatMap { _ in
-                    return self.build(root, trigger: trigger, on: node)
+                    return self.build(rootAndTrigger.root, trigger: rootAndTrigger.trigger, on: node)
                 }.always { result in
                     self.finishLogging().completeQuietly()
                 }
@@ -84,14 +84,14 @@ class BuildManager {
         return execution.save(on: db)
     }
     
-    private func root() -> EventLoopFuture<Root> {
+    private func rootAndtrigger() -> EventLoopFuture<(root: Root, trigger: Root.Pipeline.Trigger)> {
         return scheduleManager.scheduled(scheduledId).flatMap { scheduledJob in
             return GitHubJob.find(failing: scheduledJob.jobId, on: self.db).flatMap { githubJob in
                 self.githubJob = githubJob
                 let location = GitLocation(
                     org: githubJob.org,
                     repo: githubJob.repo,
-                    commit: scheduledJob.commit
+                    commit: scheduledJob.commit.sha
                 )
                 
                 let githubManager = GithubManager(
@@ -106,7 +106,7 @@ class BuildManager {
                     } catch {
                         return self.container.eventLoop.makeFailedFuture(error)
                     }
-                    return self.container.eventLoop.makeSucceededFuture(root)
+                    return self.container.eventLoop.makeSucceededFuture((root: root, trigger: scheduledJob.trigger))
                 }
             }
         }

@@ -28,6 +28,9 @@ public enum GenericError: Error {
     /// Missing expected data
     case missingParamater(String)
     
+    /// Not supported
+    case notSupported(String)
+    
 }
 
 /// Generic error for work with database

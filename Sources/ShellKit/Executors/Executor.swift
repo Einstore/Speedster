@@ -19,4 +19,8 @@ public protocol Executor {
     /// - Parameter output: Future containing an exit code
     func run(bash: String, output: ((String) -> ())?) -> EventLoopFuture<Output>
     
+    /// Check if file exists
+    /// - Parameter path: Path to the file
+    func exists(path: String) ->EventLoopFuture<Bool>
+    
 }

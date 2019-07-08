@@ -223,7 +223,7 @@ extension Root.Env {
     
     static func basic() -> Root.Env {
         return Root.Env(
-            image: .VMWare(name: "macOS 10.14"),
+            image: .VMWare(name: "/Users/pro/Virtual Machines.localized/Windows 10 x64.vmwarevm/Windows 10 x64.vmx"),
             memory: "4Gib",
             storage: "10Gib",
             variables: [
@@ -256,6 +256,11 @@ extension Root {
         
         return Root(
             name: "Small root",
+            gitHub: Root.Git(
+                referenceRepo: Root.Git.Reference(
+                    origin: "git@github.com:Einstore/Einstore.git"
+                )
+            ),
             jobs: [w1, w2],
             environment: Root.Env.basic(),
             dockerDependendencies: [

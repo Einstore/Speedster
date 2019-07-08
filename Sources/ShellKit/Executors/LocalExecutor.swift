@@ -56,6 +56,7 @@ public class LocalExecutor: Executor {
             }
             out.onCompletion { cmd in
                 let exit = Int32(cmd.exitcode())
+                #warning("Append stdout to already outputed text in outputText to get the whole message!")
                 let stdout = out.stdout.read()
                 if outputText == nil && !stdout.isEmpty {
                     output?(stdout)
@@ -68,6 +69,11 @@ public class LocalExecutor: Executor {
             }
         }
         return promise.futureResult
+    }
+    
+    public func exists(path: String) -> EventLoopFuture<Bool> {
+        let exists = FileManager.default.fileExists(atPath: path)
+        return eventLoop.makeSucceededFuture(exists)
     }
     
 }

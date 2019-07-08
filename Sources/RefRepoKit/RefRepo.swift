@@ -32,24 +32,25 @@ public class RefRepo {
     public func clone(repo: String, checkout: String, for identifier: String) -> EventLoopFuture<String> {
         let repoPath = git(for: repo)
         
-        func localCloneProcess() -> EventLoopFuture<String> {
-            return self.clean(for: identifier).flatMap { _ in
-                return self.clone(repo: repo, to: identifier).flatMap { _ in
-                    return self.checkout(identifier, to: checkout).map {
-                        return self.tmp(identifier: identifier)
+        return shell.exists(path: repoPath).flatMap { exists in
+            func localCloneProcess() -> EventLoopFuture<String> {
+                return self.clean(for: identifier).flatMap { _ in
+                    return self.clone(repo: repo, to: identifier).flatMap { _ in
+                        return self.checkout(identifier, to: checkout).map {
+                            return self.tmp(identifier: identifier)
+                        }
                     }
                 }
             }
-        }
-        
-        #warning("Replace with Shell function so it works over SSH too!")
-        if FileManager.default.fileExists(atPath: repoPath) {
-            return fetch(repo: repo).flatMap { out in
-                return localCloneProcess()
-            }
-        } else {
-            return clone(repo: repo).flatMap { _ in
-                return localCloneProcess()
+            
+            if exists {
+                return self.fetch(repo: repo).flatMap { out in
+                    return localCloneProcess()
+                }
+            } else {
+                return self.clone(repo: repo).flatMap { _ in
+                    return localCloneProcess()
+                }
             }
         }
     }

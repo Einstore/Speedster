@@ -238,8 +238,10 @@ public class VMRun {
     /// Send a command
     /// - Parameter command: command
     /// - Parameter output: Output stream (optional)
-    public func send(command: Command, output: ((String) -> ())? = nil) -> EventLoopFuture<Int32> {
-        return shell.run(bash: compile(command), output: output)
+    public func send(command: Command, output: ((String) -> ())? = nil) -> EventLoopFuture<Void> {
+        return shell.run(bash: compile(command), output: output).map { _ in
+            return Void()
+        }
     }
     
     // MARK: Private interface

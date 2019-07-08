@@ -52,17 +52,33 @@ final class ScheduledController: Controller {
             return scheduleManager.scheduled(id)
         }
         
+        let github = try c.make(Github.self)
+        
         r.post("scheduled", ":scheduled_id", "run") { req -> EventLoopFuture<Response> in
             let id = req.parameters.get("scheduled_id", as: Speedster.DbIdType.self)
-            let github = try c.make(Github.self)
             let buildManager = try BuildManager(
                 github: github,
                 container: c,
                 scheduleManager: scheduleManager,
-                scheduledId: id,
                 on: self.db
             )
-            return buildManager.build().map { _ in
+            return try buildManager.build(id, trigger: Root.Pipeline.Trigger(branch: "master")).map { _ in
+                return Response.make.noContent()
+            }
+        }
+        
+        r.post("scheduled", ":scheduled_id", "run", ":branch") { req -> EventLoopFuture<Response> in
+            let id = req.parameters.get("scheduled_id", as: Speedster.DbIdType.self)
+            guard let branch = req.parameters.get("branch", as: String.self) else {
+                throw GenericError.missingParamater("branch Id")
+            }
+            let buildManager = try BuildManager(
+                github: github,
+                container: c,
+                scheduleManager: scheduleManager,
+                on: self.db
+            )
+            return try buildManager.build(id, trigger: Root.Pipeline.Trigger(branch: branch)).map { _ in
                 return Response.make.noContent()
             }
         }

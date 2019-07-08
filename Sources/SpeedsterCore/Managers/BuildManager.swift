@@ -29,7 +29,7 @@ class BuildManager {
     
     private let redis: RedisClient
     
-    private var scheduledId: Speedster.DbIdType
+    private var scheduledId: Speedster.DbIdType!
     
     private var githubJob: Row<GitHubJob>!
     private var execution: Row<Execution>!
@@ -42,7 +42,6 @@ class BuildManager {
         github: Github,
         container: Container,
         scheduleManager: ScheduledManager,
-        scheduledId: Speedster.DbIdType?,
         on database: Database
         ) throws {
         self.github = github
@@ -50,19 +49,18 @@ class BuildManager {
         self.scheduleManager = scheduleManager
         self.db = database
         
+        redis = try container.make(RedisClient.self)
+    }
+    
+    func build(_ scheduledId: Speedster.DbIdType?, trigger: Root.Pipeline.Trigger) throws -> EventLoopFuture<Void> {
         guard let scheduledId = scheduledId else {
             throw Error.missingScheduledId
         }
         self.scheduledId = scheduledId
-        
-        redis = try container.make(RedisClient.self)
-    }
-    
-    func build() -> EventLoopFuture<Void> {
         return self.root().flatMap { root in
             return self.node(root).flatMap { node in
                 return self.logging(node: node).flatMap { _ in
-                    return self.build(root, on: node)
+                    return self.build(root, trigger: trigger, on: node)
                 }.always { result in
                     self.finishLogging().completeQuietly()
                 }
@@ -72,8 +70,9 @@ class BuildManager {
     
     // MARK: Private interface
     
-    private func identifier(for jobName: String) -> String {
-        return "\(scheduledId.uuidString)-\(execution.id!.uuidString)-\(jobName)".lowercased().safeText
+    private func identifier(for jobName: String?) -> String {
+        let name = jobName ?? "environment"
+        return "\(scheduledId.uuidString)-\(execution.id!.uuidString)-\(name)".lowercased().safeText
     }
     
     private func logging(node: Row<Node>) -> EventLoopFuture<Void> {
@@ -139,11 +138,10 @@ class BuildManager {
         return wrapper.run
     }
     
-    private func build(_ root: Root, on node: Row<Node>) -> EventLoopFuture<Void> {
-        let promise = self.container.eventLoop.makePromise(of: Void.self)
+    private func build(_ root: Root, trigger: Root.Pipeline.Trigger, on node: Row<Node>) -> EventLoopFuture<Void> {
         let ex = Executioner(
             root: root,
-            pipeline: root.fullPipeline(),
+            trigger: trigger,
             node: node,
             on: self.container.eventLoop
         ) { update in
@@ -154,7 +152,7 @@ class BuildManager {
                 run.save(on: self.db).completeQuietly()
             case .output(text: let text, job: let job):
                 print(text)
-                self.redis.append((text + "\n"), to: self.identifier(for: job.name)).completeQuietly()
+                self.redis.append((text + "\n"), to: self.identifier(for: job?.name)).completeQuietly()
             case .environment(error: let error, job: let job):
                 print(error)
                 let env = job.environment?.image.serialize() ?? root.environment?.image.serialize() ?? "n/a"
@@ -170,14 +168,7 @@ class BuildManager {
                 self.guaranteed(run: job).result = exit
             }
         }
-        ex.run(finished: {
-            self.finish().completeQuietly()
-            promise.succeed(Void())
-        }) { error in
-            self.finish().completeQuietly()
-            promise.fail(error)
-        }
-        return promise.futureResult
+        return ex.run()
     }
     
     private func finishLogging() -> EventLoopFuture<Void> {

@@ -6,7 +6,6 @@
 //
 
 import Fluent
-import Yams
 import GitHubKit
 
 
@@ -41,9 +40,13 @@ final class JobsController: Controller {
             guard let yaml = req.body.string else {
                 throw HTTPError.notFound
             }
-            let root = try YAMLDecoder().decode(Root.self, from: yaml)
-            try ChecksManager.check(jobDependencies: root)
-            return root
+            do {
+                let root = try Root.decode(from: yaml)
+                try ChecksManager.check(jobDependencies: root)
+                return root
+            } catch {
+                throw error
+            }
         }
         
         r.post("jobs", "reload") { req -> EventLoopFuture<Response> in

@@ -21,6 +21,7 @@ class VMWareLauncher: Launcher {
     let vmrun: VMRun
     
     enum Error: Swift.Error {
+        case imageDoesNotExist(String)
         case vmrestUnavailable
         case unableToLaunchImage
     }
@@ -45,19 +46,32 @@ class VMWareLauncher: Launcher {
     }
     
     func launch() -> EventLoopFuture<Root.Env.Connection> {
-        // Check image exists
-        // Check machine is off
-        // Check image has Speedster-clean snapshot
-        // Reset image to Speedster-clean snapshot if only Speedster-run exists
-        // Rename snapshot to Speedster-run
-        // Launch Speedster-run
-        fatalError()
+        do {
+            return try VM.query(on: vmrest).get().flatMap { machines in
+                print(machines)
+                guard let machine = machines.filter({ $0.path?.contains(self.image) ?? false }).first, let path = machine.path else {
+                    return Error.imageDoesNotExist(self.image).fail(self.eventLoop)
+                }
+                var output = ""
+                let outputClosure: ((String) -> ()) = { text in
+                    output += text
+                }
+                return self.vmrun.send(command: .listSnapshots(image: path), output: outputClosure).flatMap { exit in
+                    print(output)
+                    // Find snapshot called Speedster
+                    // Create Speedster snapshot if it desn't exist
+                    // Reset machine to Speedster snapshot
+                    // Launch Speedster
+                    
+                    fatalError()
+                }
+            }
+        } catch { return error.fail(self.eventLoop) }
     }
     
     func clean() -> EventLoopFuture<Void> {
         // Power off machine
-        // Reset Speedster-run to Speedster-clean snapshot
-        // Rename snapshot to Speedster-clean
+        // Reset machine to Speedster snapshot
         fatalError()
     }
     

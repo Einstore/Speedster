@@ -6,13 +6,15 @@
 //
 
 import Fluent
+import RefRepoKit
+import ShellKit
 
 
 class Executioner {
     
     enum UpdateData {
         case started(job: Root.Job)
-        case output(text: String, job: Root.Job)
+        case output(text: String, job: Root.Job? = nil)
         case finished(exit: Int, job: Root.Job)
         case environment(error: Error, job: Root.Job)
         case error(_ error: Error, job: Root.Job)
@@ -25,38 +27,68 @@ class Executioner {
     let node: Row<Node>
     
     // Pripeline
-    let pipeline: Root.Pipeline
+    let trigger: Root.Pipeline.Trigger
     let eventLoop: EventLoop
     
     var update: Update
     
     var processed: [String] = []
     
+    var randomId: String
+    
     // MARK: Public interface
     
     /// Initializer
     init(
         root: Root,
-        pipeline: Root.Pipeline,
+        trigger: Root.Pipeline.Trigger,
         node: Row<Node>,
         on eventLoop: EventLoop,
         update: @escaping Update
         ) {
         self.root = root
-        self.pipeline = pipeline
+        self.trigger = trigger
         self.update = update
         self.eventLoop = eventLoop
         self.node = node
+        randomId = "\(root.name.safeText)-\(UUID().uuidString)".lowercased()
     }
     
      typealias FailedClosure = ((Swift.Error) -> ())
     
     /// Execute job
-    func run(finished: @escaping (() -> ()), failed: @escaping FailedClosure) {
+    func run() -> EventLoopFuture<Void> {
+        guard let referenceRepo = root.gitHub?.referenceRepo else {
+            return runJobs()
+        }
+        let nodeConnection = node.asShellConnection()
+        do {
+            let ref = try RefRepo(
+                nodeConnection,
+                temp: referenceRepo.path ?? "/tmp/speeedster/",
+                on: eventLoop) { text in
+                    self.make(update: .output(text: text))
+            }
+            return ref.clone(
+                repo: referenceRepo.origin,
+                checkout: trigger.branch,
+                for: randomId
+            ).flatMap { path in
+                return self.runJobs(repoPath: path)
+            }
+        } catch {
+            return eventLoop.makeFailedFuture(error)
+        }
+    }
+    
+    // MARK: Private interface
+    
+    private func runJobs(repoPath: String? = nil) -> EventLoopFuture<Void> {
+        var futures: [EventLoopFuture<Void>] = []
         for job in root.jobs.filter({ $0.dependsOn == nil || $0.dependsOn?.isEmpty == true }) {
             // Launch virtual machine
             guard let env = job.environment ?? root.environment else {
-                fatalError("Missing environment, this should have been checked before the run has started")
+                fatalError("Missing environment, this should have been checked before the run has started (favourite last words, THIS SHOULD NEVER HAPPEN!)")
             }
             let envManager = EnvironmentManager(env, node: self.node, on: self.eventLoop)
             envManager.launch().whenComplete { result in
@@ -76,7 +108,7 @@ class Executioner {
                     
                     
 //                    var executor = RemoteExecutor(connection, on: eventLoop)
-//                    
+//
 //                    executor.output = { out, identifier in
 //                        let out = "[\(connection.host)] \(out)"
 //                        eventLoop.execute {
@@ -106,9 +138,8 @@ class Executioner {
                 }
             }
         }
+        return futures.flatten(on: eventLoop)
     }
-    
-    // MARK: Private interface
     
     private func make(update data: UpdateData) {
         eventLoop.execute {

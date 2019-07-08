@@ -12,8 +12,17 @@ import NIO
 /// Main executor
 public class Shell: Executor {
     
+    public enum Error: Swift.Error {
+        case badExitCode(command: String, exit: Int32, output: String)
+    }
+    
     /// Default directory path
-    public static var DefaultDir = "~/"
+    public static var DefaultDir = "/"
+    
+    public var outputCommands: Bool = true
+    
+    /// Default output
+    public var output: ((String) -> ())? = nil
     
     /// Connection type
     public struct Connection {
@@ -75,17 +84,24 @@ public class Shell: Executor {
     public init(_ connection: Connection, on eventLoop: EventLoop) throws {
         switch connection.storage {
         case .local(dir: let dir):
-            executor = LocalExecutor(workDir: dir, on: eventLoop)
+            executor = try LocalExecutor(workDir: dir, on: eventLoop)
         case .ssh(host: let host, port: let port, dir: let dir, username: let user, auth: let auth):
             executor = try SSHExecutor(workDir: dir, host: host, port: port, username: user, auth: auth, on: eventLoop)
         }
     }
     
     /// Run bash command
-    /// - Parameter bash: bash command
+    /// - Parameter command: bash command
     /// - Parameter output: Future containing an exit code
-    public func run(bash: String, output: ((String) -> ())? = nil) -> EventLoopFuture<Int32> {
-        return executor.run(bash: bash, output: output)
+    public func run(bash command: String, output: ((String) -> ())? = nil) -> EventLoopFuture<String> {
+        if outputCommands {
+            output?("$ \(command)\n")
+            self.output?(command + "\n")
+        }
+        return executor.run(bash: command) { text in
+            output?(text)
+            self.output?(text)
+        }
     }
     
 }

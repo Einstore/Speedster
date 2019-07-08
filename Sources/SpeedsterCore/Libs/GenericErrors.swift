@@ -26,7 +26,7 @@ public enum GenericError: Error {
     case decodingError
     
     /// Missing expected data
-    case missingParamaters
+    case missingParamater(String)
     
 }
 

@@ -35,13 +35,20 @@ public class SSHExecutor: Executor {
     /// Run bash command
     /// - Parameter bash: bash command
     /// - Parameter output: Future containing an exit code
-    public func run(bash: String, output: ((String) -> ())? = nil) -> EventLoopFuture<Int32> {
-        let promise = eventLoop.makePromise(of: Int32.self)
+    public func run(bash: String, output: ((String) -> ())? = nil) -> EventLoopFuture<Output> {
+        let promise = eventLoop.makePromise(of: Output.self)
         DispatchQueue.global(qos: .background).async {
             do {
-                let output = output ?? { _ in }
-                let res = try self.ssh.execute("cd \(self.workDir) ; \(bash)", output: output)
-                promise.succeed(res)
+                var outputText = ""
+                let res = try self.ssh.execute("cd \(self.workDir) ; \(bash)") { text in
+                    outputText += text
+                    output?(text)
+                }
+                if res == 0 {
+                    promise.succeed(outputText)
+                } else {
+                    promise.fail(Shell.Error.badExitCode(command: bash, exit: res, output: outputText))
+                }
             } catch {
                 promise.fail(error)
             }

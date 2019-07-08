@@ -58,7 +58,6 @@ public struct VM: Codable {
         
     }
 
-    
     public struct CPU: Codable {
         let processors: Int?
     }

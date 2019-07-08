@@ -12,3 +12,4 @@
 @_exported import struct Shout.SSHKey
 @_exported import class Shout.SSH
 @_exported import class NIO.EventLoopFuture
+@_exported import protocol NIO.EventLoop

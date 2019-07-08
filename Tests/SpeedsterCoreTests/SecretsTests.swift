@@ -48,6 +48,8 @@ final class SecretsTests: XCTestCase {
     }
     
     static let allTests = [
+        ("testBase64EncodingDecoding", testBase64EncodingDecoding),
+        ("testBase64StringEncodingDecoding", testBase64StringEncodingDecoding),
         ("testEncryptionDecryption", testEncryptionDecryption),
         ("testDataEncryptionDecryption", testDataEncryptionDecryption),
         ("testBase64EncryptionDecryption", testBase64EncryptionDecryption)

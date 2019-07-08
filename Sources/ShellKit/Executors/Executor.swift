@@ -12,9 +12,11 @@ import NIO
 /// Executor protocol
 public protocol Executor {
     
+    typealias Output = String
+    
     /// Run bash command
     /// - Parameter bash: bash command
     /// - Parameter output: Future containing an exit code
-    func run(bash: String, output: ((String) -> ())?) -> EventLoopFuture<Int32>
+    func run(bash: String, output: ((String) -> ())?) -> EventLoopFuture<Output>
     
 }

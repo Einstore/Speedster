@@ -6,6 +6,7 @@
 //
 
 import Vapor
+import Yams
 
 
 public struct Root: Content {
@@ -71,10 +72,10 @@ public struct Root: Content {
         public let dockerDependendencies: [Dependency]?
         
         /// Timeout for the whole job (seconds, default 3600)
-        public let timeout: Int
+        public let timeout: Int?
         
         /// Job will timeout after an interval if no update is received (seconds, default 1800)
-        public let timeoutOnInactivity: Int
+        public let timeoutOnInactivity: Int?
         
         enum CodingKeys: String, CodingKey {
             case name
@@ -192,7 +193,7 @@ public struct Root: Content {
         public enum Image: Codable {
             
             public enum Error: Swift.Error {
-                case invalidImage
+                case invalidEnvironmentImageType
             }
             
             /// Docker image (ex. einstore/einstore:latest)
@@ -214,12 +215,12 @@ public struct Root: Content {
                 let container = try decoder.singleValueContainer()
                 let string = try container.decode(String.self)
                 switch true {
-                case string.contains("vmw;"):
-                    self = .VMWare(name: string.replacingOccurrences(of: "vmw;", with: ""))
+                case string.contains("vmware;"):
+                    self = .VMWare(name: string.replacingOccurrences(of: "vmware;", with: ""))
                 case string.contains("docker;"):
                     self = .VMWare(name: string.replacingOccurrences(of: "docker;", with: ""))
                 default:
-                    throw Error.invalidImage
+                    throw Error.invalidEnvironmentImageType
                 }
             }
             
@@ -261,16 +262,19 @@ public struct Root: Content {
                 
                 case commit
                 
+                case manual
+                
                 case message(String)
                 
                 enum CodingKeys: String, CodingKey {
                     case commit
+                    case manual
                     case message
                 }
                 
                 public init(from decoder: Decoder) throws {
                     let values = try decoder.container(keyedBy: CodingKeys.self)
-                    // TODO: This can never work, you have to decode by some code within the content :)!!!!!!!!!!!!!!!!!!!!!!
+                    #warning("This can never work, you have to decode by some code within the content :)")
                     if let _ = try? values.decode(String.self, forKey: .commit) {
                         self = .commit
                         return
@@ -287,8 +291,10 @@ public struct Root: Content {
                     switch self {
                     case .commit:
                         try container.encode("commit", forKey: .commit)
+                    case .manual:
+                        try container.encode("manual", forKey: .commit)
                     case .message(let value):
-                        try container.encode(value, forKey: .message)
+                        try container.encode("message:" + value, forKey: .message)
                     }
                 }
                 
@@ -303,7 +309,7 @@ public struct Root: Content {
                 case action
             }
             
-            public init(branch: String, action: Action) {
+            public init(branch: String, action: Action = .manual) {
                 self.branch = branch
                 self.action = action
             }
@@ -403,10 +409,41 @@ extension Root {
         let jobNames = jobs.map({ $0.name })
         let pipeline = Pipeline(
             name: "All jobs",
-            triggers: [],
+            triggers: [
+                Pipeline.Trigger(branch: "master", action: .manual)
+            ],
             jobs: jobNames
         )
         return pipeline
+    }
+    
+    public static func decode(from string: String) throws -> Root {
+        do {
+            let root = try YAMLDecoder().decode(Root.self, from: string)
+            return root
+        } catch let error as DecodingError {
+            switch error {
+            case .keyNotFound(let key, let ctx):
+                print(key)
+                print(ctx)
+                if let err = ctx.underlyingError { throw err }
+            case .dataCorrupted(let ctx):
+                print(ctx)
+                if let err = ctx.underlyingError { throw err }
+            case .typeMismatch(let type, let ctx):
+                print(type)
+                print(ctx)
+                if let err = ctx.underlyingError { throw err }
+            case .valueNotFound(let type, let ctx):
+                print(type)
+                if let err = ctx.underlyingError { throw err }
+            default:
+                throw GenericError.decodingError
+            }
+        } catch {
+            throw error
+        }
+        throw GenericError.decodingError
     }
     
 }

@@ -9,7 +9,6 @@ import GitHubKit
 import Fluent
 import FluentPostgresDriver
 import FluentSQLiteDriver
-import Yams
 
 
 class GithubManager {
@@ -148,7 +147,9 @@ class GithubManager {
                 do {
                     _ = try file.decodeCoreJob()
                     fileInfo.invalid = false
-                } catch { }
+                } catch {
+                    print("Failed decoding yml on \(fileInfo.org)/\(fileInfo.repo): \(error)")
+                }
             }
             infos.append(fileInfo)
             
@@ -253,7 +254,7 @@ class GithubManager {
                 guard
                     let data = Data(base64Encoded: blob.content, options: [.ignoreUnknownCharacters]),
                     let string = String(data: data, encoding: .utf8),
-                    let job: Root = try YAMLDecoder().decode(from: string)
+                    let job: Root = try Root.decode(from: string)
                     else {
                         return self.db.eventLoop.makeFailedFuture(GenericError.decodingError)
                 }
@@ -358,7 +359,7 @@ extension GithubManager.SpeedsterFileData {
         guard let file = file, let string = String(data: file, encoding: .utf8) else {
             throw GithubManager.Error.invalidSpeedsterFile
         }
-        let data = try YAMLDecoder().decode(Root.self, from: string)
+        let data = try Root.decode(from: string)
         return data
     }
     

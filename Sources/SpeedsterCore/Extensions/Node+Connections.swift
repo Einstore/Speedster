@@ -7,6 +7,7 @@
 
 import Fluent
 import ShellKit
+import SecretsKit
 
 
 extension Row where Model == Node {
@@ -18,7 +19,7 @@ extension Row where Model == Node {
         case self.auth == .password:
             let password: String?
             if let data = self.password {
-                password = try Secrets.decrypt(data)
+                password = try Secrets.decrypt(string: data)
             } else { password = nil }
             return .ssh(host: self.host, username: self.user ?? "root", password: password ?? "")
         default:

@@ -6,6 +6,7 @@
 //
 
 import Fluent
+import SecretsKit
 
 
 // Machine is a single worker machine to which Speedster connects via SSH

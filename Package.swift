@@ -7,7 +7,6 @@ let package = Package(
         .macOS(.v10_13)
     ],
     products: [
-        .executable(name: "random-generator", targets: ["RandomGenerator"]),
         .executable(name: "speedster-hello", targets: ["SpeedsterHello"]),
         .library(name: "SpeedsterCore", targets: ["SpeedsterCore"]),
         .library(name: "VMWareRunKit", targets: ["VMWareRunKit"]),
@@ -24,17 +23,12 @@ let package = Package(
         .package(url: "https://github.com/vapor/redis.git", from: "4.0.0-alpha.1"),
         .package(url: "https://github.com/vapor/jobs-redis-driver.git", from: "1.0.0-alpha.1.2"),
         //.package(url: "https://github.com/Einstore/GitHubKit.git", from: "1.0.0"),
+        .package(url: "https://github.com/Einstore/SecretsKit.git", from: "1.0.0"),
         .package(url: "https://github.com/rafiki270/Yams.git", .branch("master")),
         .package(url: "https://github.com/jakeheis/Shout.git", from: "0.5.0"),
         .package(url: "https://github.com/kareman/SwiftShell.git", from: "5.0.0")
     ],
     targets: [
-        .target(
-            name: "RandomGenerator",
-            dependencies: [
-                "CryptoKit"
-            ]
-        ),
         .target(
             name: "SpeedsterHello",
             dependencies: [
@@ -91,7 +85,8 @@ let package = Package(
                 "JobsRedisDriver",
                 "VMWareRunKit",
                 "ShellKit",
-                "RefRepoKit"
+                "RefRepoKit",
+                "SecretsKit"
             ]
         ),
         .target(

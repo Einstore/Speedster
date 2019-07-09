@@ -155,6 +155,15 @@
         }
       },
       {
+        "package": "SecretsKit",
+        "repositoryURL": "https://github.com/Einstore/SecretsKit.git",
+        "state": {
+          "branch": null,
+          "revision": "a33842176ada9ee9a3155093171139e7a3345e9f",
+          "version": "1.0.0"
+        }
+      },
+      {
         "package": "Shout",
         "repositoryURL": "https://github.com/jakeheis/Shout.git",
         "state": {

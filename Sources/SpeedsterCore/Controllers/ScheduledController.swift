@@ -49,6 +49,11 @@ final class ScheduledController: Controller {
             return scheduleManager.scheduled(id)
         }
         
+        r.delete("scheduled", ":scheduled_id") { req -> EventLoopFuture<Response> in
+            let id = req.parameters.get("scheduled_id", as: Speedster.DbIdType.self)
+            return Scheduled.delete(failing: id, on: self.db).asDeletedResponse(on: c)
+        }
+        
         r.post("scheduled", ":scheduled_id", "run") { req -> EventLoopFuture<Response> in
             let id = req.parameters.get("scheduled_id", as: Speedster.DbIdType.self)
             let buildManager = try BuildManager(

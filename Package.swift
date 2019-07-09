@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "app",
+    name: "Speedster",
     platforms: [
         .macOS(.v10_13)
     ],
@@ -52,12 +52,6 @@ let package = Package(
         ),
         .target(
             name: "GitHubKit",
-            dependencies: [
-                "Vapor"
-            ]
-        ),
-        .target(
-            name: "VMWareRestKit",
             dependencies: [
                 "Vapor"
             ]

@@ -132,14 +132,24 @@ public struct Root: Content {
             /// Local filesystem path to the repo
             public let path: String?
             
-            #warning("Origin should be automatically loaded from the repo/job")
+            #warning("Origin could be automatically loaded from the repo/job")
             /// Origin link, either in https or SSH (git@repo) format
             public let origin: String
             
+            /// Domain: RSA SHA 256 verification key
+            ///     - Note: These values are used for reference repo and are added to the Node's ~/.ssh/known_hosts.
+            ///     - Note: The SHA is used to verify there was no interference with the connection, alas man-in-the-middle attack
+            public let rsa: [String: String]?
+            
+            /// SSH private key from credentials, requires a name for a value stored in the system
+            public let ssh: String?
+            
             /// Initializer
-            public init(path: String? = nil, origin: String) {
+            public init(path: String? = nil, origin: String, rsa: [String: String]?, ssh: String?) {
                 self.path = path
                 self.origin = origin
+                self.rsa = rsa
+                self.ssh = ssh
             }
             
         }
@@ -248,19 +258,22 @@ public struct Root: Content {
         }
         
         public let image: Image
-        public let memory: String
-        public let storage: String
+        public let memory: String?
+        public let storage: String?
+        public let workspace: String?
         public let variables: [String: String]?
         
         public init(
             image: Image,
             memory: String,
             storage: String,
+            workspace: String? = nil,
             variables: [String: String]? = nil
             ) {
             self.image = image
             self.memory = memory
             self.storage = storage
+            self.workspace = workspace
             self.variables = variables
         }
         
@@ -364,8 +377,8 @@ public struct Root: Content {
     /// Node labels
     public let nodeLabels: [String]?
     
-    /// GitHub info & settings
-    public let gitHub: Git?
+    /// Source code info & settings
+    public let source: Git?
     
     /// Workflows
     public let jobs: [Job]
@@ -386,7 +399,7 @@ public struct Root: Content {
         case name
         case identifier
         case nodeLabels = "node_labels"
-        case gitHub = "github"
+        case source
         case jobs = "jobs"
         case environment = "environment"
         case dockerDependendencies = "docker_dependencies"
@@ -399,7 +412,7 @@ public struct Root: Content {
         name: String,
         identifier: String? = nil,
         nodeLabels: [String]? = nil,
-        gitHub: Git? = nil,
+        source: Git? = nil,
         jobs: [Job],
         environment: Env? = nil,
         dockerDependendencies: [Dependency]? = nil,
@@ -409,7 +422,7 @@ public struct Root: Content {
         self.name = name
         self.identifier = identifier
         self.nodeLabels = nodeLabels
-        self.gitHub = gitHub
+        self.source = source
         self.jobs = jobs
         self.environment = environment
         self.dockerDependendencies = dockerDependendencies

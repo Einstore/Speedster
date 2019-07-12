@@ -24,7 +24,7 @@ class NodesManager {
     
     func next(_ labels: [String]? = nil) -> EventLoopFuture<Row<Node>?> {
         let q = Node.query(on: db)
-            .filter(\Node.running == 0)
+            .filter(\Node.running < 2)
         if let labels = labels {
             #warning("Needs to search for any of the given labels in the string")
             q.filter(\Node.labels, in: labels)

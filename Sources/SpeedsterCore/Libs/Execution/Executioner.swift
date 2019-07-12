@@ -58,8 +58,8 @@ class Executioner {
     
     /// Execute job
     func run() -> EventLoopFuture<Void> {
-        guard let referenceRepo = root.gitHub?.referenceRepo else {
-            return runJobs()
+        guard let referenceRepo = root.source?.referenceRepo else {
+            return run()
         }
         do {
             let nodeConnection = try node.asShellConnection()
@@ -69,12 +69,24 @@ class Executioner {
                 on: eventLoop) { text in
                     self.make(update: .output(text: text))
             }
-            return ref.clone(
-                repo: referenceRepo.origin,
-                checkout: trigger.branch,
-                for: randomId
-            ).flatMap { path in
-                return self.runJobs(repoPath: path)
+            
+            func checkout() -> EventLoopFuture<Void> {
+                return ref.clone(
+                    repo: referenceRepo.origin,
+                    checkout: trigger.branch,
+                    for: randomId
+                ).flatMap { path in
+                    return self.run(repoPath: path)
+                }
+            }
+            
+            if let rsa = referenceRepo.rsa {
+                // Add RSA keys to ~/.known_hosts if neccessary
+                return ref.add(rsa: rsa.map({ (domain: $0, sha: $1) })).flatMap { _ in
+                    return checkout()
+                }
+            } else {
+                return checkout()
             }
         } catch {
             return eventLoop.makeFailedFuture(error)
@@ -83,60 +95,13 @@ class Executioner {
     
     // MARK: Private interface
     
-    private func runJobs(repoPath: String? = nil) -> EventLoopFuture<Void> {
+    private func run(repoPath: String? = nil) -> EventLoopFuture<Void> {
         var futures: [EventLoopFuture<Void>] = []
         for job in root.jobs.filter({ $0.dependsOn == nil || $0.dependsOn?.isEmpty == true }) {
-            // Launch virtual machine
-            guard let env = job.environment ?? root.environment else {
-                fatalError("Missing environment, this should have been checked before the run has started (favourite last words ... THIS SHOULD NEVER HAPPEN!)")
+            let future: EventLoopFuture<Void> = launch(envFor: job).flatMap { connection in
+                fatalError()
             }
-            let envManager = EnvironmentManager(env, node: self.node, on: self.eventLoop)
-            envManager.launch().whenComplete { result in
-                let connection: Root.Env.Connection
-                switch result {
-                case .success(let conn):
-                    connection = conn
-                case .failure(let error):
-                    self.make(update: .environment(error: error, job: job))
-                    return
-                }
-                print(connection)
-                
-                DispatchQueue.global(qos: .background).async {
-                    
-                    fatalError()
-                    
-                    
-//                    var executor = RemoteExecutor(connection, on: eventLoop)
-//
-//                    executor.output = { out, identifier in
-//                        let out = "[\(connection.host)] \(out)"
-//                        eventLoop.execute {
-//                            self.output?(out, identifier)
-//                        }
-//                    }
-//                    do {
-//                        try self.run(job: job, failed: failed)
-//                        if let success = job.success {
-//                            for p in success {
-//                                try executor.run(p, identifier: root.workspaceName)
-//                            }
-//                        }
-//                        if let always = job.always {
-//                            for p in always {
-//                                try executor.run(p, identifier: root.workspaceName)
-//                            }
-//                        }
-//                    } catch {
-//                        if let fail = job.fail {
-//                            for p in fail {
-//                                try? executor.run(p, identifier: root.workspaceName)
-//                            }
-//                        }
-//                        //throw error
-//                    }
-                }
-            }
+            futures.append(future)
         }
         return futures.flatten(on: eventLoop)
     }
@@ -144,6 +109,24 @@ class Executioner {
     private func make(update data: UpdateData) {
         eventLoop.execute {
             self.update(data)
+        }
+    }
+    
+    private func launch(envFor job: Root.Job) -> EventLoopFuture<Root.Env.Connection> {
+        guard let env = job.environment ?? root.environment else {
+            fatalError("Missing environment, this should have been checked before the run has started (favourite last words ... THIS SHOULD NEVER HAPPEN!)")
+        }
+        let envManager = EnvironmentManager(env, node: self.node, on: self.eventLoop)
+        return envManager.launch().always { result in
+            let connection: Root.Env.Connection
+            switch result {
+            case .success(let conn):
+                connection = conn
+            case .failure(let error):
+                self.make(update: .environment(error: error, job: job))
+                return
+            }
+            print(connection)
         }
     }
     

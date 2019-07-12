@@ -15,3 +15,11 @@ extension EventLoopFuture {
     }
     
 }
+
+extension Array where Element == EventLoopFuture<Void> {
+    
+    func flatten(on eventLoop: EventLoop) -> EventLoopFuture<Void> {
+        return .andAllSucceed(self, on: eventLoop)
+    }
+    
+}

@@ -5,6 +5,7 @@
 //  Created by Ondrej Rafaj on 15/06/2019.
 //
 
+import Foundation
 import Fluent
 import Yams
 
@@ -61,6 +62,20 @@ extension Response {
     
     public func asSucceededFuture(on req: Request) -> EventLoopFuture<Response> {
         return asSucceededFuture(on: req.eventLoop)
+    }
+    
+}
+
+
+extension Encodable {
+    
+    public func asResponse(_ status: HTTPResponseStatus = .ok, headers: HTTPHeaders = [:]) -> Response {
+        var headers = headers
+        headers.add(name: .contentType, value: "application/json; charset=utf-8")
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .prettyPrinted
+        let data = try? encoder.encode(self)
+        return Response(status: status, headers: headers, body: Response.Body(data: data ?? Data()))
     }
     
 }

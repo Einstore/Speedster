@@ -73,7 +73,7 @@ extension Organization {
     
     /// Return a guaranteed Organization row
     static func row(_ organization: GitHubKit.Organization, on db: Database) -> EventLoopFuture<Row<Organization>> {
-        return Organization.query(on: db).filter(\.githubId == organization.id).first().map() { org in
+        return Organization.query(on: db).filter(\Organization.githubId == organization.id).first().map() { org in
             guard let org = org else {
                 let row = Organization.row()
                 row.activeJobs = 0

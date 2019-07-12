@@ -17,9 +17,7 @@ class ScheduledManager {
     }
     
     func scheduled(_ id: Speedster.DbIdType?) -> EventLoopFuture<Row<Scheduled>> {
-        return Scheduled.query(on: self.db)
-            .filter(\Scheduled.id == id)
-            .firstUnwrapped()
+        return Scheduled.find(failing: id, on: db)
     }
     
     func schedule(id: Speedster.DbIdType?, ref: GitReference?, trigger: Root.Pipeline.Trigger, githubManager: GithubManager) -> EventLoopFuture<Row<Scheduled>> {

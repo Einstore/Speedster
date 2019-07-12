@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  EnvironmentManagerTests.swift
 //  
 //
 //  Created by Ondrej Rafaj on 07/07/2019.

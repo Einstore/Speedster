@@ -27,9 +27,7 @@ final class JobsController: Controller {
         
         r.get("jobs", ":job_id") { req -> EventLoopFuture<Row<GitHubJob>> in
             let id = req.parameters.get("job_id", as: Speedster.DbIdType.self)
-            return GitHubJob.query(on: self.db)
-                .filter(\GitHubJob.id == id)
-                .firstUnwrapped()
+            return GitHubJob.find(failing: id, on: self.db)
         }
         
         r.get("jobs") { req -> EventLoopFuture<[Row<GitHubJob>]> in
@@ -57,7 +55,7 @@ final class JobsController: Controller {
                             return githubManager.process(files: files, repos: repos).flatMap { infos in // Process all Speedster.yml files
                                 return githubManager.update(orgStats: dbOrgs).flatMap { _ in // Update all affected organizations with the latest repo stats
                                     return githubManager.setup(webhooks: infos).map { // Setup webhooks
-                                        return infos.asDisplayResponse()
+                                        return infos.asResponse()
                                     }
                                 }
                             }
@@ -69,9 +67,7 @@ final class JobsController: Controller {
         
         r.post("jobs", ":job_id", "webhooks", "reset") { req -> EventLoopFuture<Response> in
             let id = req.parameters.get("job_id", as: Speedster.DbIdType.self)
-            return GitHubJob.query(on: self.db)
-                .filter(\GitHubJob.id == id)
-                .firstUnwrapped().flatMap { job in
+            return GitHubJob.find(failing: id, on: self.db).flatMap { job in
                     let infos = [
                         SpeedsterFileInfo(
                             job: job.id,

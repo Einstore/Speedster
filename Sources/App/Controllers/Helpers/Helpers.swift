@@ -256,9 +256,13 @@ extension Root {
         
         return Root(
             name: "Small root",
-            gitHub: Root.Git(
+            source: Root.Git(
                 referenceRepo: Root.Git.Reference(
-                    origin: "git@github.com:Einstore/Einstore.git"
+                    origin: "git@github.com:Einstore/Einstore.git",
+                    rsa: [
+                        "github.com": "nThbg6kXUpJWGl7E1IGOCspRomTxdCARLviKw6E5SY8"
+                    ],
+                    ssh: "github.com"
                 )
             ),
             jobs: [w1, w2],

@@ -16,7 +16,7 @@ class VMWareLauncher: Launcher {
     let env: Root.Env
     let image: String
     
-    let vmrun: VMRun
+    let client: VMRun
     
     enum Error: Swift.Error {
         case imageDoesNotExist(String)
@@ -27,7 +27,7 @@ class VMWareLauncher: Launcher {
     required init(_ env: Root.Env, node: Row<Node>, on eventLoop: EventLoop) throws {
         self.eventLoop = eventLoop
         self.env = env
-        vmrun = try VMRun(
+        client = try VMRun(
             node.asShellConnection(),
             for: .fusion,
             on: eventLoop
@@ -36,35 +36,24 @@ class VMWareLauncher: Launcher {
     }
     
     func launch() -> EventLoopFuture<Root.Env.Connection> {
-        do {
-            return vmrun.send(command: .list).flatMap { machinesOutput in
-                print(machinesOutput)
-                fatalError()
-//                let machines = []
-//                guard let machine = machines.filter({ $0.path?.contains(self.image) ?? false }).first, let path = machine.path else {
-//                    return Error.imageDoesNotExist(self.image).fail(self.eventLoop)
-//                }
-//                var output = ""
-//                let outputClosure: ((String) -> ()) = { text in
-//                    output += text
-//                }
-//                return self.vmrun.send(command: .listSnapshots(image: path), output: outputClosure).flatMap { exit in
-//                    print(output)
-//                    // Find snapshot called Speedster
-//                    // Create Speedster snapshot if it desn't exist
-//                    // Reset machine to Speedster snapshot
-//                    // Launch Speedster
-//
-//                    fatalError()
-//                }
-            }
-        } catch { return error.fail(self.eventLoop) }
+        return createSpeedsterSnapshotIfNeeded().flatMap { _ in
+            fatalError()
+        }
     }
     
     func clean() -> EventLoopFuture<Void> {
         // Power off machine
         // Reset machine to Speedster snapshot
         fatalError()
+    }
+    
+    // MARK: Private interface
+    
+    private func createSpeedsterSnapshotIfNeeded() -> EventLoopFuture<Void> {
+        return client.send(command: .revertToSnapshot(image: image, name: "Speedster")).flatMap { output in
+            print(output)
+            fatalError()
+        }
     }
     
 }

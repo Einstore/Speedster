@@ -144,7 +144,7 @@ extension Node {
     
 }
 
-extension Row: Displayable where Model == Node {
+extension Row where Model == Node {
     
     public func asDisplay() -> Node.Display {
         return Node.Display(self)
@@ -160,14 +160,10 @@ extension Row: Displayable where Model == Node {
         self.executors = nodeData.executors
         if let password = nodeData.password {
             self.password = try? Secrets.encrypt(asData: password)
-        } else {
-            self.password = nil
-        }
+        } else { self.password = nil }
         if let publicKey = nodeData.publicKey {
             self.publicKey = try? Secrets.encrypt(asData: publicKey)
-        } else {
-            self.publicKey = nil
-        }
+        } else { self.publicKey = nil }
     }
     
 }

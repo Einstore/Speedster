@@ -21,7 +21,7 @@ final class NodesController: Controller {
         
         r.get("nodes") { req -> EventLoopFuture<Response> in
             return Node.query(on: self.db).all().map { rows in
-                return rows.asDisplayResponse()
+                return rows.map { $0.asDisplay() }.asResponse()
             }
         }
         
@@ -31,14 +31,14 @@ final class NodesController: Controller {
             node.running = 0
             node.update(from: post)
             return node.save(on: self.db).map { _ in
-                return node.asDisplayResponse(.created)
+                return node.asDisplay().asResponse(.created)
             }
         }
         
         r.get("nodes", ":node_id") { req -> EventLoopFuture<Response> in
             let id = req.parameters.get("node_id", as: Speedster.DbIdType.self)
             return Node.find(failing: id, on: self.db).map { node in
-                return node.asDisplayResponse()
+                return node.asDisplay().asResponse()
             }
         }
         
@@ -55,7 +55,7 @@ final class NodesController: Controller {
             let nodeData = try req.content.decode(Node.Post.self)
             return Node.find(failing: id, on: self.db).flatMap { node in
                 node.update(from: nodeData)
-                return node.update(on: self.db).map { node.asDisplayResponse() }
+                return node.update(on: self.db).map { node.asDisplay().asResponse() }
             }
         }
         

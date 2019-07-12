@@ -22,7 +22,8 @@ public class Speedster {
         NodesController.self,
         GithubController.self,
         JobsController.self,
-        ScheduledController.self
+        ScheduledController.self,
+        CredentialsController.self
     ]
     
     public static func configure(services s: inout Services) throws {
@@ -55,6 +56,7 @@ public class Speedster {
     }
     
     public static func configure(migrations: inout Migrations, dbIdentifier: DatabaseID) throws {
+        migrations.add(Credentials.autoMigration(), to: dbIdentifier)
         migrations.add(Organization.autoMigration(), to: dbIdentifier)
         migrations.add(Node.autoMigration(), to: dbIdentifier)
         migrations.add(GitHubJob.autoMigration(), to: dbIdentifier)

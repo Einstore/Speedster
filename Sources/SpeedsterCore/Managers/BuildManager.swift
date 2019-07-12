@@ -143,7 +143,7 @@ class BuildManager {
             root: root,
             trigger: trigger,
             node: node,
-            on: self.container.eventLoop
+            on: self.db
         ) { update in
             switch update {
             case .started(job: let job):
@@ -185,7 +185,9 @@ class BuildManager {
                 }
                 futures.append(future)
             }
-            return futures.flatten(on: self.container.eventLoop)
+            return futures.flatten(on: self.container.eventLoop).flatMap { _ in
+                self.redis.delete(self.runs.map { self.identifier(for: $0.key) }).void()
+            }
         }
     }
     

@@ -16,8 +16,13 @@ class Executioner {
         case started(job: Root.Job)
         case output(text: String, job: Root.Job? = nil)
         case finished(exit: Int, job: Root.Job)
-        case environment(error: Error, job: Root.Job)
-        case error(_ error: Error, job: Root.Job)
+        case environment(error: Swift.Error, job: Root.Job)
+        case error(_ error: Swift.Error, job: Root.Job)
+    }
+    
+    public enum Error: Swift.Error {
+        case invalidCredentials(name: String)
+        case missingPrivateKey(name: String)
     }
     
     typealias Update = ((UpdateData) -> ())
@@ -28,7 +33,9 @@ class Executioner {
     
     // Pripeline
     let trigger: Root.Pipeline.Trigger
+    
     let eventLoop: EventLoop
+    let db: Database
     
     var update: Update
     
@@ -43,13 +50,14 @@ class Executioner {
         root: Root,
         trigger: Root.Pipeline.Trigger,
         node: Row<Node>,
-        on eventLoop: EventLoop,
+        on db: Database,
         update: @escaping Update
         ) {
         self.root = root
         self.trigger = trigger
         self.update = update
-        self.eventLoop = eventLoop
+        self.db = db
+        eventLoop = db.eventLoop
         self.node = node
         randomId = "\(root.name.safeText)-\(UUID().uuidString)".lowercased()
     }
@@ -70,26 +78,52 @@ class Executioner {
                     self.make(update: .output(text: text))
             }
             
-            func checkout() -> EventLoopFuture<Void> {
-                return ref.clone(
-                    repo: referenceRepo.origin,
-                    checkout: trigger.branch,
-                    for: randomId
-                ).flatMap { path in
-                    return self.run(repoPath: path)
+            
+            func knownHosts() -> EventLoopFuture<Void> {
+                func checkout() -> EventLoopFuture<Void> {
+                    return ref.clone(
+                        repo: referenceRepo.origin,
+                        checkout: trigger.branch,
+                        for: randomId
+                    ).flatMap { path in
+                        return self.run(repoPath: path)
+                    }
+                }
+                
+                if let rsa = referenceRepo.rsa {
+                    // Add RSA keys to ~/.known_hosts if neccessary
+                    return ref.add(rsa: rsa.map({ (domain: $0, sha: $1) })).flatMap { _ in
+                        return checkout()
+                    }
+                } else {
+                    return checkout()
                 }
             }
             
-            if let rsa = referenceRepo.rsa {
-                // Add RSA keys to ~/.known_hosts if neccessary
-                return ref.add(rsa: rsa.map({ (domain: $0, sha: $1) })).flatMap { _ in
-                    return checkout()
+            if let ssh = referenceRepo.ssh {
+                // Import ssh private keys to ~/.ssh/known_hosts
+                return Credentials.select(name: ssh, on: self.db).all().flatMap { creds in
+                    guard creds.count != ssh.count else {
+                        let diff = ssh.difference(from: creds.map { $0.name })
+                        return Error.invalidCredentials(name: diff.first ?? "unknown credentials").fail(self.eventLoop)
+                    }
+                    var futures: [EventLoopFuture<Void>] = []
+                    for cred in creds {
+                        guard let privateKey = cred.privateKeyDecrypted else {
+                            return Error.missingPrivateKey(name: cred.name).fail(self.eventLoop)
+                        }
+                        let future = ref.add(ssh: privateKey).flatMap { _ in
+                            return knownHosts()
+                        }
+                        futures.append(future)
+                    }
+                    return futures.flatten(on: self.eventLoop)
                 }
             } else {
-                return checkout()
+                return knownHosts()
             }
         } catch {
-            return eventLoop.makeFailedFuture(error)
+            return error.fail(eventLoop)
         }
     }
     

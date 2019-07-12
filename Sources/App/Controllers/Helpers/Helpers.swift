@@ -262,7 +262,10 @@ extension Root {
                     rsa: [
                         "github.com": "nThbg6kXUpJWGl7E1IGOCspRomTxdCARLviKw6E5SY8"
                     ],
-                    ssh: "github.com"
+                    ssh: [
+                        "github.com",
+                        "ford.github.com"
+                    ]
                 )
             ),
             jobs: [w1, w2],

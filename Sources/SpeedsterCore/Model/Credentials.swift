@@ -14,22 +14,24 @@ public struct Credentials: Model {
     
     public struct Display: Content {
         
-        public var id: Speedster.DbIdType?
-        public var name: String
-        public var desc: String?
-        public var login: String?
-        public var password: Bool
-        public var privateKey: Bool
-        public var publicKey: Bool
+        public let id: Speedster.DbIdType?
+        public let name: String
+        public let desc: String?
+        public let login: String?
+        public let password: Bool
+        public let privateKey: Bool
+        public let publicKey: Bool
+        public let isPrivate: Bool
         
         enum CodingKeys: String, CodingKey {
             case id
             case name
-            case desc
+            case desc = "description"
             case login
             case password
             case privateKey = "private_key"
             case publicKey = "public_key"
+            case isPrivate = "private"
         }
         
         public init(_ row: Row<Credentials>) {
@@ -40,26 +42,29 @@ public struct Credentials: Model {
             password = !row.password.isVeryVeryEmpty
             privateKey = !row.privateKey.isVeryVeryEmpty
             publicKey = !row.publicKey.isVeryVeryEmpty
+            isPrivate = row.isPrivate == 1
         }
         
     }
     
     public struct Post: Content {
         
-        public var name: String
-        public var desc: String?
-        public var login: String?
-        public var password: String?
-        public var privateKey: String?
-        public var publicKey: String?
+        public let name: String
+        public let desc: String?
+        public let login: String?
+        public let password: String?
+        public let privateKey: String?
+        public let publicKey: String?
+        public let isPrivate: Bool
         
         enum CodingKeys: String, CodingKey {
             case name
-            case desc
+            case desc = "description"
             case login
             case password
             case privateKey = "private_key"
             case publicKey = "public_key"
+            case isPrivate = "private"
         }
         
     }
@@ -72,9 +77,10 @@ public struct Credentials: Model {
     public let name = Field<String>("name")
     public let desc = Field<String?>("description")
     public let login = Field<String?>("login")
-    public let password = Field<Data?>("password")
-    public let privateKey = Field<Data?>("private_key")
-    public let publicKey = Field<Data?>("public_key")
+    public let password = Field<Data?>("password", dataType: .data)
+    public let privateKey = Field<Data?>("private_key", dataType: .data)
+    public let publicKey = Field<Data?>("public_key", dataType: .data)
+    public let isPrivate = Field<Int>("private")
     
     public static func row(from post: Post) -> Row<Credentials> {
         let row = self.row()
@@ -90,6 +96,7 @@ public struct Credentials: Model {
         if let value = post.publicKey {
             row.publicKey = try? Secrets.encrypt(asData: value)
         } else { row.publicKey = nil }
+        row.isPrivate = post.isPrivate ? 1 : 0
         return row
     }
 

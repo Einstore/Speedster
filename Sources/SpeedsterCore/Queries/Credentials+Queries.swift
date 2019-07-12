@@ -16,4 +16,9 @@ extension Credentials {
             .sort(\Credentials.login, .ascending)
     }
     
+    public static func select(name: [String], on db: Database) -> QueryBuilder<Self> {
+        return query(on: db)
+            .filter(\Credentials.name, in: name)
+    }
+    
 }

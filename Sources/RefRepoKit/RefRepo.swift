@@ -96,7 +96,7 @@ public class RefRepo {
     }
     
     public func add(ssh key: String) -> EventLoopFuture<Void> {
-        return shell.run(bash: "ssh-add -t 300 - <<< \"\(key)\"").void()
+        return shell.run(bash: "VAR=$'\(key)' ; echo -e $VAR | ssh-add - ; VAR='Nice try! :)') ").void()
     }
     
     // MARK: Private interface

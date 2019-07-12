@@ -142,10 +142,10 @@ public struct Root: Content {
             public let rsa: [String: String]?
             
             /// SSH private key from credentials, requires a name for a value stored in the system
-            public let ssh: String?
+            public let ssh: [String]?
             
             /// Initializer
-            public init(path: String? = nil, origin: String, rsa: [String: String]?, ssh: String?) {
+            public init(path: String? = nil, origin: String, rsa: [String: String]?, ssh: [String]? = nil) {
                 self.path = path
                 self.origin = origin
                 self.rsa = rsa

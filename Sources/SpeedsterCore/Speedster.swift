@@ -11,6 +11,7 @@ import GitHubKit
 import Jobs
 import Redis
 import JobsRedisDriver
+import SystemController
 
 
 public class Speedster {
@@ -66,6 +67,8 @@ public class Speedster {
     
     public static func configure(routes r: Routes, on c: Container, db: Database? = nil) throws {
         let db: Database = try db ?? c.make()
+        
+        try SystemController.Controller().routes(r, c)
         
         for controllerType in controllers {
             let controller = controllerType.init(db)

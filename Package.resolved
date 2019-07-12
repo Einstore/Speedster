@@ -2,6 +2,15 @@
   "object": {
     "pins": [
       {
+        "package": "async-http-client",
+        "repositoryURL": "https://github.com/swift-server/async-http-client.git",
+        "state": {
+          "branch": null,
+          "revision": "a42fe83781b5c4822e00706eaf6a4380b256be8a",
+          "version": "1.0.0-alpha.1"
+        }
+      },
+      {
         "package": "async-kit",
         "repositoryURL": "https://github.com/vapor/async-kit.git",
         "state": {
@@ -83,6 +92,15 @@
         }
       },
       {
+        "package": "app",
+        "repositoryURL": "https://github.com/Einstore/GitHubKit.git",
+        "state": {
+          "branch": null,
+          "revision": "7f5eaf124d13365c7501b305041ba8c348b99d08",
+          "version": "1.6.0"
+        }
+      },
+      {
         "package": "jobs",
         "repositoryURL": "https://github.com/vapor/jobs.git",
         "state": {
@@ -141,8 +159,8 @@
         "repositoryURL": "https://github.com/vapor/redis-kit.git",
         "state": {
           "branch": null,
-          "revision": "4f88f929a25d9bbe78432f3132bf38992321f8a3",
-          "version": "1.0.0-alpha.1.1"
+          "revision": "32189e022220d48e7d2adf1140969ab71d550970",
+          "version": "1.0.0-alpha.2"
         }
       },
       {
@@ -164,6 +182,15 @@
         }
       },
       {
+        "package": "ShellKit",
+        "repositoryURL": "https://github.com/Einstore/ShellKit.git",
+        "state": {
+          "branch": null,
+          "revision": "0e7e238feeac519211881afa66bfd75add84825c",
+          "version": "1.0.0"
+        }
+      },
+      {
         "package": "Shout",
         "repositoryURL": "https://github.com/jakeheis/Shout.git",
         "state": {
@@ -177,8 +204,8 @@
         "repositoryURL": "https://github.com/vapor/sql-kit.git",
         "state": {
           "branch": null,
-          "revision": "1bde2394ad31a00b47900a66d2b8a3768ece8433",
-          "version": "3.0.0-alpha.1.1"
+          "revision": "435a3ac74f7d4f54639727bb41dc6c21a395d4d2",
+          "version": "3.0.0-alpha.1.2"
         }
       },
       {
@@ -263,12 +290,12 @@
         }
       },
       {
-        "package": "swift-redis-nio-client",
-        "repositoryURL": "https://gitlab.com/mordil/swift-redis-nio-client.git",
+        "package": "redi-stack",
+        "repositoryURL": "https://gitlab.com/mordil/swift-redi-stack.git",
         "state": {
           "branch": null,
-          "revision": "79757dc0eb3a447b639447a2a24d4a5f182908c2",
-          "version": "1.0.0-alpha.3"
+          "revision": "aeae1f6c78175877c907c627ed999636141cf727",
+          "version": "1.0.0-alpha.5.0.1"
         }
       },
       {
@@ -278,6 +305,15 @@
           "branch": null,
           "revision": "2614f86520e66e19328f11b00dabd474209e82f7",
           "version": "5.0.0"
+        }
+      },
+      {
+        "package": "Systemator",
+        "repositoryURL": "https://github.com/Einstore/Systemator.git",
+        "state": {
+          "branch": null,
+          "revision": "1cec5eb944094cc5b641ca6756080c0686733f39",
+          "version": "0.0.3"
         }
       },
       {

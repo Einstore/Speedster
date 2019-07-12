@@ -7,7 +7,7 @@ let package = Package(
         .macOS(.v10_13)
     ],
     products: [
-        .executable(name: "speedster-hello", targets: ["SpeedsterHello"]),
+        .executable(name: "Speedster", targets: ["App"]),
         .library(name: "SpeedsterCore", targets: ["SpeedsterCore"]),
         .library(name: "VMWareRunKit", targets: ["VMWareRunKit"]),
         .library(name: "RefRepoKit", targets: ["RefRepoKit"])
@@ -22,19 +22,15 @@ let package = Package(
         .package(url: "https://github.com/vapor/jobs.git", from: "1.0.0-alpha.1.1"),
         .package(url: "https://github.com/vapor/redis.git", from: "4.0.0-alpha.1"),
         .package(url: "https://github.com/vapor/jobs-redis-driver.git", from: "1.0.0-alpha.1.2"),
-        //.package(url: "https://github.com/Einstore/GitHubKit.git", from: "1.0.0"),
+        .package(url: "https://github.com/Einstore/GitHubKit.git", from: "1.0.0"),
         .package(url: "https://github.com/Einstore/SecretsKit.git", from: "1.0.0"),
+        .package(url: "https://github.com/Einstore/ShellKit.git", from: "1.0.0"),
+        .package(url: "https://github.com/Einstore/Systemator.git", from: "0.0.1"),
         .package(url: "https://github.com/rafiki270/Yams.git", .branch("master")),
-        .package(url: "https://github.com/jakeheis/Shout.git", from: "0.5.0"),
-        .package(url: "https://github.com/kareman/SwiftShell.git", from: "5.0.0")
+//        .package(url: "https://github.com/jakeheis/Shout.git", from: "0.5.0"),
+//        .package(url: "https://github.com/kareman/SwiftShell.git", from: "5.0.0")
     ],
     targets: [
-        .target(
-            name: "SpeedsterHello",
-            dependencies: [
-                "Vapor"
-            ]
-        ),
         .target(
             name: "App",
             dependencies: [
@@ -45,23 +41,9 @@ let package = Package(
             ]
         ),
         .target(
-            name: "GitHubKit",
-            dependencies: [
-                "Vapor"
-            ]
-        ),
-        .target(
             name: "VMWareRunKit",
             dependencies: [
                 "ShellKit"
-            ]
-        ),
-        .target(
-            name: "ShellKit",
-            dependencies: [
-                "Shout",
-                "SwiftShell",
-                "NIO"
             ]
         ),
         .target(
@@ -86,12 +68,9 @@ let package = Package(
                 "VMWareRunKit",
                 "ShellKit",
                 "RefRepoKit",
-                "SecretsKit"
+                "SecretsKit",
+                "SystemController"
             ]
-        ),
-        .target(
-            name: "Run",
-            dependencies: ["App"]
         ),
         .testTarget(
             name: "SpeedsterCoreTests",

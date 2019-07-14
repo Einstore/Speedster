@@ -5,7 +5,7 @@
 //  Created by Ondrej Rafaj on 07/07/2019.
 //
 
-import ShellKit
+import CommandKit
 import NIO
 
 
@@ -63,7 +63,7 @@ public class RefRepo {
     }
     
     public func clean(for worklace: String) -> EventLoopFuture<Void> {
-        return shell.rm(path: worklace, flags: "-rf").void()
+        return shell.cmd.rm(path: worklace, flags: "-rf").void()
     }
     
     public func add(rsa arr: [(domain: String, sha: String?)]? = nil) -> EventLoopFuture<Void> {

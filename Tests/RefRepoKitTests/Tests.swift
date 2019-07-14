@@ -8,7 +8,7 @@
 @testable import RefRepoKit
 import XCTest
 import NIO
-import ShellKit
+import CommandKit
 
 
 /*
@@ -43,7 +43,7 @@ final class RefRepoTests: XCTestCase {
         shell = try! Shell(.local(dir: "/tmp"), on: eventLoop)
         shell.outputCommands = false
         
-        _ = shell.rm(path: ref.tmp(for: repo), flags: "-rf").void()
+        _ = try! shell.cmd.rm(path: ref.tmp(for: repo), flags: "-rf").wait()
     }
     
     override func tearDown() {

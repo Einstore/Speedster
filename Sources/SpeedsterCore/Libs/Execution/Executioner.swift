@@ -7,7 +7,7 @@
 
 import Fluent
 import RefRepoKit
-import ShellKit
+import CommandKit
 import GitHubKit
 
 
@@ -73,50 +73,81 @@ class Executioner {
     
     /// Execute job
     func run() -> EventLoopFuture<Void> {
-        var futures: [EventLoopFuture<Void>] = []
-        
-        // Reference repo
-        if let referenceRepo = root.source?.referenceRepo {
-            futures.append(refRepo(referenceRepo))
+        do {
+            let nodeConnection = try node.asShellConnection()
+            let shell = try Shell(nodeConnection, on: eventLoop)
+            
+            let workspace = self.workspace()
+            update(.output(text: "Creating workspace folder at \(workspace)"))
+            return shell.cmd.mkdir(path: workspace, flags: "-p").flatMap { _ in
+                var futures: [EventLoopFuture<Void>] = []
+                
+                // Reference repo
+                if let referenceRepo = self.root.source?.referenceRepo {
+                    futures.append(self.refRepo(referenceRepo, on: nodeConnection))
+                }
+                
+                // Download through an API
+                if self.root.source?.apiDownload == true {
+                    futures.append(self.apiDownload(shell))
+                }
+                
+                return futures.flatten(on: self.eventLoop)
+            }
+        } catch {
+            return eventLoop.makeFailedFuture(error)
         }
-        
-        // Download through an API
-        if root.source?.apiDownload == true {
-            futures.append(apiDownload())
-        }
-        
-        return futures.flatten(on: eventLoop)
     }
     
     // MARK: Private interface
     
-    private func workspace(subfolder: String? = nil) -> String {
+    private func workspace(subItem item: String? = nil) -> String {
         var workspace = root.workspace ?? "/tmp/speeedster"
         workspace = workspace.finished(with: "/").appending(randomId)
-        if let subfolder = subfolder {
-            return workspace.finished(with: "/").appending(subfolder)
+        if let item = item {
+            return workspace.finished(with: "/").appending(item)
         } else {
             return workspace
         }
     }
     
-    private func apiDownload() -> EventLoopFuture<Void> {
-        do {
-            let nodeConnection = try node.asShellConnection()
-            let shell = try Shell(nodeConnection, on: eventLoop)
-            return try github.download(org: location.org, repo: location.repo, ref: location.commit).flatMap { link in
-                return shell.run(bash: "curl -L \(link)").void()
+    private func apiDownload(_ shell: Shell) -> EventLoopFuture<Void> {
+        update(.output(text: "Downloading source"))
+        let destination = self.workspace(subItem: "downloaded")
+        return shell.cmd.mkdir(path: destination, flags: "-p").flatMap { _ in
+            do {
+                return try self.github.download(org: self.location.org, repo: self.location.repo, ref: self.location.commit).flatMap { link in
+                    let archive = self.workspace(subItem: "archive.tar")
+                    return shell.run(bash: "curl -o \(archive) \(link)") { output in
+                        self.update(.output(text: output))
+                    }.flatMap { output in
+                        return shell.run(bash: "tar -C \(destination) -xvf \(archive)") { output in
+                            self.update(.output(text: output))
+                        }.flatMap { _ in
+                            let unarchived = destination
+                                .finished(with: "/")
+                                .appending("\(self.location.org)-\(self.location.repo)-\(self.location.commit)")
+                            // Move files from a subfolder (if exists)
+                            return shell.run(bash: "mv \(unarchived)/* \(destination) ; rm -rf \(unarchived)").map { output in
+                                return Void()
+                            }.always { _ in
+                                self.update(.output(text: "Source available at \(destination)"))
+                            }.recover { _ in
+                                return Void()
+                            }
+                        }
+                    }
+                }
+            } catch {
+                return error.fail(self.eventLoop)
             }
-        } catch {
-            return error.fail(eventLoop)
         }
     }
     
-    private func refRepo(_ referenceRepo: Root.Git.Reference) -> EventLoopFuture<Void> {
+    private func refRepo(_ referenceRepo: Root.Git.Reference, on conn: Shell.Connection) -> EventLoopFuture<Void> {
         do {
-            let nodeConnection = try node.asShellConnection()
             let ref = try RefRepo(
-                nodeConnection,
+                conn,
                 temp: referenceRepo.path ?? "/tmp/speeedster/",
                 on: eventLoop) { text in
                     self.make(update: .output(text: text))
@@ -127,7 +158,7 @@ class Executioner {
                     return ref.clone(
                         repo: referenceRepo.origin,
                         checkout: trigger.ref,
-                        worklace: workspace(subfolder: "cloned")
+                        worklace: workspace(subItem: "cloned")
                     ).flatMap { path in
                         return self.run(repoPath: path)
                     }

@@ -66,7 +66,7 @@ let package = Package(
                 "Redis",
                 "JobsRedisDriver",
                 "VMWareRunKit",
-                "ShellKit",
+                "CommandKit",
                 "RefRepoKit",
                 "SecretsKit",
                 "SystemController"
@@ -82,7 +82,7 @@ let package = Package(
         ),
         .testTarget(
             name: "RefRepoKitTests",
-            dependencies: ["RefRepoKit", "NIO"]
+            dependencies: ["RefRepoKit", "NIO", "CommandKit"]
         ),
         .testTarget(
             name: "VMWareRunKitTests",

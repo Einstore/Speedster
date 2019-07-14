@@ -8,6 +8,7 @@
 import Fluent
 import RefRepoKit
 import ShellKit
+import GitHubKit
 
 
 class Executioner {
@@ -33,9 +34,11 @@ class Executioner {
     
     // Pripeline
     let trigger: Root.Pipeline.Trigger
+    let location: GitLocation
     
     let eventLoop: EventLoop
     let db: Database
+    let github: Github
     
     var update: Update
     
@@ -49,26 +52,67 @@ class Executioner {
     init(
         root: Root,
         trigger: Root.Pipeline.Trigger,
+        location: GitLocation,
         node: Row<Node>,
+        github: Github,
         on db: Database,
         update: @escaping Update
         ) {
         self.root = root
         self.trigger = trigger
+        self.location = location
         self.update = update
+        self.github = github
         self.db = db
         eventLoop = db.eventLoop
         self.node = node
         randomId = "\(root.name.safeText)-\(UUID().uuidString)".lowercased()
     }
     
-     typealias FailedClosure = ((Swift.Error) -> ())
+    typealias FailedClosure = ((Swift.Error) -> ())
     
     /// Execute job
     func run() -> EventLoopFuture<Void> {
-        guard let referenceRepo = root.source?.referenceRepo else {
-            return run()
+        var futures: [EventLoopFuture<Void>] = []
+        
+        // Reference repo
+        if let referenceRepo = root.source?.referenceRepo {
+            futures.append(refRepo(referenceRepo))
         }
+        
+        // Download through an API
+        if root.source?.apiDownload == true {
+            futures.append(apiDownload())
+        }
+        
+        return futures.flatten(on: eventLoop)
+    }
+    
+    // MARK: Private interface
+    
+    private func workspace(subfolder: String? = nil) -> String {
+        var workspace = root.workspace ?? "/tmp/speeedster"
+        workspace = workspace.finished(with: "/").appending(randomId)
+        if let subfolder = subfolder {
+            return workspace.finished(with: "/").appending(subfolder)
+        } else {
+            return workspace
+        }
+    }
+    
+    private func apiDownload() -> EventLoopFuture<Void> {
+        do {
+            let nodeConnection = try node.asShellConnection()
+            let shell = try Shell(nodeConnection, on: eventLoop)
+            return try github.download(org: location.org, repo: location.repo, ref: location.commit).flatMap { link in
+                return shell.run(bash: "curl -L \(link)").void()
+            }
+        } catch {
+            return error.fail(eventLoop)
+        }
+    }
+    
+    private func refRepo(_ referenceRepo: Root.Git.Reference) -> EventLoopFuture<Void> {
         do {
             let nodeConnection = try node.asShellConnection()
             let ref = try RefRepo(
@@ -78,13 +122,12 @@ class Executioner {
                     self.make(update: .output(text: text))
             }
             
-            
             func knownHosts() -> EventLoopFuture<Void> {
                 func checkout() -> EventLoopFuture<Void> {
                     return ref.clone(
                         repo: referenceRepo.origin,
-                        checkout: trigger.branch,
-                        for: randomId
+                        checkout: trigger.ref,
+                        worklace: workspace(subfolder: "cloned")
                     ).flatMap { path in
                         return self.run(repoPath: path)
                     }
@@ -103,7 +146,7 @@ class Executioner {
             if let ssh = referenceRepo.ssh {
                 // Import ssh private keys to ~/.ssh/known_hosts
                 return Credentials.select(name: ssh, on: self.db).all().flatMap { creds in
-                    guard creds.count != ssh.count else {
+                    guard creds.count == ssh.count else {
                         let diff = ssh.difference(from: creds.map { $0.name })
                         return Error.invalidCredentials(name: diff.first ?? "unknown credentials").fail(self.eventLoop)
                     }
@@ -126,8 +169,6 @@ class Executioner {
             return error.fail(eventLoop)
         }
     }
-    
-    // MARK: Private interface
     
     private func run(repoPath: String? = nil) -> EventLoopFuture<Void> {
         var futures: [EventLoopFuture<Void>] = []
@@ -164,47 +205,47 @@ class Executioner {
         }
     }
     
-//    private func run(job: Root.Job, failed: @escaping FailedClosure) throws {
-//        guard let root = self.root else {
-//            throw Error.missingJob
-//        }
-//        let identifier = try MD5.hash(.string("\(job)"))
-//        processed.append("\(identifier.string())")
-//        do {
-//            for phase in job.preBuild {
-//                try executor.run(phase, identifier: root.workspaceName)
-//            }
-//            for phase in job.build {
-//                try executor.run(phase, identifier: root.workspaceName)
-//            }
-//            for phase in job.success ?? [] {
-//                try executor.run(phase, identifier: root.workspaceName)
-//            }
-//            for phase in job.always ?? [] {
-//                try executor.run(phase, identifier: root.workspaceName)
-//            }
-//            for workflow in root.jobs.filter({ $0.dependsOn == job.name }) {
-//                let identifier = try MD5.hash(.string("\(workflow)"))
-//                if !processed.contains(identifier.string()) {
-//                    try self.run(job: workflow, failed: failed)
-//                }
-//            }
-//        } catch {
-//            do {
-//                for phase in job.fail ?? [] {
-//                    try executor.run(phase, identifier: root.workspaceName)
-//                }
-//            } catch {
-//                eventLoop.execute {
-//                    failed(error)
-//                }
-//                return
-//            }
-//            eventLoop.execute {
-//                failed(error)
-//            }
-//        }
-//    }
+    //    private func run(job: Root.Job, failed: @escaping FailedClosure) throws {
+    //        guard let root = self.root else {
+    //            throw Error.missingJob
+    //        }
+    //        let identifier = try MD5.hash(.string("\(job)"))
+    //        processed.append("\(identifier.string())")
+    //        do {
+    //            for phase in job.preBuild {
+    //                try executor.run(phase, identifier: root.workspaceName)
+    //            }
+    //            for phase in job.build {
+    //                try executor.run(phase, identifier: root.workspaceName)
+    //            }
+    //            for phase in job.success ?? [] {
+    //                try executor.run(phase, identifier: root.workspaceName)
+    //            }
+    //            for phase in job.always ?? [] {
+    //                try executor.run(phase, identifier: root.workspaceName)
+    //            }
+    //            for workflow in root.jobs.filter({ $0.dependsOn == job.name }) {
+    //                let identifier = try MD5.hash(.string("\(workflow)"))
+    //                if !processed.contains(identifier.string()) {
+    //                    try self.run(job: workflow, failed: failed)
+    //                }
+    //            }
+    //        } catch {
+    //            do {
+    //                for phase in job.fail ?? [] {
+    //                    try executor.run(phase, identifier: root.workspaceName)
+    //                }
+    //            } catch {
+    //                eventLoop.execute {
+    //                    failed(error)
+    //                }
+    //                return
+    //            }
+    //            eventLoop.execute {
+    //                failed(error)
+    //            }
+    //        }
+    //    }
     
     deinit {
         // TODO: This neeeds to be called!!!!!!!!!!!!!!!

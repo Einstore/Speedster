@@ -41,9 +41,11 @@ public struct Organization: Model {
     /// Number of total jobs registered
     public let disabled = Field<Int>("disabled")
     
+    /// Server for organization
     public let server = Field<String>("server")
     
     /// Full API info
     public let full = Field<GitHubKit.Organization>("full", dataType: .json)
     
 }
+

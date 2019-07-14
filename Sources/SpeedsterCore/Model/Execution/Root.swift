@@ -129,10 +129,9 @@ public struct Root: Content {
         /// Reference repo information
         public struct Reference: Codable {
             
-            /// Local filesystem path to the repo
+            /// Path to the reference repo folder; Default is /tmp/speedster/
             public let path: String?
             
-            #warning("Origin could be automatically loaded from the repo/job")
             /// Origin link, either in https or SSH (git@repo) format
             public let origin: String
             
@@ -157,13 +156,17 @@ public struct Root: Content {
         /// Reference repo
         public let referenceRepo: Reference?
         
+        public let apiDownload: Bool?
+        
         enum CodingKeys: String, CodingKey {
             case referenceRepo = "reference"
+            case apiDownload = "download"
         }
         
         /// Initializer
-        public init(referenceRepo: Reference?) {
+        public init(referenceRepo: Reference? = nil, apiDownload: Bool?) {
             self.referenceRepo = referenceRepo
+            self.apiDownload = apiDownload
         }
         
     }
@@ -334,17 +337,17 @@ public struct Root: Content {
                 
             }
             
-            public let branch: String
+            public let ref: String
             
             public let action: Action
             
             enum CodingKeys: String, CodingKey {
-                case branch
+                case ref
                 case action
             }
             
-            public init(branch: String, action: Action = .manual) {
-                self.branch = branch
+            public init(ref: String, action: Action = .manual) {
+                self.ref = ref
                 self.action = action
             }
             
@@ -380,6 +383,9 @@ public struct Root: Content {
     /// Source code info & settings
     public let source: Git?
     
+    /// Workspace folder for the entire node
+    public let workspace: String?
+    
     /// Workflows
     public let jobs: [Job]
     
@@ -400,6 +406,7 @@ public struct Root: Content {
         case identifier
         case nodeLabels = "node_labels"
         case source
+        case workspace
         case jobs = "jobs"
         case environment = "environment"
         case dockerDependendencies = "docker_dependencies"
@@ -413,6 +420,7 @@ public struct Root: Content {
         identifier: String? = nil,
         nodeLabels: [String]? = nil,
         source: Git? = nil,
+        workspace: String? = nil,
         jobs: [Job],
         environment: Env? = nil,
         dockerDependendencies: [Dependency]? = nil,
@@ -423,6 +431,7 @@ public struct Root: Content {
         self.identifier = identifier
         self.nodeLabels = nodeLabels
         self.source = source
+        self.workspace = workspace
         self.jobs = jobs
         self.environment = environment
         self.dockerDependendencies = dockerDependendencies
@@ -440,7 +449,7 @@ extension Root {
         let pipeline = Pipeline(
             name: "All jobs",
             triggers: [
-                Pipeline.Trigger(branch: "master", action: .manual)
+                Pipeline.Trigger(ref: "master", action: .manual)
             ],
             jobs: jobNames
         )

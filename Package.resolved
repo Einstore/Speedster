@@ -92,12 +92,12 @@
         }
       },
       {
-        "package": "app",
+        "package": "GitHubKit",
         "repositoryURL": "https://github.com/Einstore/GitHubKit.git",
         "state": {
           "branch": null,
-          "revision": "7f5eaf124d13365c7501b305041ba8c348b99d08",
-          "version": "1.6.0"
+          "revision": "0fde965b82a31cea895ba7678dda3197d3203d38",
+          "version": "1.6.4"
         }
       },
       {
@@ -186,8 +186,8 @@
         "repositoryURL": "https://github.com/Einstore/ShellKit.git",
         "state": {
           "branch": null,
-          "revision": "0e7e238feeac519211881afa66bfd75add84825c",
-          "version": "1.0.0"
+          "revision": "13e1f32dd84c6905f2d032f8131f43ea0d75b1d0",
+          "version": "1.1.1"
         }
       },
       {
@@ -249,8 +249,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio.git",
         "state": {
           "branch": null,
-          "revision": "7f20464df31e85f86bedf4a8afdd1785e0cb5059",
-          "version": "2.3.0"
+          "revision": "334815f6580b5256409d48431751938c4e966e72",
+          "version": "2.4.0"
         }
       },
       {
@@ -294,8 +294,8 @@
         "repositoryURL": "https://gitlab.com/mordil/swift-redi-stack.git",
         "state": {
           "branch": null,
-          "revision": "aeae1f6c78175877c907c627ed999636141cf727",
-          "version": "1.0.0-alpha.5.0.1"
+          "revision": "ca16cee332e3f54fd3568a33fb650de2f0051ab7",
+          "version": "1.0.0-alpha.5.0.2"
         }
       },
       {
@@ -312,8 +312,8 @@
         "repositoryURL": "https://github.com/Einstore/Systemator.git",
         "state": {
           "branch": null,
-          "revision": "1cec5eb944094cc5b641ca6756080c0686733f39",
-          "version": "0.0.3"
+          "revision": "3ebbece25389e6abb802d105147d1206c656aaed",
+          "version": "0.0.5"
         }
       },
       {

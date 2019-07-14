@@ -35,6 +35,14 @@ class BuildManager {
     private var execution: Row<Execution>!
     private var runs: [String: RunWrapper] = [:]
     
+    lazy var githubManager: GithubManager = {
+        return GithubManager(
+            github: self.github,
+            container: self.container,
+            on: self.db
+        )
+    }()
+    
     
     // MARK: Public interface
     
@@ -57,10 +65,15 @@ class BuildManager {
             throw Error.missingScheduledId
         }
         self.scheduledId = scheduledId
-        return self.rootAndtrigger().flatMap { rootAndTrigger in
-            return self.node(rootAndTrigger.root).flatMap { node in
+        return self.repoInfo().flatMap { repoInfo in
+            return self.node(repoInfo.root).flatMap { node in
                 return self.logging(node: node).flatMap { _ in
-                    return self.build(rootAndTrigger.root, trigger: rootAndTrigger.trigger, on: node)
+                    return self.build(
+                        repoInfo.root,
+                        trigger: repoInfo.trigger,
+                        location: repoInfo.location,
+                        on: node
+                    )
                 }.always { result in
                     self.finishLogging().completeQuietly()
                 }
@@ -84,7 +97,7 @@ class BuildManager {
         return execution.save(on: db)
     }
     
-    private func rootAndtrigger() -> EventLoopFuture<(root: Root, trigger: Root.Pipeline.Trigger)> {
+    private func repoInfo() -> EventLoopFuture<(root: Root, trigger: Root.Pipeline.Trigger, location: GitLocation)> {
         return scheduleManager.scheduled(scheduledId).flatMap { scheduledJob in
             return GitHubJob.find(failing: scheduledJob.jobId, on: self.db).flatMap { githubJob in
                 self.githubJob = githubJob
@@ -93,20 +106,18 @@ class BuildManager {
                     repo: githubJob.repo,
                     commit: scheduledJob.commit.sha
                 )
-                
-                let githubManager = GithubManager(
-                    github: self.github,
-                    container: self.container,
-                    on: self.db
-                )
-                return githubManager.speedster(for: location).flatMap { root in
+                return self.githubManager.speedster(for: location).flatMap { root in
                     do {
                         try ChecksManager.check(jobDependencies: root) // Check dependencies are set correctly
                         try EnvironmentManager.check(environments: root) // Check environments are set correctly
                     } catch {
                         return self.container.eventLoop.makeFailedFuture(error)
                     }
-                    return self.container.eventLoop.makeSucceededFuture((root: root, trigger: scheduledJob.trigger))
+                    return self.container.eventLoop.makeSucceededFuture((
+                        root: root,
+                        trigger: scheduledJob.trigger,
+                        location: location
+                    ))
                 }
             }
         }
@@ -138,11 +149,13 @@ class BuildManager {
         return wrapper.run
     }
     
-    private func build(_ root: Root, trigger: Root.Pipeline.Trigger, on node: Row<Node>) -> EventLoopFuture<Void> {
+    private func build(_ root: Root, trigger: Root.Pipeline.Trigger, location: GitLocation, on node: Row<Node>) -> EventLoopFuture<Void> {
         let ex = Executioner(
             root: root,
             trigger: trigger,
+            location: location,
             node: node,
+            github: github,
             on: self.db
         ) { update in
             switch update {

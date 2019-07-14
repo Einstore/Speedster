@@ -9,28 +9,6 @@ import Fluent
 import GitHubKit
 
 
-public struct GitReference: Codable {
-    
-    public enum RefType: String, Codable {
-        case branch
-        case commit
-        case tag
-    }
-    
-    public let value: String
-    public let type: RefType
-    
-}
-
-public struct GitLocation: Codable {
-    
-    public let org: String
-    public let repo: String
-    public let commit: String
-    
-}
-
-
 /// Single run of a phase in a job
 public struct Scheduled: Model {
     

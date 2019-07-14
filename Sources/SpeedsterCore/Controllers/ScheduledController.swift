@@ -32,7 +32,7 @@ final class ScheduledController: Controller {
             return scheduleManager.schedule(
                 id: id,
                 ref: ref,
-                trigger: Root.Pipeline.Trigger(branch: ref?.value ?? "master"),
+                trigger: Root.Pipeline.Trigger(ref: ref?.value ?? "master"),
                 githubManager: githubManager
             ).encodeResponse(status: .created, for: req)
         }

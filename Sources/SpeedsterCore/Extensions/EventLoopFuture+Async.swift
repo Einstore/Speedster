@@ -8,20 +8,6 @@
 import Vapor
 
 
-/*
- 
- // vapor 3
- map             A throws -> B
- flatMap         A throws -> Future<B>
- 
- // vapor 4
- map             A -> B
- flatMap         A -> Future<B>
- flatMapThrowing A throws -> B
- convert             A throws -> Future<B>
- 
- */
-
 extension EventLoopFuture {
     
     public func completeQuietly() {

@@ -36,15 +36,15 @@ public class RefRepo {
         self.temp = temp
     }
     
-    public func clone(repo: String, checkout: String, for identifier: String) -> EventLoopFuture<String> {
+    public func clone(repo: String, checkout: String, worklace: String) -> EventLoopFuture<String> {
         let repoPath = git(for: repo)
         
         return shell.exists(path: repoPath).flatMap { exists in
             func localCloneProcess() -> EventLoopFuture<String> {
-                return self.clean(for: identifier).flatMap { _ in
-                    return self.clone(repo: repo, to: identifier).flatMap { _ in
-                        return self.checkout(identifier, to: checkout).map {
-                            return self.tmp(identifier: identifier)
+                return self.clean(for: worklace).flatMap { _ in
+                    return self.clone(repo: repo, to: worklace).flatMap { _ in
+                        return self.checkout(worklace, to: checkout).map {
+                            return worklace
                         }
                     }
                 }
@@ -62,9 +62,8 @@ public class RefRepo {
         }
     }
     
-    public func clean(for identifier: String) -> EventLoopFuture<Void> {
-        let path = tmp(identifier: identifier)
-        return shell.rm(path: path, flags: "-rf").void()
+    public func clean(for worklace: String) -> EventLoopFuture<Void> {
+        return shell.rm(path: worklace, flags: "-rf").void()
     }
     
     public func add(rsa arr: [(domain: String, sha: String?)]? = nil) -> EventLoopFuture<Void> {
@@ -96,7 +95,9 @@ public class RefRepo {
     }
     
     public func add(ssh key: String) -> EventLoopFuture<Void> {
-        return shell.run(bash: "VAR=$'\(key)' ; echo -e $VAR | ssh-add - ; VAR='Nice try! :)') ").void()
+        return shell.run(bash: "eval 'ssh-agent -s'").flatMap { output in
+            return self.shell.run(bash: "VAR='\(key.escapedNewLines)' ; echo -e $VAR | ssh-add -").void()
+        }
     }
     
     // MARK: Private interface
@@ -112,10 +113,9 @@ public class RefRepo {
         return run(bash: "git clone \(repo) \(path.quoteEscape)")
     }
     
-    func clone(repo: String, to identifier: String) -> EventLoopFuture<Void> {
+    func clone(repo: String, to worklace: String) -> EventLoopFuture<Void> {
         let from = git(for: repo)
-        let to = tmp(identifier: identifier)
-        return run(bash: "git clone \(from.quoteEscape) \(to.quoteEscape)")
+        return run(bash: "git clone \(from.quoteEscape) \(worklace.quoteEscape)")
     }
     
     func fetch(repo: String) -> EventLoopFuture<Void> {
@@ -123,25 +123,20 @@ public class RefRepo {
         return run(bash: "cd \(path) ; git fetch")
     }
     
-    func checkout(_ identifier: String, to checkout: String) -> EventLoopFuture<Void> {
-        let path = tmp(identifier: identifier)
-        return run(bash: "cd \(path) ; git checkout \(checkout)")
+    func checkout(_ worklace: String, to checkout: String) -> EventLoopFuture<Void> {
+        return run(bash: "cd \(worklace) ; git checkout \(checkout)")
     }
     
     func git(for repo: String) -> String {
         return tmp(for: repo.safeText).finished(with: "/").appending(".git")
     }
     
-    func git(identifier: String) -> String {
-        return tmp(identifier: identifier.safeText).finished(with: "/").appending(".git")
+    func git(worklace: String) -> String {
+        return worklace.finished(with: "/").appending(".git")
     }
     
     func tmp(for repo: String) -> String {
         return temp.finished(with: "/").appending("refs/").appending(repo.safeText)
-    }
-    
-    func tmp(identifier: String) -> String {
-        return temp.finished(with: "/").appending("clones/").appending(identifier.safeText)
     }
     
 }

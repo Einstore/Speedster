@@ -79,7 +79,7 @@ final class RefRepoTests: XCTestCase {
     }
     
     func testClone() {
-        let string = try! ref.clone(repo: repo, checkout: "master", for: "test-stuff").wait()
+        let string = try! ref.clone(repo: repo, checkout: "master", worklace: "/tmp/test-refrepo/clones/test-stuff").wait()
         
         let content = try! FileManager.default.contentsOfDirectory(atPath: string)
         XCTAssertTrue(content.count > 3)
@@ -93,7 +93,7 @@ final class RefRepoTests: XCTestCase {
     func testFetch() {
         _ = try! shell.run(bash: "git clone \(repo) \(ref.tmp(for: repo))").wait()
         
-        let string = try! ref.clone(repo: repo, checkout: "master", for: "test-stuff").wait()
+        let string = try! ref.clone(repo: repo, checkout: "master", worklace: "/tmp/test-refrepo/clones/test-stuff").wait()
         
         let content = try! FileManager.default.contentsOfDirectory(atPath: string)
         XCTAssertTrue(content.count > 3)

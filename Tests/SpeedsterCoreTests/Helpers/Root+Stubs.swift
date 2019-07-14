@@ -205,10 +205,10 @@ extension Root.Pipeline {
             Root.Pipeline(
                 name: "Pipeline for \(jobs.joined(separator: ", "))",
                 triggers: [
-                    Trigger(branch: "master", action: .commit),
-                    Trigger(branch: "development", action: .message("test please")),
+                    Trigger(ref: "master", action: .commit),
+                    Trigger(ref: "development", action: .message("test please")),
                     Trigger(
-                        branch: "master",
+                        ref: "master",
                         action: .message("build please")
                     )
                 ],

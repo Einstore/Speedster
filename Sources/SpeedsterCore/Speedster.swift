@@ -23,7 +23,8 @@ public class Speedster {
         GithubController.self,
         JobsController.self,
         ScheduledController.self,
-        CredentialsController.self
+        CredentialsController.self,
+        SystemController.self
     ]
     
     public static func configure(services s: inout Services) throws {

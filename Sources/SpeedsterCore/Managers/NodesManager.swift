@@ -6,6 +6,7 @@
 //
 
 import Fluent
+import CommandKit
 
 
 class NodesManager {
@@ -41,6 +42,44 @@ class NodesManager {
     }
     
     // MARK: Node helpers
+    
+    var software: [String] {
+        return [
+            "curl",
+            "docker",
+            "git",
+            "top",
+            "vmrun",
+            "brew",
+            "apt"
+        ]
+    }
+    
+    func software(for node: Row<Node>) -> EventLoopFuture<[String: Bool]> {
+        do {
+            let conn = try node.asShellConnection()
+            let shell = try Shell(conn, on: db.eventLoop)
+            
+            var out: [String: Bool] = [:]
+            
+            func check(soft: [String]) -> EventLoopFuture<Void> {
+                guard let cmd = soft.first else {
+                    return db.eventLoop.makeSucceededFuture(Void())
+                }
+                return shell.cmd.exists(command: cmd).flatMap { res in
+                    out[cmd] = res
+                    let ns = Array(soft.dropFirst())
+                    return check(soft: ns)
+                }
+            }
+            
+            return check(soft: software).map { _ in
+                return out
+            }
+        } catch {
+            return error.fail(db)
+        }
+    }
     
     func install(_ command: String, req: Request, webSocket: WebSocket) {
         fatalError()

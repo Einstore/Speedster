@@ -24,7 +24,7 @@ public class Speedster {
         JobsController.self,
         ScheduledController.self,
         CredentialsController.self,
-        SystemController.self
+        SpeedsterController.self
     ]
     
     public static func configure(services s: inout Services) throws {

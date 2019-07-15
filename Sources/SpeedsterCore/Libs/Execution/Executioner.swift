@@ -57,6 +57,7 @@ class Executioner {
         trigger: Root.Pipeline.Trigger,
         location: GitLocation,
         node: Row<Node>,
+        identifier: Speedster.DbIdType?,
         github: Github,
         on db: Database,
         update: @escaping Update
@@ -69,14 +70,23 @@ class Executioner {
         self.db = db
         eventLoop = db.eventLoop
         self.node = node
-        randomId = "\(root.name.safeText)-\(UUID().uuidString)".lowercased()
+        randomId = "\(identifier?.uuidString ?? "unknown-identifier")-\(root.name.safeText)-\(UUID().uuidString)".lowercased()
     }
     
     typealias FailedClosure = ((Swift.Error) -> ())
     
     /// Execute job
     func run() -> EventLoopFuture<Void> {
-        update(.output(text: "Building \(root.name) on \(node.host)"))
+        make(update: .output(text: "Building \(root.name) on \(node.host)"))
+        return prepareCodebase().flatMap { _ in
+            return self.launchJobs()
+        }
+    }
+    
+    // MARK: Private interface
+    
+    /// Clone and download code if required
+    private func prepareCodebase() -> EventLoopFuture<Void> {
         return verifyNodeSoftware().flatMap {
             do {
                 let nodeConnection = try self.node.asShellConnection()
@@ -84,10 +94,10 @@ class Executioner {
                 
                 let workspace = self.workspace()
                 self.vars["WORKSPACE"] = workspace
-                self.update(.output(text: "Creating workspace folder at \(workspace)"))
+                self.make(update: .output(text: "Creating workspace folder at \(workspace)"))
                 let shared = workspace.finished(with: "/").appending("shared")
                 self.vars["SHARED"] = shared
-                self.update(.output(text: "Creating workspace shared folder at \(shared)"))
+                self.make(update: .output(text: "Creating workspace shared folder at \(shared)"))
                 return shell.cmd.mkdir(path: shared, flags: "-p").flatMap { _ in
                     func download() -> EventLoopFuture<Void> {
                         if self.root.source?.apiDownload == true {
@@ -110,20 +120,26 @@ class Executioner {
         }
     }
     
-    // MARK: Private interface
-    
-    private func workspace(subItem item: String? = nil) -> String {
-        var workspace = root.workspace ?? "/tmp/speeedster"
-        workspace = workspace.finished(with: "/").appending(randomId)
-        if let item = item {
-            return workspace.finished(with: "/").appending(item)
-        } else {
-            return workspace
+    /// Verify basic software like curl, git or docker is available on the node if needed
+    private func verifyNodeSoftware() -> EventLoopFuture<Void> {
+        make(update: .output(text: "Verify node has all neccessary software"))
+        let nodeManager = NodesManager(db)
+        return nodeManager.software(for: node).flatMap { software in
+            let required = self.root.requiredSoftware()
+            for command in required {
+                if software.contains(where: { $0.key == command }) {
+                    if software[command] == false {
+                        return Error.unsupportedCommand(command: command, node: self.node).fail(self.eventLoop)
+                    }
+                }
+            }
+            return self.eventLoop.makeSucceededFuture(Void())
         }
     }
     
+    /// Download files using the Github API into workspace/downloaded
     private func apiDownload(_ shell: Shell) -> EventLoopFuture<Void> {
-        update(.output(text: "Downloading source"))
+        make(update: .output(text: "Downloading source"))
         let destination = self.workspace(subItem: "downloaded")
         vars["DOWNLOADED"] = destination
         return shell.cmd.mkdir(path: destination, flags: "-p").flatMap { _ in
@@ -131,10 +147,10 @@ class Executioner {
                 return try self.github.download(org: self.location.org, repo: self.location.repo, ref: self.location.commit).flatMap { link in
                     let archive = self.workspace(subItem: "archive.tar")
                     return shell.run(bash: "curl -o \(archive) \(link)") { output in
-                        self.update(.output(text: output))
+                        self.make(update: .output(text: output))
                     }.flatMap { output in
                         return shell.run(bash: "tar -C \(destination) -xvf \(archive)") { output in
-                            self.update(.output(text: output))
+                            self.make(update: .output(text: output))
                         }.flatMap { _ in
                             let unarchived = destination
                                 .finished(with: "/")
@@ -143,7 +159,7 @@ class Executioner {
                             return shell.run(bash: "mv \(unarchived)/* \(destination) ; rm -rf \(unarchived)").map { output in
                                 return Void()
                             }.always { _ in
-                                self.update(.output(text: "Source available at \(destination)"))
+                                self.make(update: .output(text: "Source available at \(destination)"))
                             }.recover { _ in
                                 return Void()
                             }
@@ -156,6 +172,7 @@ class Executioner {
         }
     }
     
+    /// Clone files using a reference repo into workspace/cloned
     private func refRepo(_ referenceRepo: Root.Git.Reference, on conn: Shell.Connection) -> EventLoopFuture<Void> {
         do {
             let ref = try RefRepo(
@@ -173,9 +190,9 @@ class Executioner {
                         checkout: trigger.ref,
                         target: destination,
                         workspace: workspace()
-                    ).flatMap { path in
+                    ).map { path in
                         self.vars["CLONED"] = destination
-                        return self.run(repoPath: path)
+                        return Void()
                     }
                 }
                 
@@ -192,7 +209,7 @@ class Executioner {
             if let ssh = referenceRepo.ssh {
                 // Import ssh private keys to ~/.ssh/known_hosts
                 return Credentials.select(name: ssh, on: self.db).all().flatMap { creds in
-                    self.update(.output(text: "Adding ssh keys"))
+                    self.make(update: .output(text: "Adding ssh keys"))
                     guard creds.count == ssh.count else {
                         let diff = ssh.difference(from: creds.map { $0.name })
                         return Error.invalidCredentials(name: diff.first ?? "unknown credentials").fail(self.eventLoop)
@@ -222,7 +239,9 @@ class Executioner {
         }
     }
     
-    private func run(repoPath: String? = nil) -> EventLoopFuture<Void> {
+    /// Launch jobs in their environments
+    private func launchJobs() -> EventLoopFuture<Void> {
+        make(update: .output(text: "Starting jobs"))
         var futures: [EventLoopFuture<Void>] = []
         for job in root.jobs.filter({ $0.dependsOn == nil || $0.dependsOn?.isEmpty == true }) {
             let future: EventLoopFuture<Void> = launch(envFor: job).flatMap { connection in
@@ -233,28 +252,7 @@ class Executioner {
         return futures.flatten(on: eventLoop)
     }
     
-    private func make(update data: UpdateData) {
-        eventLoop.execute {
-            self.update(data)
-        }
-    }
-    
-    private func verifyNodeSoftware() -> EventLoopFuture<Void> {
-        update(.output(text: "Verify node has all neccessary software"))
-        let nodeManager = NodesManager(db)
-        return nodeManager.software(for: node).flatMap { software in
-            let required = self.root.requiredSoftware()
-            for command in required {
-                if software.contains(where: { $0.key == command }) {
-                    if software[command] == false {
-                        return Error.unsupportedCommand(command: command, node: self.node).fail(self.eventLoop)
-                    }
-                }
-            }
-            return self.eventLoop.makeSucceededFuture(Void())
-        }
-    }
-    
+    /// Launch an envitonment for a job
     private func launch(envFor job: Root.Job) -> EventLoopFuture<Root.Env.Connection> {
         // TODO: Launch a new Shell for each job as it will otherwise confuse shell->Channel over SSH!!!!!!!
         guard let env = job.environment ?? root.environment else {
@@ -319,6 +317,24 @@ class Executioner {
     //            }
     //        }
     //    }
+    
+    /// Workspace path builder
+    private func workspace(subItem item: String? = nil) -> String {
+        var workspace = root.workspace ?? "/tmp/speeedster/workspaces"
+        workspace = workspace.finished(with: "/").appending("\(randomId)")
+        if let item = item {
+            return workspace.finished(with: "/").appending(item)
+        } else {
+            return workspace
+        }
+    }
+    
+    /// Report event/output
+    private func make(update data: UpdateData) {
+        eventLoop.execute {
+            self.update(data)
+        }
+    }
     
     deinit {
         // TODO: This neeeds to be called!!!!!!!!!!!!!!!

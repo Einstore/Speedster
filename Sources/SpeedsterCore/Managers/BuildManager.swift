@@ -155,6 +155,7 @@ class BuildManager {
             trigger: trigger,
             location: location,
             node: node,
+            identifier: execution.id,
             github: github,
             on: self.db
         ) { update in

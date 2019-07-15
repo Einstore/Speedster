@@ -43,10 +43,13 @@ public class RefRepo {
         
         return shell.folder(exists: repoPath).flatMap { exists in
             func localCloneProcess() -> EventLoopFuture<String> {
-                return self.clean(for: target).flatMap { _ in
-                    return self.clone(locally: repo, to: target).flatMap { _ in
-                        return self.checkout(target, to: checkout).map {
-                            return target
+                let sshFolder = self.ssh(folder: workspace)
+                return self.shell.cmd.rm(path: sshFolder, flags: "-rf").flatMap { _ in
+                    return self.clean(for: target).flatMap { _ in
+                        return self.clone(locally: repo, to: target).flatMap { _ in
+                            return self.checkout(target, to: checkout).map {
+                                return target
+                            }
                         }
                     }
                 }
@@ -98,16 +101,23 @@ public class RefRepo {
     
     var sshKeys: [String] = []
     
+    
+    /// Add SSH keys to be used in reference repo clone
+    /// - Parameter key: Content of the private key
+    /// - Parameter workspace: Path to workspace where keys should be stored
     public func add(ssh key: String, workspace: String) -> EventLoopFuture<Void> {
         guard sshKeys.count == 0 else {
             return eventLoop.makeFailedFuture(Error.onlyOneIdRsaKeySupported)
         }
         let name = "id_rsa.\(sshKeys.count)"
-        let file = workspace.finished(with: "/").appending(name)
-        // NOTE: key file has to end with a new line
-        return shell.upload(string: key.finished(with: "\n"), to: file).flatMap { _ in
-            return self.shell.run(bash: "chmod 400 \(file.escapeSpaces)").map { _ in
-                self.sshKeys.append(name)
+        let folder = ssh(folder: workspace)
+        return shell.cmd.mkdir(path: folder, flags: "-p").flatMap { _ in
+            let file = folder.finished(with: "/").appending(name)
+            // NOTE: key file has to end with a new line
+            return self.shell.upload(string: key.finished(with: "\n"), to: file).flatMap { _ in
+                return self.shell.run(bash: "chmod 400 \(file.escapeSpaces)").map { _ in
+                    self.sshKeys.append(name)
+                }
             }
         }
     }
@@ -132,7 +142,7 @@ public class RefRepo {
             guard let key = sshKeys.first else {
                 return eventLoop.makeFailedFuture(Error.sshKeyHasNotBeenSpecified)
             }
-            let keyPath = workspace.finished(with: "/").appending(key)
+            let keyPath = ssh(folder: workspace, file: key)
             return run(bash: "GIT_SSH_COMMAND='ssh -i \(keyPath.escapeSpaces)' git clone \(repo) \(path.escapeSpaces)")
         }
     }
@@ -150,7 +160,7 @@ public class RefRepo {
             guard let key = sshKeys.first else {
                 return eventLoop.makeFailedFuture(Error.sshKeyHasNotBeenSpecified)
             }
-            let keyPath = workspace.finished(with: "/").appending(key)
+            let keyPath = ssh(folder: workspace, file: key)
             return run(bash: "cd \(path.escapeSpaces) ; GIT_SSH_COMMAND='ssh -i \(keyPath.escapeSpaces)' git fetch")
         }
     }
@@ -169,6 +179,15 @@ public class RefRepo {
     
     func tmp(for repo: String) -> String {
         return temp.finished(with: "/").appending("refs/").appending(repo.safeText)
+    }
+    
+    func ssh(folder workspace: String, file name: String? = nil) -> String {
+        let path = workspace.finished(with: "/").appending("ssh")
+        if let name = name {
+            return path.finished(with: "/").appending(name)
+        } else {
+            return path
+        }
     }
     
 }

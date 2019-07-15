@@ -17,3 +17,14 @@ extension Array where Element: Hashable {
     }
     
 }
+
+
+extension Array where Element: Equatable {
+
+    mutating func append(ifNotPresent object: Element) {
+        if !contains(object) {
+            append(object)
+        }
+    }
+
+}

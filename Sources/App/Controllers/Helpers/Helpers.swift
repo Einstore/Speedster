@@ -176,10 +176,10 @@ extension Root.Job {
         )
     }
     
-    static func jobSmall(_ customName: String = "Small", dependsOn: String? = nil, env: Bool = false) -> Root.Job {
+    static func jobSmall(_ customName: String = "Small", nodeLabel: String = "linux", dependsOn: String? = nil, env: Bool = false) -> Root.Job {
         return Root.Job(
             name: "\(customName) job",
-            nodeLabels: ["linux"],
+            nodeLabels: [nodeLabel],
             dependsOn: dependsOn,
             environment: (env ? Root.Env.basic() : nil),
             preBuild: [
@@ -223,13 +223,19 @@ extension Root.Env {
     
     static func basic() -> Root.Env {
         return Root.Env(
-            image: .VMWare(name: "/Users/pro/Virtual Machines.localized/Windows 10 x64.vmwarevm/Windows 10 x64.vmx"),
-            memory: "4Gib",
-            storage: "10Gib",
+            //image: .vmware(name: "/Users/pro/Virtual Machines.localized/Windows 10 x64.vmwarevm/Windows 10 x64.vmx"),
+            image: .docker(image: "einstore"),
+            memory: "4GiB",
+            storage: "10GiB",
+            mounts: [
+                "#{workspace}": "/Users/ci/Projects/Job/Workspace/",
+                "/tmp/": "/tmp/"
+            ],
             variables: [
                 "VAR1": "value 1",
                 "VAR2": "value 2"
-            ]
+            ],
+            build: "echo 'This is an image build script'"
         )
     }
     
@@ -251,8 +257,8 @@ extension Root {
     }
     
     static func rootSmall() -> Root {
-        let w1 = Job.jobSmall()
-        let w2 = Job.jobSmall("Linux", dependsOn: w1.name, env: true)
+        let w1 = Job.jobSmall(nodeLabel: "master")
+        let w2 = Job.jobSmall("macOS", nodeLabel: "master", dependsOn: w1.name, env: true)
         
         return Root(
             name: "Small root",

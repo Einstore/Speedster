@@ -223,7 +223,7 @@ extension Root.Env {
     
     static func basic() -> Root.Env {
         return Root.Env(
-            image: .VMWare(name: "macOS 10.14"),
+            image: .vmware(name: "macOS 10.14"),
             memory: "4Gib",
             storage: "10Gib",
             variables: [

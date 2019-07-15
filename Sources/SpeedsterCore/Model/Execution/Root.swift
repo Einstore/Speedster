@@ -219,7 +219,7 @@ public struct Root: Content {
         }
         
         /// Image for environment
-        public enum Image: Codable {
+        public enum Image: Codable, Equatable {
             
             public enum Error: Swift.Error {
                 case invalidEnvironmentImageType
@@ -229,13 +229,13 @@ public struct Root: Content {
             case docker(image: String)
             
             /// VMWare image (name of the image, has to be installed on a node selected)
-            case VMWare(name: String)
+            case vmware(name: String)
             
             public func serialize() -> String {
                 switch self {
                 case .docker(image: let image):
                     return "docker;\(image)"
-                case .VMWare(name: let name):
+                case .vmware(name: let name):
                     return "vmware;\(name)"
                 }
             }
@@ -244,10 +244,10 @@ public struct Root: Content {
                 let container = try decoder.singleValueContainer()
                 let string = try container.decode(String.self)
                 switch true {
-                case string.contains("vmware;"):
-                    self = .VMWare(name: string.replacingOccurrences(of: "vmware;", with: ""))
-                case string.contains("docker;"):
-                    self = .VMWare(name: string.replacingOccurrences(of: "docker;", with: ""))
+                case string.prefix(7) == "vmware;":
+                    self = .vmware(name: String(string.dropFirst(7)))
+                case string.prefix(7) == "docker;":
+                    self = .docker(image: String(string.dropFirst(7)))
                 default:
                     throw Error.invalidEnvironmentImageType
                 }
@@ -260,24 +260,38 @@ public struct Root: Content {
             
         }
         
+        /// Image type
         public let image: Image
+        
+        /// Amount of memory (RAM) available
         public let memory: String?
+        
+        /// Amount of storage available
         public let storage: String?
-        public let workspace: String?
+        
+        /// Mounted folders (node: vm)
+        public let mounts: [String: String]?
+        
+        /// Environmental variables
         public let variables: [String: String]?
+        
+        /// Build script for the environment
+        public let build: String?
         
         public init(
             image: Image,
             memory: String,
             storage: String,
-            workspace: String? = nil,
-            variables: [String: String]? = nil
+            mounts: [String: String]? = nil,
+            variables: [String: String]? = nil,
+            build: String? = nil
             ) {
             self.image = image
             self.memory = memory
             self.storage = storage
-            self.workspace = workspace
+            self.mounts = mounts
             self.variables = variables
+            self.build = build
         }
         
     }
@@ -363,6 +377,7 @@ public struct Root: Content {
         /// Jobs allowed within the pipeline
         public let jobs: [String]
         
+        /// Initializer
         public init(name: String, triggers: [Trigger], jobs: [String]) {
             self.name = name
             self.triggers = triggers

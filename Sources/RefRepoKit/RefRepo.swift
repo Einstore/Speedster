@@ -13,6 +13,8 @@ public class RefRepo {
     
     public enum Error: Swift.Error {
         case rsaValidationFailed(domain: String)
+        case onlyOneIdRsaKeySupported
+        case sshKeyHasNotBeenSpecified
     }
     
     let shell: Shell
@@ -36,15 +38,15 @@ public class RefRepo {
         self.temp = temp
     }
     
-    public func clone(repo: String, checkout: String, worklace: String) -> EventLoopFuture<String> {
+    public func clone(repo: String, checkout: String, workspace: String) -> EventLoopFuture<String> {
         let repoPath = git(for: repo)
         
         return shell.exists(path: repoPath).flatMap { exists in
             func localCloneProcess() -> EventLoopFuture<String> {
-                return self.clean(for: worklace).flatMap { _ in
-                    return self.clone(repo: repo, to: worklace).flatMap { _ in
-                        return self.checkout(worklace, to: checkout).map {
-                            return worklace
+                return self.clean(for: workspace).flatMap { _ in
+                    return self.clone(locally: repo, to: workspace).flatMap { _ in
+                        return self.checkout(workspace, to: checkout).map {
+                            return workspace
                         }
                     }
                 }
@@ -62,8 +64,8 @@ public class RefRepo {
         }
     }
     
-    public func clean(for worklace: String) -> EventLoopFuture<Void> {
-        return shell.cmd.rm(path: worklace, flags: "-rf").void()
+    public func clean(for workspace: String) -> EventLoopFuture<Void> {
+        return shell.cmd.rm(path: workspace, flags: "-rf").void()
     }
     
     public func add(rsa arr: [(domain: String, sha: String?)]? = nil) -> EventLoopFuture<Void> {
@@ -94,9 +96,15 @@ public class RefRepo {
         }
     }
     
-    public func add(ssh key: String) -> EventLoopFuture<Void> {
-        return shell.run(bash: "eval 'ssh-agent -s'").flatMap { output in
-            return self.shell.run(bash: "VAR='\(key.escapedNewLines)' ; echo -e $VAR | ssh-add -").void()
+    var sshKeys: [String] = []
+    
+    public func add(ssh key: String, workspace: String) -> EventLoopFuture<Void> {
+        guard sshKeys.count == 0 else {
+            return eventLoop.makeFailedFuture(Error.onlyOneIdRsaKeySupported)
+        }
+        let name = "id_rsa.\(sshKeys.count)"
+        return shell.upload(string: key, to: workspace.finished(with: "/").appending(name)).map { _ in
+            self.sshKeys.append(name)
         }
     }
     
@@ -108,14 +116,25 @@ public class RefRepo {
         }
     }
     
-    func clone(repo: String) -> EventLoopFuture<Void> {
-        let path = tmp(for: repo)
-        return run(bash: "git clone \(repo) \(path.quoteEscape)")
+    private func has(http repo: String) -> Bool {
+        return repo.prefix(8) == "https://" || repo.prefix(7) == "http://"
     }
     
-    func clone(repo: String, to worklace: String) -> EventLoopFuture<Void> {
+    func clone(repo: String) -> EventLoopFuture<Void> {
+        let path = tmp(for: repo)
+        if has(http: repo) {
+            return run(bash: "git clone \(repo) \(path.quoteEscape)")
+        } else {
+            guard let key = sshKeys.first else {
+                return eventLoop.makeFailedFuture(Error.sshKeyHasNotBeenSpecified)
+            }
+            return run(bash: "GIT_SSH_COMMAND='ssh -i /root/id_rsa' git clone \(repo) \(path.quoteEscape)")
+        }
+    }
+    
+    func clone(locally repo: String, to workspace: String) -> EventLoopFuture<Void> {
         let from = git(for: repo)
-        return run(bash: "git clone \(from.quoteEscape) \(worklace.quoteEscape)")
+        return run(bash: "git clone \(from.quoteEscape) \(workspace.quoteEscape)")
     }
     
     func fetch(repo: String) -> EventLoopFuture<Void> {
@@ -123,16 +142,16 @@ public class RefRepo {
         return run(bash: "cd \(path) ; git fetch")
     }
     
-    func checkout(_ worklace: String, to checkout: String) -> EventLoopFuture<Void> {
-        return run(bash: "cd \(worklace) ; git checkout \(checkout)")
+    func checkout(_ workspace: String, to checkout: String) -> EventLoopFuture<Void> {
+        return run(bash: "cd \(workspace) ; git checkout \(checkout)")
     }
     
     func git(for repo: String) -> String {
         return tmp(for: repo.safeText).finished(with: "/").appending(".git")
     }
     
-    func git(worklace: String) -> String {
-        return worklace.finished(with: "/").appending(".git")
+    func git(workspace: String) -> String {
+        return workspace.finished(with: "/").appending(".git")
     }
     
     func tmp(for repo: String) -> String {

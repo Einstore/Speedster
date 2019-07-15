@@ -49,7 +49,7 @@ let package = Package(
         .target(
             name: "RefRepoKit",
             dependencies: [
-                "ShellKit"
+                "CommandKit"
             ]
         ),
         .target(

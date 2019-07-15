@@ -27,7 +27,7 @@ class EnvironmentManager {
         
         do {
             switch env.image {
-            case .VMWare:
+            case .vmware:
                 launcher = try VMWareLauncher(env, node: node, on: eventLoop)
             default:
                 fatalError()

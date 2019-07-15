@@ -21,6 +21,10 @@ extension String {
         return replacingOccurrences(of: "\n", with: "\\n")
     }
     
+    var escapeSpaces: String {
+        return replacingOccurrences(of: " ", with: "\\ ")
+    }
+    
     var safeText: String {
         var text = components(separatedBy: CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_").inverted).joined(separator: "-").lowercased()
         text = text.components(separatedBy: CharacterSet(charactersIn: "-")).filter { !$0.isEmpty }.joined(separator: "-")

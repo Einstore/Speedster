@@ -171,7 +171,8 @@ class Executioner {
                     return ref.clone(
                         repo: referenceRepo.origin,
                         checkout: trigger.ref,
-                        workspace: destination
+                        target: destination,
+                        workspace: workspace()
                     ).flatMap { path in
                         self.vars["CLONED"] = destination
                         return self.run(repoPath: path)

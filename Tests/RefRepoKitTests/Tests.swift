@@ -19,7 +19,8 @@ import CommandKit
 
 final class RefRepoTests: XCTestCase {
     
-    let repo = "git@github.com:Einstore/Einstore.git"
+    let repoSSH = "git@github.com:Einstore/Einstore.git"
+    let repoHTTPS = "https://github.com/Einstore/ShellKit.git"
     
     var ref: RefRepo!
     var shell: Shell!
@@ -43,7 +44,8 @@ final class RefRepoTests: XCTestCase {
         shell = try! Shell(.local(dir: "/tmp"), on: eventLoop)
         shell.outputCommands = false
         
-        _ = try! shell.cmd.rm(path: ref.tmp(for: repo), flags: "-rf").wait()
+        _ = try! shell.cmd.rm(path: ref.tmp(for: repoSSH), flags: "-rf").wait()
+        _ = try! shell.cmd.rm(path: ref.tmp(for: repoHTTPS), flags: "-rf").wait()
     }
     
     override func tearDown() {
@@ -78,22 +80,50 @@ final class RefRepoTests: XCTestCase {
         XCTAssertEqual(count, 3)
     }
     
-    func testClone() {
-        let string = try! ref.clone(repo: repo, checkout: "master", workspace: "/tmp/test-refrepo/clones/test-stuff").wait()
+    func testCloneSSH() {
+        ref.sshKeys.append("id_rsa.0")
+        let string = try! ref.clone(repo: repoSSH, checkout: "master", target: "/tmp/test-refrepo/clones/test-stuff", workspace: "/tmp/test-refrepo/clones/").wait()
         
         let content = try! FileManager.default.contentsOfDirectory(atPath: string)
         XCTAssertTrue(content.count > 3)
         XCTAssertTrue(content.contains(".git"))
         
-        XCTAssertTrue(output.contains(repo), "Text not present in: \(output)")
+        XCTAssertTrue(output.contains(repoSSH), "Text not present in: \(output)")
         
         XCTAssertEqual(string, "/tmp/test-refrepo/clones/test-stuff")
     }
     
-    func testFetch() {
-        _ = try! shell.run(bash: "git clone \(repo) \(ref.tmp(for: repo))").wait()
+    func testCloneHTTPS() {
+        let string = try! ref.clone(repo: repoHTTPS, checkout: "master", target: "/tmp/test-refrepo/clones/test-stuff", workspace: "/tmp/test-refrepo/clones/").wait()
         
-        let string = try! ref.clone(repo: repo, checkout: "master", workspace: "/tmp/test-refrepo/clones/test-stuff").wait()
+        let content = try! FileManager.default.contentsOfDirectory(atPath: string)
+        XCTAssertTrue(content.count > 3)
+        XCTAssertTrue(content.contains(".git"))
+        
+        XCTAssertTrue(output.contains(repoHTTPS), "Text not present in: \(output)")
+        
+        XCTAssertEqual(string, "/tmp/test-refrepo/clones/test-stuff")
+    }
+    
+    func testFetchSSH() {
+        ref.sshKeys.append("id_rsa.0")
+        _ = try! shell.run(bash: "git clone \(repoSSH) \(ref.tmp(for: repoSSH))").wait()
+        
+        let string = try! ref.clone(repo: repoSSH, checkout: "master", target: "/tmp/test-refrepo/clones/test-stuff", workspace: "/tmp/test-refrepo/clones/").wait()
+        
+        let content = try! FileManager.default.contentsOfDirectory(atPath: string)
+        XCTAssertTrue(content.count > 3)
+        XCTAssertTrue(content.contains(".git"))
+        
+        XCTAssertTrue(output.contains("Your branch is up to date with 'origin/master'"), "Text not present in: \(output)")
+        
+        XCTAssertEqual(string, "/tmp/test-refrepo/clones/test-stuff")
+    }
+    
+    func testFetchHTTPS() {
+        _ = try! shell.run(bash: "git clone \(repoHTTPS) \(ref.tmp(for: repoSSH))").wait()
+        
+        let string = try! ref.clone(repo: repoHTTPS, checkout: "master", target: "/tmp/test-refrepo/clones/test-stuff", workspace: "/tmp/test-refrepo/clones/").wait()
         
         let content = try! FileManager.default.contentsOfDirectory(atPath: string)
         XCTAssertTrue(content.count > 3)
@@ -107,8 +137,10 @@ final class RefRepoTests: XCTestCase {
     static let allTests = [
         ("testShell", testShell),
         ("testLongShell", testLongShell),
-        ("testClone", testClone),
-        ("testFetch", testFetch)
+        ("testCloneSSH", testCloneSSH),
+        ("testCloneHTTPS", testCloneHTTPS),
+        ("testFetchSSH", testFetchSSH),
+        ("testFetchHTTPS", testFetchHTTPS)
     ]
     
 }

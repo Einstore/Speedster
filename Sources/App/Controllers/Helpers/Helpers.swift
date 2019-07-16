@@ -270,7 +270,8 @@ extension Root {
                     ],
                     ssh: [
                         "github.com"
-                    ]
+                    ],
+                    fetchSubmodules: true
                 ),
                 apiDownload: true
             ),

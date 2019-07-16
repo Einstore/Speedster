@@ -143,12 +143,29 @@ public struct Root: Content {
             /// SSH private key from credentials, requires a name for a value stored in the system
             public let ssh: [String]?
             
+            public let fetchSubmodules: Bool?
+            
+            enum CodingKeys: String, CodingKey {
+                case path
+                case origin
+                case rsa
+                case ssh
+                case fetchSubmodules = "submodules"
+            }
+            
             /// Initializer
-            public init(path: String? = nil, origin: String, rsa: [String: String]?, ssh: [String]? = nil) {
+            public init(
+                path: String? = nil,
+                origin: String,
+                rsa: [String: String]?,
+                ssh: [String]? = nil,
+                fetchSubmodules: Bool? = nil
+                ) {
                 self.path = path
                 self.origin = origin
                 self.rsa = rsa
                 self.ssh = ssh
+                self.fetchSubmodules = fetchSubmodules
             }
             
         }

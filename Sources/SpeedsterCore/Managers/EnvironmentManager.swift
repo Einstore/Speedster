@@ -48,11 +48,11 @@ class EnvironmentManager {
         }
     }
     
-    func launch() -> EventLoopFuture<Root.Env.Connection> {
+    func launch(env: [String: String]? = nil) -> EventLoopFuture<Root.Env.Connection> {
         guard let launcher = launcher else {
             return eventLoop.makeFailedFuture(bootUpError ?? Error.unknownError)
         }
-        return launcher.launch()
+        return launcher.launch(env: env)
     }
     
     func clean() -> EventLoopFuture<Void> {

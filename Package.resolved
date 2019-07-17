@@ -96,8 +96,8 @@
         "repositoryURL": "https://github.com/Einstore/GitHubKit.git",
         "state": {
           "branch": null,
-          "revision": "0fde965b82a31cea895ba7678dda3197d3203d38",
-          "version": "1.6.4"
+          "revision": "b839d7044a3f1d4959660a47d42f5f6225aa080f",
+          "version": "1.6.5"
         }
       },
       {
@@ -125,6 +125,15 @@
           "branch": null,
           "revision": "3e515024c4c9eab6adb1ab516be15777a28a233e",
           "version": "1.0.0-alpha.1"
+        }
+      },
+      {
+        "package": "NIOErrorKit",
+        "repositoryURL": "https://github.com/Einstore/NIOErrorKit.git",
+        "state": {
+          "branch": null,
+          "revision": "74084844f7def572171311f450cb7d3df0da87c4",
+          "version": "0.0.1"
         }
       },
       {
@@ -186,8 +195,8 @@
         "repositoryURL": "https://github.com/Einstore/ShellKit.git",
         "state": {
           "branch": null,
-          "revision": "57ec3c315b7aef1c280e92381e873362f83e1f00",
-          "version": "1.3.0"
+          "revision": "225b1bf00b4b91de6b8b5310f8abcf6d7be56fee",
+          "version": "1.4.0"
         }
       },
       {
@@ -299,21 +308,12 @@
         }
       },
       {
-        "package": "SwiftShell",
-        "repositoryURL": "https://github.com/kareman/SwiftShell.git",
-        "state": {
-          "branch": null,
-          "revision": "2614f86520e66e19328f11b00dabd474209e82f7",
-          "version": "5.0.0"
-        }
-      },
-      {
         "package": "Systemator",
         "repositoryURL": "https://github.com/Einstore/Systemator.git",
         "state": {
           "branch": null,
-          "revision": "3ebbece25389e6abb802d105147d1206c656aaed",
-          "version": "0.0.5"
+          "revision": "16f1289353b9f0adcc783993e71fa39204b73fb7",
+          "version": "0.0.6"
         }
       },
       {
@@ -323,6 +323,24 @@
           "branch": null,
           "revision": "e415cbcacc14a5f8d02e3b6e1aea36f86064b98e",
           "version": "4.0.0-alpha.1.5"
+        }
+      },
+      {
+        "package": "VaporErrorKit",
+        "repositoryURL": "https://github.com/Einstore/VaporErrorKit.git",
+        "state": {
+          "branch": null,
+          "revision": "b1abf67b4acd8740f01b8de5d8984cc415bf4ffe",
+          "version": "0.0.1"
+        }
+      },
+      {
+        "package": "WebError",
+        "repositoryURL": "https://github.com/Einstore/WebErrorKit.git",
+        "state": {
+          "branch": null,
+          "revision": "183170b95c46ca5a900d0ea870980c9c280a573a",
+          "version": "0.0.1"
         }
       },
       {

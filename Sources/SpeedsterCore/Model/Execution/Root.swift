@@ -7,6 +7,7 @@
 
 import Vapor
 import Yams
+import WebErrorKit
 
 
 public struct Root: Content {
@@ -238,7 +239,7 @@ public struct Root: Content {
         /// Image for environment
         public enum Image: Codable, Equatable {
             
-            public enum Error: Swift.Error {
+            public enum Error: String, WebError {
                 case invalidEnvironmentImageType
             }
             
@@ -319,10 +320,6 @@ public struct Root: Content {
             
             public enum Action: Codable {
                 
-                public enum Error: Swift.Error {
-                    case decoding(String)
-                }
-                
                 case commit
                 
                 case manual
@@ -346,7 +343,7 @@ public struct Root: Content {
                     case string.prefix(8) == "message:":
                         self = .message(string.replacingOccurrences(of: "message:", with: ""))
                     default:
-                        throw Error.decoding("Error decoding Root.Pipeline.Trigger.Action: \(string)")
+                        throw GenericError.decodingError("Error decoding Root.Pipeline.Trigger.Action: \(string)")
                     }
                 }
                 
@@ -509,12 +506,12 @@ extension Root {
                 print(type)
                 if let err = ctx.underlyingError { throw err }
             default:
-                throw GenericError.decodingError
+                throw GenericError.decodingError(nil)
             }
         } catch {
             throw error
         }
-        throw GenericError.decodingError
+        throw GenericError.decodingError(nil)
     }
     
 }

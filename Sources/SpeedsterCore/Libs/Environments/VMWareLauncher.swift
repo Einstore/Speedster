@@ -35,7 +35,7 @@ class VMWareLauncher: Launcher {
         image = env.image.serialize().replacingOccurrences(of: "vmware;", with: "")
     }
     
-    func launch() -> EventLoopFuture<Root.Env.Connection> {
+    func launch(env: [String: String]? = nil) -> EventLoopFuture<Root.Env.Connection> {
         return createSpeedsterSnapshotIfNeeded().flatMap { _ in
             fatalError()
         }

@@ -81,11 +81,11 @@ public class RefRepo {
             var futures: [EventLoopFuture<Void>] = []
             for rsa in arr {
                 if !output.contains(rsa.domain) {
-                    let future: EventLoopFuture<Void> = self.shell.run(bash: "ssh-keyscan \(rsa.domain) >> \(rsa.domain.safeText) ; ssh-keygen -lf \(rsa.domain.safeText)").flatMap { output in
+                    let future: EventLoopFuture<Void> = self.shell.run(bash: "ssh-keyscan \(rsa.domain) >> \(rsa.domain.safeText) ; ssh-keygen -lf \(rsa.domain.safeText)").future.flatMap { output in
                         if let sha = rsa.sha, !output.contains(sha) {
                             return self.eventLoop.makeFailedFuture(Error.rsaValidationFailed(domain: rsa.domain))
                         }
-                        return self.shell.run(bash: "cat \(rsa.domain.safeText) >> ~/.ssh/known_hosts").void()
+                        return self.shell.run(bash: "cat \(rsa.domain.safeText) >> ~/.ssh/known_hosts").future.void()
                     }
                     futures.append(future)
                 }
@@ -93,7 +93,7 @@ public class RefRepo {
             return futures.flatten(on: self.eventLoop)
         }
         
-        return shell.run(bash: "cat ~/.ssh/known_hosts").flatMap { output in
+        return shell.run(bash: "cat ~/.ssh/known_hosts").future.flatMap { output in
             return run(output)
         }.flatMapError { error in
             return run("")
@@ -116,7 +116,7 @@ public class RefRepo {
             let file = folder.finished(with: "/").appending(name)
             // NOTE: key file has to end with a new line
             return self.shell.upload(string: key.finished(with: "\n"), to: file).flatMap { _ in
-                return self.shell.run(bash: "chmod 400 \(file.escapeSpaces)").map { _ in
+                return self.shell.run(bash: "chmod 400 \(file.escapeSpaces)").future.map { _ in
                     self.sshKeys.append(name)
                 }
             }
@@ -126,7 +126,7 @@ public class RefRepo {
     // MARK: Private interface
     
     func run(bash command: String) -> EventLoopFuture<Void> {
-        return shell.run(bash: command).map { out in
+        return shell.run(bash: command).future.map { out in
             print("Output for \(command): " + out)
         }
     }

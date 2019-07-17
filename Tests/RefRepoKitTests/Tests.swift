@@ -59,7 +59,7 @@ final class RefRepoTests: XCTestCase {
         _ = try! shell.run(bash: "pwd") { s in
             XCTAssertEqual(s.trimmingCharacters(in: .newlines), "/tmp")
             count += 1
-        }.wait()
+        }.future.wait()
         XCTAssertEqual(count, 1)
     }
     
@@ -76,7 +76,7 @@ final class RefRepoTests: XCTestCase {
         _ = try! shell.run(bash: command) { s in
             count += 1
             XCTAssertEqual(s.trimmingCharacters(in: .newlines), String(count))
-        }.wait()
+        }.future.wait()
         XCTAssertEqual(count, 3)
     }
     
@@ -107,7 +107,7 @@ final class RefRepoTests: XCTestCase {
     
     func testFetchSSH() {
         ref.sshKeys.append("id_rsa.0")
-        _ = try! shell.run(bash: "git clone \(repoSSH) \(ref.tmp(for: repoSSH))").wait()
+        _ = try! shell.run(bash: "git clone \(repoSSH) \(ref.tmp(for: repoSSH))").future.wait()
         
         let string = try! ref.clone(repo: repoSSH, checkout: "master", target: "/tmp/test-refrepo/clones/test-stuff", workspace: "/tmp/test-refrepo/clones/").wait()
         
@@ -121,7 +121,7 @@ final class RefRepoTests: XCTestCase {
     }
     
     func testFetchHTTPS() {
-        _ = try! shell.run(bash: "git clone \(repoHTTPS) \(ref.tmp(for: repoSSH))").wait()
+        _ = try! shell.run(bash: "git clone \(repoHTTPS) \(ref.tmp(for: repoSSH))").future.wait()
         
         let string = try! ref.clone(repo: repoHTTPS, checkout: "master", target: "/tmp/test-refrepo/clones/test-stuff", workspace: "/tmp/test-refrepo/clones/").wait()
         

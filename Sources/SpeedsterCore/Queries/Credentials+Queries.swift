@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  Credentials+Queries.swift
 //  
 //
 //  Created by Ondrej Rafaj on 12/07/2019.

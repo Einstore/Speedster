@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  Array+Tools.swift
 //  
 //
 //  Created by Ondrej Rafaj on 13/07/2019.

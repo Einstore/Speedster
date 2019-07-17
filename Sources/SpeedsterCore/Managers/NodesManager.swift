@@ -7,11 +7,12 @@
 
 import Fluent
 import CommandKit
+import WebErrorKit
 
 
 class NodesManager {
     
-    enum Error: Swift.Error {
+    enum Error: String, WebError {
         case errorExitCode
     }
     
@@ -27,8 +28,9 @@ class NodesManager {
         let q = Node.query(on: db)
             .filter(\Node.running < 2)
         if let labels = labels {
-            #warning("Needs to search for any of the given labels in the string")
-            q.filter(\Node.labels, in: labels)
+            for label: String in labels {
+                q.filter(\Node.labels == label)
+            }
         }
         return q.first().flatMap { node in
             guard let node = node else {

@@ -9,6 +9,7 @@ import Fluent
 import RefRepoKit
 import CommandKit
 import GitHubKit
+import WebErrorKit
 
 
 class Executioner {
@@ -21,10 +22,37 @@ class Executioner {
         case error(_ error: Swift.Error, job: Root.Job)
     }
     
-    public enum Error: Swift.Error {
+    public enum ExecutionerError: SerializableWebError {
         case invalidCredentials(name: String)
         case missingPrivateKey(name: String)
         case unsupportedCommand(command: String, node: Row<Node>)
+        
+        public var statusCode: Int {
+            return 412
+        }
+        
+        public var serializedCode: String {
+            switch self {
+            case .invalidCredentials:
+                return "invalid_credentials"
+            case .missingPrivateKey:
+                return "missing_private_key"
+            case .unsupportedCommand:
+                return "unsupported_command"
+            }
+        }
+        
+        public var reason: String? {
+            switch self {
+            case .invalidCredentials(name: let name):
+                return "Invalid credentials: \(name)"
+            case .missingPrivateKey(name: let name):
+                return "Missing private key: \(name)"
+            case .unsupportedCommand(command: let command, node: let node):
+                return "Unsupported \(command) command on \(node.host)"
+            }
+        }
+        
     }
     
     typealias Update = ((UpdateData) -> ())
@@ -78,9 +106,10 @@ class Executioner {
     /// Execute job
     func run() -> EventLoopFuture<Void> {
         make(update: .output(text: "Building \(root.name) on \(node.host)"))
-        return prepareCodebase().flatMap { _ in
-            return self.launchJobs()
-        }
+        return ExecutionerError.invalidCredentials(name: "test woe").fail(eventLoop)
+//        return prepareCodebase().flatMap { _ in
+//            return self.launchJobs()
+//        }
     }
     
     // MARK: Private interface
@@ -129,7 +158,7 @@ class Executioner {
             for command in required {
                 if software.contains(where: { $0.key == command }) {
                     if software[command] == false {
-                        return Error.unsupportedCommand(command: command, node: self.node).fail(self.eventLoop)
+                        return ExecutionerError.unsupportedCommand(command: command, node: self.node).fail(self.eventLoop)
                     }
                 }
             }
@@ -148,15 +177,15 @@ class Executioner {
                     let archive = self.workspace(subItem: "archive.tar")
                     return shell.run(bash: "curl -o \(archive) \(link)") { output in
                         self.make(update: .output(text: output))
-                    }.flatMap { output in
+                    }.future.flatMap { output in
                         return shell.run(bash: "tar -C \(destination) -xvf \(archive)") { output in
                             self.make(update: .output(text: output))
-                        }.flatMap { _ in
+                        }.future.flatMap { _ in
                             let unarchived = destination
                                 .finished(with: "/")
                                 .appending("\(self.location.org)-\(self.location.repo)-\(self.location.commit)")
                             // Move files from a subfolder (if exists)
-                            return shell.run(bash: "mv \(unarchived)/* \(destination) ; rm -rf \(unarchived)").map { output in
+                            return shell.run(bash: "mv \(unarchived)/* \(destination) ; rm -rf \(unarchived)").future.map { output in
                                 return Void()
                             }.always { _ in
                                 self.make(update: .output(text: "Source available at \(destination)"))
@@ -212,7 +241,7 @@ class Executioner {
                     self.make(update: .output(text: "Adding ssh keys"))
                     guard creds.count == ssh.count else {
                         let diff = ssh.difference(from: creds.map { $0.name })
-                        return Error.invalidCredentials(name: diff.first ?? "unknown credentials").fail(self.eventLoop)
+                        return ExecutionerError.invalidCredentials(name: diff.first ?? "unknown credentials").fail(self.eventLoop)
                     }
                     
                     func addPrivateKey(_ creds: [Row<Credentials>]) -> EventLoopFuture<Void> {
@@ -220,7 +249,7 @@ class Executioner {
                             return self.eventLoop.makeSucceededFuture(Void())
                         }
                         guard let privateKey = cred.privateKeyDecrypted else {
-                            return Error.missingPrivateKey(name: cred.name).fail(self.eventLoop)
+                            return ExecutionerError.missingPrivateKey(name: cred.name).fail(self.eventLoop)
                         }
                         return ref.add(ssh: privateKey, workspace: self.workspace()).flatMap { _ in
                             return addPrivateKey(Array(creds.dropFirst()))
@@ -263,7 +292,11 @@ class Executioner {
             node: self.node,
             on: self.eventLoop
         )
-        return envManager.launch().always { result in
+        var envVars = env.variables ?? [:]
+        for v in vars {
+            envVars["SYSTEM_\(v.key)"] = v.value
+        }
+        return envManager.launch(env: envVars).always { result in
             let connection: Root.Env.Connection
             switch result {
             case .success(let conn):

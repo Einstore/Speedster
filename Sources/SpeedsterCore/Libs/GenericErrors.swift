@@ -6,10 +6,11 @@
 //
 
 import Vapor
+import WebErrorKit
 
 
 /// Generic HTTP error
-public enum HTTPError: Error {
+public enum HTTPError: SerializableWebError {
     
     /// Not found
     case notFound
@@ -17,19 +18,39 @@ public enum HTTPError: Error {
     /// Missing query  or POST parameters
     case missingParamaters
     
+    public var serializedCode: String {
+        switch self {
+        case .notFound:
+            return "not_found"
+        case .missingParamaters:
+            return "missing_params"
+        }
+    }
+    
 }
 
 /// Generic error
-public enum GenericError: Error {
+public enum GenericError: SerializableWebError {
     
     /// Error decoding content
-    case decodingError
+    case decodingError(String?)
     
     /// Missing expected data
     case missingParamater(String)
     
     /// Not supported
     case notSupported(String)
+    
+    public var serializedCode: String {
+        switch self {
+        case .decodingError:
+            return "decoring_error"
+        case .missingParamater:
+            return "missing_parameter"
+        case .notSupported:
+            return "not_supported"
+        }
+    }
     
 }
 

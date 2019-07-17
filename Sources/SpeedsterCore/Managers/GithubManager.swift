@@ -9,11 +9,12 @@ import GitHubKit
 import Fluent
 import FluentPostgresDriver
 import FluentSQLiteDriver
+import WebErrorKit
 
 
 class GithubManager {
     
-    enum Error: Swift.Error {
+    enum Error: String, WebError {
         case unableToRetrieveGithubData
         case invalidSpeedsterFile
         case noFilesFoundInCommitTree
@@ -242,7 +243,7 @@ class GithubManager {
     func file(_ fileName: String, for location: GitLocation) -> EventLoopFuture<Data> {
         return blob(fileName, for: location).flatMap { blob in
             guard let data = Data(base64Encoded: blob.content, options: [.ignoreUnknownCharacters]) else {
-                return GenericError.decodingError.fail(self.container)
+                return GenericError.decodingError(nil).fail(self.container)
             }
             return self.db.eventLoop.makeSucceededFuture(data)
         }
@@ -255,7 +256,7 @@ class GithubManager {
                     let data = Data(base64Encoded: blob.content, options: [.ignoreUnknownCharacters]),
                     let string = String(data: data, encoding: .utf8)
                     else {
-                        return GenericError.decodingError.fail(self.container)
+                        return GenericError.decodingError(nil).fail(self.container)
                 }
                 let job: Root = try Root.decode(from: string)
                 return self.db.eventLoop.makeSucceededFuture(job)

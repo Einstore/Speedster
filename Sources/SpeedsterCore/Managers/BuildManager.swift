@@ -8,11 +8,12 @@
 import Fluent
 import GitHubKit
 import Redis
+import WebErrorKit
 
 
 class BuildManager {
     
-    enum Error: Swift.Error {
+    enum Error: String, WebError {
         case missingScheduledId
         case noAvailableNode
     }

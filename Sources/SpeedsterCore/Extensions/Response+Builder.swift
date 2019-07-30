@@ -1,10 +1,3 @@
-//
-//  Response+Builder.swift
-//  
-//
-//  Created by Ondrej Rafaj on 15/06/2019.
-//
-
 import Foundation
 import Fluent
 import Yams

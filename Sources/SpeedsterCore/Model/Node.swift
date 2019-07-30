@@ -20,7 +20,7 @@ public struct Node: Model {
         let user: String?
         let labels: [String]?
         let password: String?
-        let publicKey: String?
+        let privateKey: String?
         let auth: Root.Env.Connection.Auth
         let executors: Int
         
@@ -31,7 +31,7 @@ public struct Node: Model {
             case user
             case labels
             case password
-            case publicKey = "public_key"
+            case privateKey = "public_key"
             case auth
             case executors
         }
@@ -47,7 +47,7 @@ public struct Node: Model {
         public let user: String?
         public let labels: [String]?
         public let password: Bool
-        public let publicKey: Bool
+        public let privateKey: Bool
         public let auth: Root.Env.Connection.Auth
         public let executors: Int
         public let running: Int
@@ -60,7 +60,7 @@ public struct Node: Model {
             case user
             case labels
             case password
-            case publicKey = "public_key"
+            case privateKey = "public_key"
             case auth
             case executors
             case running
@@ -74,7 +74,7 @@ public struct Node: Model {
             self.user = row.user ?? (row.auth == .password ? "root" : nil)
             self.labels = row.labels?.commaSeparatedArray()
             self.password = (row.password?.count ?? 0) > 0
-            self.publicKey = (row.publicKey?.count ?? 0) > 0
+            self.privateKey = (row.privateKey?.count ?? 0) > 0
             self.auth = row.auth
             self.executors = row.executors
             self.running = row.running
@@ -105,8 +105,11 @@ public struct Node: Model {
     /// Login password (if auth is 2) or an optional passphrase (if auth is 3)
     public let password = Field<Data?>("password", dataType: .data)
     
-    /// Public key certificate
-    public let publicKey = Field<Data?>("public_key", dataType: .data)
+    /// Public RSA key
+    //public let privateKey = Field<Data?>("public_key", dataType: .data)
+    
+    /// Private RSA key
+    public let privateKey = Field<Data?>("private_key", dataType: .data)
     
     /// Authentication
     ///
@@ -161,9 +164,9 @@ extension Row where Model == Node {
         if let password = nodeData.password {
             self.password = try? Secrets.encrypt(asData: password)
         } else { self.password = nil }
-        if let publicKey = nodeData.publicKey {
-            self.publicKey = try? Secrets.encrypt(asData: publicKey)
-        } else { self.publicKey = nil }
+        if let privateKey = nodeData.privateKey {
+            self.privateKey = try? Secrets.encrypt(asData: privateKey)
+        } else { self.privateKey = nil }
     }
     
 }

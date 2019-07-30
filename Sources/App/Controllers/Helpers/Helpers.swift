@@ -235,7 +235,7 @@ extension Root.Env {
                 "VAR1": "value 1",
                 "VAR2": "value 2"
             ],
-            build: "echo 'This is an image build script'"
+            build: "docker build -t einstore ."
         )
     }
     

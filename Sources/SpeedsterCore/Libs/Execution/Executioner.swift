@@ -1,10 +1,3 @@
-//
-//  Executioner.swift
-//  
-//
-//  Created by Ondrej Rafaj on 09/06/2019.
-//
-
 import Fluent
 import RefRepoKit
 import CommandKit
@@ -292,9 +285,11 @@ class Executioner {
             node: self.node,
             on: self.eventLoop
         )
-        var envVars = env.variables ?? [:]
-        for v in vars {
-            envVars["SYSTEM_\(v.key)"] = v.value
+        var envVars = root.scriptVariables ?? [:]
+        if let vars = env.variables {
+            for v in vars {
+                envVars[v.key] = v.value
+            }
         }
         return envManager.launch(env: envVars).always { result in
             let connection: Root.Env.Connection

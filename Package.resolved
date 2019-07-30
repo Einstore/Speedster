@@ -24,8 +24,8 @@
         "repositoryURL": "https://github.com/IBM-Swift/BlueSocket",
         "state": {
           "branch": null,
-          "revision": "ccc671b022bc60e5fffcb2aa15f499c6331bfd18",
-          "version": "1.0.46"
+          "revision": "3cf5de510650d67c551c9e1884fbc9d6e744206b",
+          "version": "1.0.48"
         }
       },
       {
@@ -195,8 +195,8 @@
         "repositoryURL": "https://github.com/Einstore/ShellKit.git",
         "state": {
           "branch": null,
-          "revision": "225b1bf00b4b91de6b8b5310f8abcf6d7be56fee",
-          "version": "1.4.0"
+          "revision": "99284fae1d3f231ec1841c4e3d9976a51db29513",
+          "version": "1.4.2"
         }
       },
       {
@@ -258,8 +258,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio.git",
         "state": {
           "branch": null,
-          "revision": "334815f6580b5256409d48431751938c4e966e72",
-          "version": "2.4.0"
+          "revision": "6a79d4687ede7c088fe3e31d9b3452d6e6cd91eb",
+          "version": "2.5.1"
         }
       },
       {
@@ -267,8 +267,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio-extras.git",
         "state": {
           "branch": null,
-          "revision": "96e8335180ca61c7187efe47058a1c99eadaf265",
-          "version": "1.1.0"
+          "revision": "66f9a509ed3cc56b6eb367515e421beca4a0af53",
+          "version": "1.2.0"
         }
       },
       {
@@ -285,8 +285,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio-http2.git",
         "state": {
           "branch": null,
-          "revision": "06880b0abdc5d2aa68b96d6b3b29b089cb423922",
-          "version": "1.3.0"
+          "revision": "492a77b1867c2d31b08a3d7db63de59a8e2399ac",
+          "version": "1.4.0"
         }
       },
       {
@@ -294,8 +294,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio-ssl.git",
         "state": {
           "branch": null,
-          "revision": "77173ac9038e8e9b92f3efe8780923447e3c890b",
-          "version": "2.1.1"
+          "revision": "16de4b45c7cbe9815f995dd1539e6b7c4f0980a5",
+          "version": "2.2.0"
         }
       },
       {
@@ -321,8 +321,8 @@
         "repositoryURL": "https://github.com/vapor/vapor.git",
         "state": {
           "branch": null,
-          "revision": "e415cbcacc14a5f8d02e3b6e1aea36f86064b98e",
-          "version": "4.0.0-alpha.1.5"
+          "revision": "385101aa31e62dd2e2bd4062ea1be5882a060629",
+          "version": "4.0.0-alpha.1.5.1"
         }
       },
       {

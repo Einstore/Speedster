@@ -20,7 +20,6 @@ public struct Credentials: Model {
         public let login: String?
         public let password: Bool
         public let privateKey: Bool
-        public let publicKey: Bool
         public let isPrivate: Bool
         
         enum CodingKeys: String, CodingKey {
@@ -30,7 +29,6 @@ public struct Credentials: Model {
             case login
             case password
             case privateKey = "private_key"
-            case publicKey = "public_key"
             case isPrivate = "private"
         }
         
@@ -41,7 +39,6 @@ public struct Credentials: Model {
             login = row.login
             password = !row.password.isVeryVeryEmpty
             privateKey = !row.privateKey.isVeryVeryEmpty
-            publicKey = !row.publicKey.isVeryVeryEmpty
             isPrivate = row.isPrivate == 1
         }
         
@@ -54,7 +51,6 @@ public struct Credentials: Model {
         public let login: String?
         public let password: String?
         public let privateKey: String?
-        public let publicKey: String?
         public let isPrivate: Bool
         
         enum CodingKeys: String, CodingKey {
@@ -63,7 +59,6 @@ public struct Credentials: Model {
             case login
             case password
             case privateKey = "private_key"
-            case publicKey = "public_key"
             case isPrivate = "private"
         }
         
@@ -79,7 +74,6 @@ public struct Credentials: Model {
     public let login = Field<String?>("login")
     public let password = Field<Data?>("password", dataType: .data)
     public let privateKey = Field<Data?>("private_key", dataType: .data)
-    public let publicKey = Field<Data?>("public_key", dataType: .data)
     public let isPrivate = Field<Int>("private")
     
     public static func row(from post: Post) -> Row<Credentials> {
@@ -93,9 +87,6 @@ public struct Credentials: Model {
         if let value = post.privateKey {
             row.privateKey = try? Secrets.encrypt(asData: value)
         } else { row.privateKey = nil }
-        if let value = post.publicKey {
-            row.publicKey = try? Secrets.encrypt(asData: value)
-        } else { row.publicKey = nil }
         row.isPrivate = post.isPrivate ? 1 : 0
         return row
     }
@@ -118,13 +109,6 @@ extension Row where Model == Credentials {
     
     public var privateKeyDecrypted: String? {
         guard let data = self.privateKey else {
-            return nil
-        }
-        return try? Secrets.decrypt(string: data)
-    }
-    
-    public var publicKeyDecrypted: String? {
-        guard let data = self.publicKey else {
             return nil
         }
         return try? Secrets.decrypt(string: data)

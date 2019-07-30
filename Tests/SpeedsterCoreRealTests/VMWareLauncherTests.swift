@@ -1,15 +1,8 @@
-//
-//  EnvironmentManagerTests.swift
-//  
-//
-//  Created by Ondrej Rafaj on 07/07/2019.
-//
-
 import SpeedsterCore
 import XCTest
 
 
-final class EnvironmentManagerTests: XCTestCase {
+final class VMWareLauncherTests: XCTestCase {
     
     func testVMWareStarts() {
         

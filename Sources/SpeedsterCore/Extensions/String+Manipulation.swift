@@ -1,10 +1,3 @@
-//
-//  String+Manipulation.swift
-//  
-//
-//  Created by Ondrej Rafaj on 03/07/2019.
-//
-
 import Foundation
 
 

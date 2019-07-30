@@ -282,6 +282,9 @@ public struct Root: Content {
         public let image: Image
         
         /// Amount of memory (RAM) available
+        public let cores: Int?
+        
+        /// Amount of memory (RAM) available
         public let memory: String?
         
         /// Amount of storage available
@@ -298,13 +301,15 @@ public struct Root: Content {
         
         public init(
             image: Image,
-            memory: String,
+            cores: Int? = nil,
+            memory: String? = nil,
             storage: String,
             mounts: [String: String]? = nil,
             variables: [String: String]? = nil,
             build: String? = nil
             ) {
             self.image = image
+            self.cores = cores
             self.memory = memory
             self.storage = storage
             self.mounts = mounts
@@ -427,7 +432,7 @@ public struct Root: Content {
     /// Branch management
     public let pipelines: [Pipeline]?
     
-    /// Variables parsed through every build script in a format #{VARIABLE}
+    /// Variables parsed through to every build script in a format #{YOUR_VARIABLE}
     public let scriptVariables: [String: String]?
     
     enum CodingKeys: String, CodingKey {

@@ -1,10 +1,3 @@
-//
-//  GenericErrors.swift
-//  
-//
-//  Created by Ondrej Rafaj on 12/06/2019.
-//
-
 import Vapor
 import WebErrorKit
 

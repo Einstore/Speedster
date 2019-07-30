@@ -1,10 +1,3 @@
-//
-//  Model+SingleItemActions.swift
-//  
-//
-//  Created by Ondrej Rafaj on 16/06/2019.
-//
-
 import Fluent
 
 

@@ -1,10 +1,3 @@
-//
-//  Speedster+Database.swift
-//  
-//
-//  Created by Ondrej Rafaj on 07/06/2019.
-//
-
 import Foundation
 import Vapor
 import Fluent

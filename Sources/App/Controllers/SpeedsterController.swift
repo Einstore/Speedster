@@ -38,7 +38,7 @@ final class SpeedsterController {
 //                    port: 0,
 //                    user: nil,
 //                    password: nil,
-//                    publicKey: nil,
+//                    privateKey: nil,
 //                    auth: .none
 //                ),
 //                on: req.eventLoop
@@ -58,7 +58,7 @@ final class SpeedsterController {
 //                    port: 22,
 //                    user: "root",
 //                    password: "exploited",
-//                    publicKey: nil,
+//                    privateKey: nil,
 //                    auth: .password
 //                ),
 //                on: req.eventLoop

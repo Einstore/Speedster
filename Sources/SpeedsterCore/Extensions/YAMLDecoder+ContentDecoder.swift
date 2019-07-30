@@ -1,10 +1,3 @@
-//
-//  YAMLDecoder+ContentDecoder.swift
-//  
-//
-//  Created by Ondrej Rafaj on 20/06/2019.
-//
-
 import Yams
 import Vapor
 

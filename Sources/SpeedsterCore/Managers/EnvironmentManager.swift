@@ -29,8 +29,8 @@ class EnvironmentManager {
             switch env.image {
             case .vmware:
                 launcher = try VMWareLauncher(env, node: node, on: eventLoop)
-            default:
-                fatalError()
+            case .docker:
+                launcher = try DockerLauncher(env, node: node, on: eventLoop)
             }
         } catch {
             bootUpError = error

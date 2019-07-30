@@ -4,10 +4,11 @@ import PackageDescription
 let package = Package(
     name: "Speedster",
     products: [
-        .executable(name: "Speedster", targets: ["App"]),
+        .executable(name: "speedster", targets: ["App"]),
         .library(name: "SpeedsterCore", targets: ["SpeedsterCore"]),
         .library(name: "VMWareRunKit", targets: ["VMWareRunKit"]),
-        .library(name: "RefRepoKit", targets: ["RefRepoKit"])
+        .library(name: "RefRepoKit", targets: ["RefRepoKit"]),
+        .library(name: "DockerCommandKit", targets: ["DockerCommandKit"])
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-nio.git", from: "2.3.0"),
@@ -39,6 +40,12 @@ let package = Package(
         ),
         .target(
             name: "VMWareRunKit",
+            dependencies: [
+                "ShellKit"
+            ]
+        ),
+        .target(
+            name: "DockerCommandKit",
             dependencies: [
                 "ShellKit"
             ]
@@ -85,6 +92,10 @@ let package = Package(
         .testTarget(
             name: "VMWareRunKitTests",
             dependencies: ["VMWareRunKit", "NIO"]
+        ),
+        .testTarget(
+            name: "DockerCommandKitTests",
+            dependencies: ["DockerCommandKit"]
         )
     ]
 )

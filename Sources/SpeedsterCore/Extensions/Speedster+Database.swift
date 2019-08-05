@@ -39,7 +39,7 @@ extension Speedster {
             }
             
             s.register(SQLiteConfiguration.self) { c in
-                return .init(storage: .connection(.file(path: "/temp/speedster.sqlite")))
+                return .init(storage: .connection(.file(path: "/tmp/speedster.sqlite")))
             }
             
             s.register(Database.self) { c in

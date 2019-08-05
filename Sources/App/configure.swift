@@ -23,7 +23,7 @@ s.register(MiddlewareConfiguration.self) { c in
     /// middlewares.use(FileMiddleware.self)
     
     // Catches errors and converts to HTTP response
-    try middlewares.use(c.make(WebErrorMiddleware.self))
+    try middlewares.use(c.make(ErrorMiddleware.self))
     
     return middlewares
 }

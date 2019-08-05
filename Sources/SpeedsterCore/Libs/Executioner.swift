@@ -8,11 +8,19 @@ import WebErrorKit
 class Executioner {
     
     enum UpdateData {
+        
         case started(job: Root.Job)
-        case output(text: String, job: Root.Job? = nil)
+        // TODO: Make job `nil` by default again when it get's fixed in Swift SR-11256
+        case output(text: String, job: Root.Job?)
         case finished(exit: Int, job: Root.Job)
         case environment(error: Swift.Error, job: Root.Job)
         case error(_ error: Swift.Error, job: Root.Job)
+        
+        // TODO: Remove as per previous comment
+        public static func output(text: String) -> UpdateData {
+            return .output(text: text, job: nil)
+        }
+        
     }
     
     public enum ExecutionerError: SerializableWebError {
@@ -99,10 +107,10 @@ class Executioner {
     /// Execute job
     func run() -> EventLoopFuture<Void> {
         make(update: .output(text: "Building \(root.name) on \(node.host)"))
-        return ExecutionerError.invalidCredentials(name: "test woe").fail(eventLoop)
-//        return prepareCodebase().flatMap { _ in
-//            return self.launchJobs()
-//        }
+//        return ExecutionerError.invalidCredentials(name: "test woe").fail(eventLoop)
+        return prepareCodebase().flatMap { _ in
+            return self.launchJobs()
+        }
     }
     
     // MARK: Private interface
@@ -276,7 +284,6 @@ class Executioner {
     
     /// Launch an envitonment for a job
     private func launch(envFor job: Root.Job) -> EventLoopFuture<Root.Env.Connection> {
-        // TODO: Launch a new Shell for each job as it will otherwise confuse shell->Channel over SSH!!!!!!!
         guard let env = job.environment ?? root.environment else {
             fatalError("Missing environment, this should have been checked before the run has started (favourite last words ... THIS SHOULD NEVER HAPPEN!)")
         }
@@ -291,6 +298,7 @@ class Executioner {
                 envVars[v.key] = v.value
             }
         }
+        print(envVars)
         return envManager.launch(env: envVars).always { result in
             let connection: Root.Env.Connection
             switch result {

@@ -18,12 +18,13 @@ extension Speedster {
             }
             
             s.register(PostgresConfiguration.self) { c in
+                let port = Int(Environment.get("DB_PORT") ?? "5432")
                 return .init(
-                    hostname: "localhost",
-                    port: 5432,
-                    username: "speedster",
-                    password: "aaaaaa",
-                    database: "speedster",
+                    hostname: Environment.get("DB_HOST") ?? "localhost",
+                    port: port ?? 5432,
+                    username: Environment.get("DB_USER") ?? "speedster",
+                    password: Environment.get("DB_HPASSWORD") ?? "aaaaaa",
+                    database: Environment.get("DB_DATABASE") ?? "speedster",
                     tlsConfiguration: nil
                 )
             }

@@ -9,6 +9,7 @@ services:
         restart: on-failure
         environment:
             DB: postgres
+            DB_HOST: postgres
             PERSONAL_ACCESS_TOKEN: ${TOKEN}
             SECRET: "c3BlZWRzdGVyOtq39S8PBthwDkJ0m2S/OBJtvZE4viY0xA726hgLKcIC"
         command: ["swift", "run", "speedster", "serve", "--hostname", "0.0.0.0", "--port", "8080", "--auto-migrate"]

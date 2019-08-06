@@ -1,11 +1,40 @@
-version: '2'
+version: '2.4'
 
 services:
-  db:
-    image: postgres:11
-    environment:
-      POSTGRES_USER: speedster
-      POSTGRES_DB: speedster
-      POSTGRES_PASSWORD: aaaaaa
-    ports:
-      - 5432:5432
+    api:
+        image: einstore/swift:latest-full
+        volumes:
+            - .:/app
+        working_dir: /app
+        restart: on-failure
+        environment:
+            DB: postgres
+            PERSONAL_ACCESS_TOKEN: ${TOKEN}
+            SECRET: "c3BlZWRzdGVyOtq39S8PBthwDkJ0m2S/OBJtvZE4viY0xA726hgLKcIC"
+        command: ["swift", "run", "speedster", "serve", "--hostname", "0.0.0.0", "--port", "8080", "--auto-migrate"]
+
+    postgres:
+        image: postgres:11-alpine
+        restart: always
+        environment:
+            POSTGRES_USER: speedster
+            POSTGRES_PASSWORD: aaaaaa
+            POSTGRES_DB: speedster
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U speedster"]
+            interval: 1s
+            timeout: 5s
+            retries: 40
+
+    adminer:
+        image: michalhosna/adminer:master
+        environment:
+            ADMINER_DB: speedster
+            ADMINER_DRIVER: pgsql
+            ADMINER_PASSWORD: aaaaaa
+            ADMINER_SERVER: postgres
+            ADMINER_USERNAME: speedster
+            ADMINER_AUTOLOGIN: 1
+            ADMINER_NAME: Speedster
+        depends_on:
+            - postgres

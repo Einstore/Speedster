@@ -274,32 +274,37 @@ class Executioner {
         make(update: .output(text: "Starting jobs"))
         var futures: [EventLoopFuture<Void>] = []
         for job in root.jobs.filter({ $0.dependsOn == nil || $0.dependsOn?.isEmpty == true }) {
-            let future: EventLoopFuture<Void> = launch(envFor: job).flatMap { connection in
-                fatalError()
+            var envVars = root.scriptVariables ?? [:]
+            if let env = job.environment ?? root.environment {
+                // Add environments env vars
+                if let vars = env.variables {
+                    for v in vars {
+                        envVars[v.key] = v.value
+                    }
+                }
+                print(envVars)
+                // TODO: Launch dependencies with access to vars
+                let future: EventLoopFuture<Void> = launch(env, vars: envVars, for: job).flatMap { connection in
+                    return self.execute(job, with: envVars, on: connection)
+                }
+                futures.append(future)
+            } else {
+                print(envVars)
+                let future = self.execute(job, with: envVars)
+                futures.append(future)
             }
-            futures.append(future)
         }
         return futures.flatten(on: eventLoop)
     }
     
     /// Launch an envitonment for a job
-    private func launch(envFor job: Root.Job) -> EventLoopFuture<Root.Env.Connection> {
-        guard let env = job.environment ?? root.environment else {
-            fatalError("Missing environment, this should have been checked before the run has started (favourite last words ... THIS SHOULD NEVER HAPPEN!)")
-        }
+    private func launch(_ env: Root.Env, vars: [String: String], for job: Root.Job) -> EventLoopFuture<Root.Env.Connection> {
         let envManager = EnvironmentManager(
             env,
             node: self.node,
             on: self.eventLoop
         )
-        var envVars = root.scriptVariables ?? [:]
-        if let vars = env.variables {
-            for v in vars {
-                envVars[v.key] = v.value
-            }
-        }
-        print(envVars)
-        return envManager.launch(env: envVars).always { result in
+        return envManager.launch(env: vars).always { result in
             let connection: Root.Env.Connection
             switch result {
             case .success(let conn):
@@ -310,6 +315,14 @@ class Executioner {
             }
             print(connection)
         }
+    }
+    
+    private func launchDependencies(for job: Root.Job) -> EventLoopFuture<Void> {
+        return eventLoop.makeSucceededFuture(Void())
+    }
+    
+    private func execute(_ job: Root.Job, with vars: [String: String], on connection: Root.Env.Connection? = nil) -> EventLoopFuture<Void> {
+        fatalError()
     }
     
     //    private func run(job: Root.Job, failed: @escaping FailedClosure) throws {

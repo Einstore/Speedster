@@ -445,7 +445,7 @@ public struct Root: Content {
         case environment = "environment"
         case dockerDependendencies = "docker_dependencies"
         case pipelines
-        case scriptVariables = "script_vars"
+        case scriptVariables = "vars"
     }
     
     /// Initializer

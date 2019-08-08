@@ -56,6 +56,10 @@ class EnvironmentManager {
         return launcher.launch(env: env)
     }
     
+    func launch(dependencies env: [String: String]?, for root: Root) -> EventLoopFuture<Void> {
+        fatalError()
+    }
+    
     func clean() -> EventLoopFuture<Void> {
         guard let launcher = launcher else {
             return eventLoop.makeFailedFuture(bootUpError ?? Error.unknownError)

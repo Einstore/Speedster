@@ -1,17 +1,17 @@
-FROM einstore/swift-full:latest as builder
+FROM einstore/swift:latest-full as builder
 
 WORKDIR /app
 COPY . /app
 
-ARG CONFIGURATION="release"
+ARG CONFIGURATION="debug"
 
 RUN swift build --configuration ${CONFIGURATION} --product speedster
 
 # ------------------------------------------------------------------------------
 
-FROM einstore/swift-full:latest
+FROM einstore/swift:latest-full
 
-ARG CONFIGURATION="release"
+ARG CONFIGURATION="debug"
 
 WORKDIR /app
 COPY --from=builder /app/.build/${CONFIGURATION}/speedster /app

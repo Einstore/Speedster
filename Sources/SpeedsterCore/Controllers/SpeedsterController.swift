@@ -7,6 +7,11 @@
 
 import Fluent
 import SystemManager
+#if os(Linux)
+    import Glibc
+#else
+    import Darwin.C
+#endif
 
 
 class SpeedsterController: Controller {
@@ -18,6 +23,10 @@ class SpeedsterController: Controller {
     }
     
     func routes(_ r: Routes, _ c: Container) throws {
+        let logger = try c.make(Logger.self)
+        logger.info("Routes for: \(#file)")
+        logger.info("Version: 1")
+        
         let nodesManager = NodesManager(db)
         
         r.post("system", "rsa", "sha") { req -> EventLoopFuture<Response> in
@@ -47,6 +56,11 @@ class SpeedsterController: Controller {
                     return error.fail(c)
                 }
             }
+        }
+        
+        r.get("system", "flush") { req -> String in
+            fflush(stdout)
+            return ":)"
         }
     }
     

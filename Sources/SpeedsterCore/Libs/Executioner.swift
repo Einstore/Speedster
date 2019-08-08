@@ -107,7 +107,7 @@ class Executioner {
     /// Execute job
     func run() -> EventLoopFuture<Void> {
         make(update: .output(text: "Building \(root.name) on \(node.host)"))
-//        return ExecutionerError.invalidCredentials(name: "test woe").fail(eventLoop)
+        //        return ExecutionerError.invalidCredentials(name: "test woe").fail(eventLoop)
         return prepareCodebase().flatMap { _ in
             return self.launchJobs()
         }
@@ -178,22 +178,22 @@ class Executioner {
                     let archive = self.workspace(subItem: "archive.tar")
                     return shell.run(bash: "curl -o \(archive) \(link)") { output in
                         self.make(update: .output(text: output))
-                    }.future.flatMap { output in
-                        return shell.run(bash: "tar -C \(destination) -xvf \(archive)") { output in
-                            self.make(update: .output(text: output))
-                        }.future.flatMap { _ in
-                            let unarchived = destination
-                                .finished(with: "/")
-                                .appending("\(self.location.org)-\(self.location.repo)-\(self.location.commit)")
-                            // Move files from a subfolder (if exists)
-                            return shell.run(bash: "mv \(unarchived)/* \(destination) ; rm -rf \(unarchived)").future.map { output in
-                                return Void()
-                            }.always { _ in
-                                self.make(update: .output(text: "Source available at \(destination)"))
-                            }.recover { _ in
-                                return Void()
+                        }.future.flatMap { output in
+                            return shell.run(bash: "tar -C \(destination) -xvf \(archive)") { output in
+                                self.make(update: .output(text: output))
+                                }.future.flatMap { _ in
+                                    let unarchived = destination
+                                        .finished(with: "/")
+                                        .appending("\(self.location.org)-\(self.location.repo)-\(self.location.commit)")
+                                    // Move files from a subfolder (if exists)
+                                    return shell.run(bash: "mv \(unarchived)/* \(destination) ; rm -rf \(unarchived)").future.map { output in
+                                        return Void()
+                                        }.always { _ in
+                                            self.make(update: .output(text: "Source available at \(destination)"))
+                                        }.recover { _ in
+                                            return Void()
+                                    }
                             }
-                        }
                     }
                 }
             } catch {
@@ -220,9 +220,9 @@ class Executioner {
                         checkout: trigger.ref,
                         target: destination,
                         workspace: workspace()
-                    ).map { path in
-                        self.vars["CLONED"] = destination
-                        return Void()
+                        ).map { path in
+                            self.vars["CLONED"] = destination
+                            return Void()
                     }
                 }
                 
@@ -304,68 +304,105 @@ class Executioner {
             node: self.node,
             on: self.eventLoop
         )
-        return envManager.launch(env: vars).always { result in
-            let connection: Root.Env.Connection
-            switch result {
-            case .success(let conn):
-                connection = conn
-            case .failure(let error):
-                self.make(update: .environment(error: error, job: job))
-                return
+        return envManager.launch(dependencies: vars, for: root).flatMap { _ in
+            return envManager.launch(env: vars).always { result in
+                let connection: Root.Env.Connection
+                switch result {
+                case .success(let conn):
+                    connection = conn
+                case .failure(let error):
+                    self.make(update: .environment(error: error, job: job))
+                    return
+                }
+                print(connection)
             }
-            print(connection)
         }
     }
     
-    private func launchDependencies(for job: Root.Job) -> EventLoopFuture<Void> {
-        return eventLoop.makeSucceededFuture(Void())
+    /// Execute a job on a local machine or a connection to a VM
+    ///     - Note: Do we want to allow this on Docker containers?!???
+    private func execute(_ job: Root.Job, with vars: [String: String], on conn: Root.Env.Connection? = nil) -> EventLoopFuture<Void> {
+        let shell: Shell
+        let identifier: String
+        do {
+            if let conn = conn {
+                shell = try Shell(
+                    // TODO: Make a proper connection to the VM
+                    .ssh(host: conn.host, username: "root", password: "aaaaaa"),
+                    on: eventLoop
+                )
+            } else {
+                shell = try Shell(.local, on: eventLoop)
+            }
+            identifier = try MD5.hash(.string("\(job)")).string()
+        } catch {
+            return eventLoop.makeFailedFuture(error)
+        }
+        processed.append(identifier)
+        
+        func append(_ phase: Root.Job.Phase, _ script: inout String) {
+            
+        }
+        
+        func internalExecute(_ job: Root.Job) -> EventLoopFuture<Void> {
+            var script = ""
+            
+            for phase in job.preBuild {
+                append(phase, &script)
+            }
+            for phase in job.build {
+                append(phase, &script)
+            }
+            for phase in job.success ?? [] {
+                append(phase, &script)
+            }
+            
+            // TODO: Parse vars into phase!!!!!!!!
+            
+            return shell.run(bash: script) { output in
+                // TODO: Track output on redis
+            }.future.flatMap { _ in
+                // Process any sub-jobs
+                do {
+                    var futures: [EventLoopFuture<Void>] = []
+                    for job in self.root.jobs.filter({ $0.dependsOn == job.name }) {
+                        let identifier = try MD5.hash(.string("\(job)")).string()
+                        if !self.processed.contains(identifier) {
+                            let future = internalExecute(job)
+                            futures.append(future)
+                        }
+                    }
+                    return futures.flatten(on: self.eventLoop)
+                } catch {
+                    return self.eventLoop.makeFailedFuture(error)
+                }
+            }
+        }
+        return internalExecute(job).flatMapError { error in
+            var futures: [EventLoopFuture<Void>] = []
+            for phase in job.fail ?? [] {
+                // TODO: Parse vars into phase!!!!!!!!
+                let future = shell.run(bash: phase.command, output: { output in
+                    // TODO: Track output on redis
+                })
+                futures.append(future.future.void())
+            }
+            return futures.flatten(on: self.eventLoop).flatMap { _ in
+                return self.eventLoop.makeFailedFuture(error)
+            }.flatMapError { _ in
+                return self.eventLoop.makeFailedFuture(error)
+            }
+        }.flatMap { _ in
+            var script = ""
+            // TODO: Parse vars into phase!!!!!!!!
+            for phase in job.always ?? [] {
+                append(phase, &script)
+            }
+            return shell.run(bash: script) { output in
+                // TODO: Track output on redis
+            }.future.void()
+        }
     }
-    
-    private func execute(_ job: Root.Job, with vars: [String: String], on connection: Root.Env.Connection? = nil) -> EventLoopFuture<Void> {
-        fatalError()
-    }
-    
-    //    private func run(job: Root.Job, failed: @escaping FailedClosure) throws {
-    //        guard let root = self.root else {
-    //            throw Error.missingJob
-    //        }
-    //        let identifier = try MD5.hash(.string("\(job)"))
-    //        processed.append("\(identifier.string())")
-    //        do {
-    //            for phase in job.preBuild {
-    //                try executor.run(phase, identifier: root.workspaceName)
-    //            }
-    //            for phase in job.build {
-    //                try executor.run(phase, identifier: root.workspaceName)
-    //            }
-    //            for phase in job.success ?? [] {
-    //                try executor.run(phase, identifier: root.workspaceName)
-    //            }
-    //            for phase in job.always ?? [] {
-    //                try executor.run(phase, identifier: root.workspaceName)
-    //            }
-    //            for workflow in root.jobs.filter({ $0.dependsOn == job.name }) {
-    //                let identifier = try MD5.hash(.string("\(workflow)"))
-    //                if !processed.contains(identifier.string()) {
-    //                    try self.run(job: workflow, failed: failed)
-    //                }
-    //            }
-    //        } catch {
-    //            do {
-    //                for phase in job.fail ?? [] {
-    //                    try executor.run(phase, identifier: root.workspaceName)
-    //                }
-    //            } catch {
-    //                eventLoop.execute {
-    //                    failed(error)
-    //                }
-    //                return
-    //            }
-    //            eventLoop.execute {
-    //                failed(error)
-    //            }
-    //        }
-    //    }
     
     /// Workspace path builder
     private func workspace(subItem item: String? = nil) -> String {

@@ -19,7 +19,7 @@ extension Speedster {
             
             s.register(PostgresConfiguration.self) { c in
                 let port = Int(Environment.get("DB_PORT") ?? "5432")
-                return .init(
+                let conf = PostgresConfiguration(
                     hostname: Environment.get("DB_HOST") ?? "localhost",
                     port: port ?? 5432,
                     username: Environment.get("DB_USER") ?? "speedster",
@@ -27,6 +27,7 @@ extension Speedster {
                     database: Environment.get("DB_DATABASE") ?? "speedster",
                     tlsConfiguration: nil
                 )
+                return conf
             }
             
             s.register(Database.self) { c in

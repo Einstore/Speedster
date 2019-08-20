@@ -25,7 +25,9 @@ class SpeedsterController: Controller {
     func routes(_ r: Routes, _ c: Container) throws {
         let logger = try c.make(Logger.self)
         logger.info("Routes for: \(#file)")
-        logger.info("Version: 1")
+        logger.info("Version: 3")
+        logger.info("DB: \(Environment.get("DB") ?? "sqlite")")
+        logger.info("Host: \(Environment.get("DB_HOST") ?? "n/a")")
         
         let nodesManager = NodesManager(db)
         

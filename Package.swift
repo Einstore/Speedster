@@ -39,6 +39,12 @@ let package = Package(
             ]
         ),
         .target(
+            name: "K8Kit",
+            dependencies: [
+                "CommandKit"
+            ]
+        ),
+        .target(
             name: "VMWareRunKit",
             dependencies: [
                 "ShellKit"
@@ -74,7 +80,8 @@ let package = Package(
                 "RefRepoKit",
                 "SecretsKit",
                 "SystemController",
-                "VaporErrorKit"
+                "VaporErrorKit",
+                "K8Kit"
             ]
         ),
         .testTarget(

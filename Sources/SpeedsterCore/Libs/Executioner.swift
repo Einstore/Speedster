@@ -341,7 +341,9 @@ class Executioner {
         processed.append(identifier)
         
         func append(_ phase: Root.Job.Phase, _ script: inout String) {
-            
+            script.append("\(phase.identifier ?? "")/n")
+            script.append("\(phase.description ?? "")/n")
+            script.append(phase.command)
         }
         
         func internalExecute(_ job: Root.Job) -> EventLoopFuture<Void> {
@@ -361,8 +363,7 @@ class Executioner {
             
             return shell.run(bash: script) { output in
                 // TODO: Track output on redis
-            }.future.flatMap { _ in
-                // Process any sub-jobs
+            }.future.flatMap { _ in // Process any sub-jobs
                 do {
                     var futures: [EventLoopFuture<Void>] = []
                     for job in self.root.jobs.filter({ $0.dependsOn == job.name }) {
@@ -378,6 +379,7 @@ class Executioner {
                 }
             }
         }
+        
         return internalExecute(job).flatMapError { error in
             var futures: [EventLoopFuture<Void>] = []
             for phase in job.fail ?? [] {
@@ -406,6 +408,7 @@ class Executioner {
     
     /// Workspace path builder
     private func workspace(subItem item: String? = nil) -> String {
+        // TODO: Allow users to define their own workspace through ENV vars!!!!
         var workspace = root.workspace ?? "/tmp/speeedster/workspaces"
         workspace = workspace.finished(with: "/").appending("\(randomId)")
         if let item = item {

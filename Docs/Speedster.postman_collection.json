@@ -1,0 +1,817 @@
+{
+	"info": {
+		"_postman_id": "c3c3b3a2-0417-4de2-8795-ee9207046173",
+		"name": "Speedster",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Example (example)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER}}example",
+					"host": [
+						"{{SERVER}}example"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Example (example/fail)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER}}example/fail",
+					"host": [
+						"{{SERVER}}example"
+					],
+					"path": [
+						"fail"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Example (example/small)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER}}example/small",
+					"host": [
+						"{{SERVER}}example"
+					],
+					"path": [
+						"small"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Reload (jobs/reload)",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER}}jobs/reload",
+					"host": [
+						"{{SERVER}}jobs"
+					],
+					"path": [
+						"reload"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Remote",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER}}remote",
+					"host": [
+						"{{SERVER}}remote"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Local",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER}}local",
+					"host": [
+						"{{SERVER}}local"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Jobs (jobs)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER}}jobs",
+					"host": [
+						"{{SERVER}}jobs"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Job (jobs/:id)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER}}jobs/{{JOB_ID}}",
+					"host": [
+						"{{SERVER}}jobs"
+					],
+					"path": [
+						"{{JOB_ID}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Scheduled (scheduled)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER}}scheduled",
+					"host": [
+						"{{SERVER}}scheduled"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Schedule (jobs/:id/schedule)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "fafd03dc-f976-4969-be82-aaf3213298f5",
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"",
+							"var code = 201",
+							"",
+							"// Status code",
+							"tests[\"Status code is \" + code] = responseCode.code === code;",
+							"",
+							"if (responseCode.code === code) {",
+							"    // Token check",
+							"    tests[\"Scheduled job has an id\"] = (jsonData[\"id\"].length > 0)",
+							"    tests[\"Scheduled job has a job_id\"] = (jsonData[\"job_id\"].length > 0)",
+							"    ",
+							"    postman.setEnvironmentVariable(\"SCHEDULED_ID\", jsonData[\"id\"]);",
+							"}",
+							"",
+							"// Content type",
+							"tests[\"Content-Type is present\"] = postman.getResponseHeader(\"Content-Type\");",
+							"tests[\"Content-Type is correct\"] = (postman.getResponseHeader(\"Content-Type\") == \"application/json; charset=utf-8\");",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{SERVER}}jobs/{{JOB_ID}}/schedule",
+					"host": [
+						"{{SERVER}}jobs"
+					],
+					"path": [
+						"{{JOB_ID}}",
+						"schedule"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Run (scheduled/:id/run)",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER}}scheduled/{{SCHEDULED_ID}}/run",
+					"host": [
+						"{{SERVER}}scheduled"
+					],
+					"path": [
+						"{{SCHEDULED_ID}}",
+						"run"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Scheduled (scheduled/:id)",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER}}scheduled/{{SCHEDULED_ID}}",
+					"host": [
+						"{{SERVER}}scheduled"
+					],
+					"path": [
+						"{{SCHEDULED_ID}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Webhook (github/:id/webhooks/reset)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "fae4ff51-af02-4d25-99ed-32de3aa6f1e9",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER}}github/{{JOB_ID}}/webhooks/reset",
+					"host": [
+						"{{SERVER}}github"
+					],
+					"path": [
+						"{{JOB_ID}}",
+						"webhooks",
+						"reset"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Validate (jobs/validate)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "text/yaml",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "name: Small root\nsource:\n  reference:\n    origin: git@github.com:Einstore/Einstore.git\n    rsa:\n      github.com: nThbg6kXUpJWGl7E1IGOCspRomTxdCARLviKw6E5SY8\n    ssh: github.com\njobs:\n- name: Small job\n  node_labels:\n  - linux\n  pre_build:\n  - command: echo 'Starting Small workflow'\n  build:\n  - name: Phase ls -a\n    command: ls -a\n    description: Phase ls -a description\n  fail:\n  - command: echo 'I have failed you master! :('\n  success:\n  - command: echo 'Yay!'\n  always:\n  - command: echo 'I am done!'\n  timeout: 10\n  timeout_inactivity: 5\n- name: Linux job\n  node_labels:\n  - linux\n  depends: Small job\n  environment:\n    image: vmware;/Users/pro/Virtual Machines.localized/Windows 10 x64.vmwarevm/Windows\n      10 x64.vmx\n    memory: 4Gib\n    storage: 10Gib\n    variables:\n      VAR1: value 1\n      VAR2: value 2\n  pre_build:\n  - command: echo 'Starting Linux workflow'\n  build:\n  - name: Phase ls -a\n    command: ls -a\n    description: Phase ls -a description\n  fail:\n  - command: echo 'I have failed you master! :('\n  success:\n  - command: echo 'Yay!'\n  always:\n  - command: echo 'I am done!'\n  timeout: 10\n  timeout_inactivity: 5\nenvironment:\n  image: vmware;/Users/pro/Virtual Machines.localized/Windows 10 x64.vmwarevm/Windows\n    10 x64.vmx\n  memory: 4Gib\n  storage: 10Gib\n  variables:\n    VAR2: value 2\n    VAR1: value 1\ndocker_dependencies:\n- image: postgres:11\n  networkName: psql\n  variables:\n    POSTGRES_DB: speedster\n    POSTGRES_USER: speedster\n    POSTGRES_PASSWORD: aaaaaa\npipelines:\n- name: Pipeline for Small job, Linux job\n  triggers:\n  - branch: master\n    action: commit\n  - branch: development\n    action: message:test please\n  - branch: master\n    action: message:build please\n  jobs:\n  - Small job\n  - Linux job\n"
+				},
+				"url": {
+					"raw": "{{SERVER}}jobs/validate",
+					"host": [
+						"{{SERVER}}jobs"
+					],
+					"path": [
+						"validate"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Crypt",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER}}crypt",
+					"host": [
+						"{{SERVER}}crypt"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Organizations (github/api/organizations)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER}}github/api/organizations",
+					"host": [
+						"{{SERVER}}github"
+					],
+					"path": [
+						"api",
+						"organizations"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Repos (github/api/organizations/:org/repos)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER}}github/api/organizations/fordeu/repos",
+					"host": [
+						"{{SERVER}}github"
+					],
+					"path": [
+						"api",
+						"organizations",
+						"fordeu",
+						"repos"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Branches (github/api/organizations/:org/:repo/branches)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER}}github/api/organizations/fordeu/repo/branches",
+					"host": [
+						"{{SERVER}}github"
+					],
+					"path": [
+						"api",
+						"organizations",
+						"fordeu",
+						"repo",
+						"branches"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Hooks (github/api/organizations/:org/:repo/hooks)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER}}github/api/organizations/fordeu/repo/hooks",
+					"host": [
+						"{{SERVER}}github"
+					],
+					"path": [
+						"api",
+						"organizations",
+						"fordeu",
+						"repo",
+						"hooks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Nodes (nodes)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER}}nodes",
+					"host": [
+						"{{SERVER}}nodes"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Nodes (nodes/:id)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER}}nodes/{{NODES_ID}}",
+					"host": [
+						"{{SERVER}}nodes"
+					],
+					"path": [
+						"{{NODES_ID}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Software (nodes/:id/software)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER}}nodes/{{NODES_ID}}/software",
+					"host": [
+						"{{SERVER}}nodes"
+					],
+					"path": [
+						"{{NODES_ID}}",
+						"software"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Info (nodes/:id/info)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER}}nodes/{{NODES_ID}}/info",
+					"host": [
+						"{{SERVER}}nodes"
+					],
+					"path": [
+						"{{NODES_ID}}",
+						"info"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Nodes (nodes/:id/install-docker)",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER}}nodes/{{NODES_ID}}/install-docker",
+					"host": [
+						"{{SERVER}}nodes"
+					],
+					"path": [
+						"{{NODES_ID}}",
+						"install-docker"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Nodes (nodes) - macOS",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "38d90072-ba68-4c89-9030-77ebdc08b014",
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"",
+							"// Status code",
+							"tests[\"Status code is 201\"] = responseCode.code === 201;",
+							"",
+							"if (responseCode.code === 201 || responseCode.code === 200) {",
+							"    // Token check",
+							"    tests[\"Team has an id\"] = (jsonData[\"id\"].length > 0)",
+							"    tests[\"Team has a name\"] = (jsonData[\"name\"].length > 0)",
+							"    ",
+							"    postman.setEnvironmentVariable(\"NODES_ID\", jsonData[\"id\"]);",
+							"}",
+							"",
+							"// Content type",
+							"tests[\"Content-Type is present\"] = postman.getResponseHeader(\"Content-Type\");",
+							"tests[\"Content-Type is correct\"] = (postman.getResponseHeader(\"Content-Type\") == \"application/json; charset=utf-8\");",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"labels\": [\"mac\"],\n    \"password\": \"exploited\",\n    \"port\": 22,\n    \"public_key\": null,\n    \"executors\": 2,\n    \"host\": \"new.liveui.io\",\n    \"auth\": \"ps\",\n    \"name\": \"Hoster\",\n    \"user\": \"administrator\"\n}"
+				},
+				"url": {
+					"raw": "{{SERVER}}nodes",
+					"host": [
+						"{{SERVER}}nodes"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Nodes (nodes) - Linux",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "38d90072-ba68-4c89-9030-77ebdc08b014",
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"",
+							"// Status code",
+							"tests[\"Status code is 201\"] = responseCode.code === 201;",
+							"",
+							"if (responseCode.code === 201 || responseCode.code === 200) {",
+							"    // Token check",
+							"    tests[\"Team has an id\"] = (jsonData[\"id\"].length > 0)",
+							"    tests[\"Team has a name\"] = (jsonData[\"name\"].length > 0)",
+							"    ",
+							"    postman.setEnvironmentVariable(\"NODES_ID\", jsonData[\"id\"]);",
+							"}",
+							"",
+							"// Content type",
+							"tests[\"Content-Type is present\"] = postman.getResponseHeader(\"Content-Type\");",
+							"tests[\"Content-Type is correct\"] = (postman.getResponseHeader(\"Content-Type\") == \"application/json; charset=utf-8\");",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"labels\": [\"linux\"],\n    \"password\": \"exploited\",\n    \"port\": 22,\n    \"public_key\": null,\n    \"executors\": 2,\n    \"host\": \"157.230.106.39\",\n    \"auth\": \"ps\",\n    \"name\": \"DO Linux\",\n    \"user\": \"root\"\n}"
+				},
+				"url": {
+					"raw": "{{SERVER}}nodes",
+					"host": [
+						"{{SERVER}}nodes"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Nodes (nodes/:id)",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER}}nodes/{{NODES_ID}}",
+					"host": [
+						"{{SERVER}}nodes"
+					],
+					"path": [
+						"{{NODES_ID}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Nodes (nodes/:id)",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER}}nodes/{{NODES_ID}}",
+					"host": [
+						"{{SERVER}}nodes"
+					],
+					"path": [
+						"{{NODES_ID}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Info (info)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER}}info",
+					"host": [
+						"{{SERVER}}info"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Info (info)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"host\": \"172.16.217.131\",\n\t\"port\": 22,\n\t\"login\": \"pro\",\n\t\"password\": \"aaaaaa\"\n}"
+				},
+				"url": {
+					"raw": "{{SERVER}}info",
+					"host": [
+						"{{SERVER}}info"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Credentials (credentials)",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"host\": \"172.16.217.131\",\n\t\"port\": 22,\n\t\"login\": \"pro\",\n\t\"password\": \"aaaaaa\"\n}"
+				},
+				"url": {
+					"raw": "{{SERVER}}credentials",
+					"host": [
+						"{{SERVER}}credentials"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Credentials (credentials)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "0cab1788-d1bb-4f6e-84b6-a0ad34b4458d",
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"",
+							"var code = 201",
+							"",
+							"// Status code",
+							"tests[\"Status code is \" + code] = responseCode.code === code;",
+							"",
+							"if (responseCode.code === code) {",
+							"    // Token check",
+							"    tests[\"Entry has an id\"] = (jsonData[\"id\"].length > 0)",
+							"    ",
+							"    postman.setEnvironmentVariable(\"CREDENTIALS_ID\", jsonData[\"id\"]);",
+							"}",
+							"",
+							"// Content type",
+							"tests[\"Content-Type is present\"] = postman.getResponseHeader(\"Content-Type\");",
+							"tests[\"Content-Type is correct\"] = (postman.getResponseHeader(\"Content-Type\") == \"application/json; charset=utf-8\");",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"name\": \"github.com\",\n\t\"description\": \"This is a description\",\n\t\"login\": \"rafiki270\",\n\t\"password\": \"aaaaaa\",\n\t\"private_key\": \"-----BEGIN OPENSSH PRIVATE KEY-----\\nb3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAACFwAAAAdzc2gtcn\\nNhAAAAAwEAAQAAAgEAuQ11dnBW0ag069wlpmrIaS6GilufisG4\\/h5qXo9c8zCjcFZHLpmk\\nv6zRQ48qBhC5pugdjCcwiijBN9b+UMfoaq61x\\/afSMsEqDMO2hzCnfZ+CKo8TZH7Ai\\/oWw\\nvPYAQ+bj5uK2BRnx54yej+8jHzIAs+hULuhOKl4bgOkU3MKfMKnLMzbyqrp\\/0XPzD1FWQn\\n9t2fkDWPgEKrErxZMossGV8ZU8058ufbsOm5HGv5ZowIF1r2p9a526eyde5wD29Kxc2Wdf\\nrnY5b2kNrEPjclDs+3Vt5v2g1ATNwN4w0cVPGkP6ajqqyFQKB+r6q1hC+mvheQQdJsgDhQ\\nORbd19liG7cdWtTQXkfKcSfHG0BDK+7zhsNEbbRCPHW+00HOxnf7hBsHfMb0DZnYWi80Jp\\nOUUN+PisMBGMdEkqhPt382fyk8Dd8e3\\/YAlRRR3zpKKTXoYa6gRhtThBDqVxTQ9glFGmmW\\n7+PkaJ\\/L32ehkUiZ6jaoxA7S\\/fDLOnfyTQKVteVgmzhU83dyXJyh5A52VAwO8Y3Iim2FMI\\nFrY5O8tGnB\\/0ABrlm3r\\/MK1XIf+AUJNLEu4HRyXhKLY8I1TE90ADpzC6QFAvzaCzVKH4SL\\nhuJpNMGE0bIbs9sY\\/VQsGAj21AqRZ1lR4QcQmutxvC2xE\\/kGujGdmxKX6vFFwFuuMkSzpW\\nMAAAdQii8T14ovE9cAAAAHc3NoLXJzYQAAAgEAuQ11dnBW0ag069wlpmrIaS6GilufisG4\\n\\/h5qXo9c8zCjcFZHLpmkv6zRQ48qBhC5pugdjCcwiijBN9b+UMfoaq61x\\/afSMsEqDMO2h\\nzCnfZ+CKo8TZH7Ai\\/oWwvPYAQ+bj5uK2BRnx54yej+8jHzIAs+hULuhOKl4bgOkU3MKfMK\\nnLMzbyqrp\\/0XPzD1FWQn9t2fkDWPgEKrErxZMossGV8ZU8058ufbsOm5HGv5ZowIF1r2p9\\na526eyde5wD29Kxc2WdfrnY5b2kNrEPjclDs+3Vt5v2g1ATNwN4w0cVPGkP6ajqqyFQKB+\\nr6q1hC+mvheQQdJsgDhQORbd19liG7cdWtTQXkfKcSfHG0BDK+7zhsNEbbRCPHW+00HOxn\\nf7hBsHfMb0DZnYWi80JpOUUN+PisMBGMdEkqhPt382fyk8Dd8e3\\/YAlRRR3zpKKTXoYa6g\\nRhtThBDqVxTQ9glFGmmW7+PkaJ\\/L32ehkUiZ6jaoxA7S\\/fDLOnfyTQKVteVgmzhU83dyXJ\\nyh5A52VAwO8Y3Iim2FMIFrY5O8tGnB\\/0ABrlm3r\\/MK1XIf+AUJNLEu4HRyXhKLY8I1TE90\\nADpzC6QFAvzaCzVKH4SLhuJpNMGE0bIbs9sY\\/VQsGAj21AqRZ1lR4QcQmutxvC2xE\\/kGuj\\nGdmxKX6vFFwFuuMkSzpWMAAAADAQABAAACAHA\\/erW6FN+dwWQkKG5WrXQntZJtW0wmkBkM\\nyAbNvVsCcNEudIUOy4E8yb7KM3p0YLieaXXfO7FCYVmGvsKvUAqOKVO\\/BAV6qDuCpQqmkW\\nKR5wdIg8Wlu\\/UqrC217zdVu6zRj7Ad\\/8SeDjSjcSnmJIyWZXkeDWJrvKU7KRL4dtQnSZOd\\nm6Bd6LvAaH57Kt6r3xX+ftBRvNbXGcAGobBn\\/Pry1YEgpnryKy+XxiI4WJLcc\\/f+xEkwlZ\\nJomXaxiCXEoz1ypEayR\\/L\\/2lYpbQo0FvVyB8rYqE5C5XL5tC66gCoCXVgCs5pOhZGbCN1z\\nliE1alY6ItXaVtg70GWgujY49SnEH5bsh3MwRPtXhDxMtmWSZbRRVo8vIdtBE6oSXWbLv0\\nfaIWcCeOJe0zCxLo2IVlWQX4EDn+529vdIgCeYlbW7x1YEpMbXqLx2X0moHJYP+h2H352R\\ndCAwUlsWmmr2G6k5oLIytbDTkQg93vTb\\/IDRn57EeWgnsMIhDbX233whSdvlO49AyyGRjM\\nfVHs+83hf6Z3oVLlacu58I26GZFwWKWJywO7V3dPx1rrI+AJkk83eSBK1iWJ7C2sdWV1RS\\n04ZG8yDAKlaz+3sGvGSgy\\/41oszhZDVAwZoSozKcO+ffYVhm6iewrJ6N5OxuSWECtnBpW4\\njCdNNX\\/Xt\\/oZcV4+QxAAABAQDNr+XvdVS3NE98dtublkbw\\/ffnflA1qGcPb5RDjKYcG2BT\\nW41MwD1fdZiO\\/Uu+xY3hdLkqbdMT3HCRzKkbrR0m8sDNvYgMQXY0V45lJhbvrviXpaX0Ge\\n7xBYqua2j0Gkqun0HjcIhHCEA09bhsZTeYCOR0zwWsjeu9i+CAggtgt0Z90w5wKItJDbm4\\nynN+2w6Esq7jjlqTsUsbM\\/+CZUg38HGFYofUqvw3q8GJBTJ2JA2lsDg7HvQMjCUhFq7dAG\\ncsmGAPoQK3V6JXnHc83ACyPTa13CzB5bL4o+5ewYP1ZKun8HUqVjI4P5VzGc0s3g6Te1C+\\nYF16MnLqGjksX4auAAABAQDmhv3MJn6nGZRbFO6Of1RXiUCrS5smRgIe+vYfexXxyfzbiy\\n3kI0v5\\/HOiOXeCLBu2jXkEWbJzR3\\/S4o0KzK\\/iXrtslBWDnVGw5vibh+clQ2QNI7gs3kLt\\ndWEUXjknaxxdWCsd0gc0Hd+7slaHyefHOa0OjoHKGEwv+PYp\\/QpY5a+MgqjAJBzChTw+9w\\nP84cxH5UsL2pFnLTOGOd+KtQWhZiKev3\\/BSfQwjUP7u6B+ZLmxGyNzaKhJSyAy21fvdbCr\\nug3jAlx+CGP4xjBg00KVAI90T8es57t3pOcUM7zFln2SJuME2WKknKbRjiK8TVT9SGhUsd\\nKoQw65ckKo5Y57AAABAQDNgBt2oGiuO4ucOgJ+tMB\\/8mSZOayK7RXj6ZL5O1IIVY4Qp2o\\/\\n1qtHxA0Br364DLs+kw08b42x7dkukbyUxWtza7t66khwIvR35CYJUOkfLYrupZlAjDVEYu\\na1I2i+SYH1SA\\/2OP8SJGAvXMWLGkE8LVFou3ZHCJf9T\\/eDtFkj+chkv9Ajpvlj4CbFajkx\\nmRVgXxtduP8S6bgDMLVtforv222WOLxoAxF\\/oc+6saBLkOEU57wXzCsVUf4zrBGqcoHENJ\\nMhgv51F+tNSHmWvIHcPrFt3McZuk847943GEM2ax1YkVx80GAT28j+7bWVxt3UODs8ZC\\/P\\nk7UzXDAqBwQ5AAAAFm9uZHJlai5yYWZhakBnbWFpbC5jb20BAgME\\n-----END OPENSSH PRIVATE KEY-----\",\n\t\"public_key\": \"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC5DXV2cFbRqDTr3CWmashpLoaKW5+Kwbj+Hmpej1zzMKNwVkcumaS\\/rNFDjyoGELmm6B2MJzCKKME31v5Qx+hqrrXH9p9IywSoMw7aHMKd9n4IqjxNkfsCL+hbC89gBD5uPm4rYFGfHnjJ6P7yMfMgCz6FQu6E4qXhuA6RTcwp8wqcszNvKqun\\/Rc\\/MPUVZCf23Z+QNY+AQqsSvFkyiywZXxlTzTny59uw6bkca\\/lmjAgXWvan1rnbp7J17nAPb0rFzZZ1+udjlvaQ2sQ+NyUOz7dW3m\\/aDUBM3A3jDRxU8aQ\\/pqOqrIVAoH6vqrWEL6a+F5BB0myAOFA5Ft3X2WIbtx1a1NBeR8pxJ8cbQEMr7vOGw0RttEI8db7TQc7Gd\\/uEGwd8xvQNmdhaLzQmk5RQ34+KwwEYx0SSqE+3fzZ\\/KTwN3x7f9gCVFFHfOkopNehhrqBGG1OEEOpXFND2CUUaaZbv4+Ron8vfZ6GRSJnqNqjEDtL98Ms6d\\/JNApW15WCbOFTzd3JcnKHkDnZUDA7xjciKbYUwgWtjk7y0acH\\/QAGuWbev8wrVch\\/4BQk0sS7gdHJeEotjwjVMT3QAOnMLpAUC\\/NoLNUofhIuG4mk0wYTRshuz2xj9VCwYCPbUCpFnWVHhBxCa63G8LbET+Qa6MZ2bEpfq8UXAW64yRLOlYw== ondrej.rafaj@gmail.com\",\n\t\"private\": true\n}"
+				},
+				"url": {
+					"raw": "{{SERVER}}credentials",
+					"host": [
+						"{{SERVER}}credentials"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Credentials (credentials/:id)",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"host\": \"172.16.217.131\",\n\t\"port\": 22,\n\t\"login\": \"pro\",\n\t\"password\": \"aaaaaa\"\n}"
+				},
+				"url": {
+					"raw": "{{SERVER}}credentials/{{CREDENTIALS_ID}}",
+					"host": [
+						"{{SERVER}}credentials"
+					],
+					"path": [
+						"{{CREDENTIALS_ID}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Credentials (credentials/:id)",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"host\": \"172.16.217.131\",\n\t\"port\": 22,\n\t\"login\": \"pro\",\n\t\"password\": \"aaaaaa\"\n}"
+				},
+				"url": {
+					"raw": "{{SERVER}}credentials/{{CREDENTIALS_ID}}",
+					"host": [
+						"{{SERVER}}credentials"
+					],
+					"path": [
+						"{{CREDENTIALS_ID}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Flush (system/flush)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER}}system/flush",
+					"host": [
+						"{{SERVER}}system"
+					],
+					"path": [
+						"flush"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

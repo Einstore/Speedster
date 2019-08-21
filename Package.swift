@@ -94,7 +94,7 @@ let package = Package(
         ),
         .testTarget(
             name: "RefRepoKitTests",
-            dependencies: ["RefRepoKit", "NIO", "CommandKit"]
+            dependencies: ["RefRepoKit", "NIO", "CommandKit", "ExecutorMocks"]
         ),
         .testTarget(
             name: "VMWareRunKitTests",
